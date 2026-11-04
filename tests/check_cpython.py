@@ -97,6 +97,7 @@ def main():
     for name, function, inputs in cases:
         generated = f"actual_{name}"
         lines.append(artifact(generated, function))
+        lines.append(f"def admitted_{name} : StackAdmitted {generated} := admit_bytecode% {generated}")
         if name in fixtures:
             # Compare literal fixtures with real code objects, not just executions.
             # Build strings are provenance of the original extraction, not portable IDs.
@@ -118,7 +119,7 @@ def main():
             print(result.stdout, end="")
             print(result.stderr, end="", file=sys.stderr)
             raise SystemExit(result.returncode)
-    print(f"Passed: {count} CPython outcomes across {len(cases)} artifacts; "
+    print(f"Passed: {count} CPython outcomes across {len(cases)} stack-admitted artifacts; "
           f"{len(fixtures)} literal fixtures matched code-object metadata.")
 
 

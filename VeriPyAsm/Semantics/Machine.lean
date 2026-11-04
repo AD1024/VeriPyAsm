@@ -1,8 +1,9 @@
 import VeriPyAsm.Semantics.Value
 
 /-! Explicit one-frame execution and shallow instruction combinators. Labels are
-byte offsets; the head of `stack` is its top. The stack is currently unbounded;
-checking co_stacksize is a future admission obligation. Cycles live in the transition system.
+byte offsets; the head of `stack` is its top. The stack is represented by an
+unbounded list; Stack.Certificate bounds admitted executions by co_stacksize.
+Cycles live in the transition system.
 Exception/fault frames are instruction-entry snapshots, not CPython unwound frames. -/
 
 namespace VeriPyAsm.Semantics
