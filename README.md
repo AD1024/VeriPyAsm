@@ -4,17 +4,20 @@ VeriPyAsm will verify Python programs by proving properties of their compiled
 CPython bytecode in Lean 4. The long-term target includes mutable objects,
 exceptions, library calls, and asynchronous programs.
 
-**Status:** the first bytecode slice is implemented: scalar values, explicit frame
-transitions, a CPython 3.14.4 baseline decoder, and certified translation into
-shallow Lean commands. `bytecode% artifact` elaborates literal bytecode with
-kernel-checked decoding and representation certificates. See the
-[bytecode slice guide](docs/BYTECODE.md) for the supported instructions and limits.
-The `triangular` example and universal program contracts are not yet verified.
+**Status:** the scalar bytecode slice and stack admission are implemented.
+`bytecode% artifact` decodes CPython 3.14.4 baseline bytes and produces a certified
+translation into shallow Lean commands. `admit_bytecode% artifact` also checks
+stack requirements, consistent heights across control flow, exact return shape,
+and the artifact's declared stack capacity. The resulting certificate supports
+kernel-checked stack-safety theorems. See the [bytecode guide](docs/BYTECODE.md)
+for the precise guarantees and remaining limits. The `triangular` contract is
+not yet verified.
 
 The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
 contracts, VC generation, configurable Crush discharge, proof reporting, and the
 manual `@[veripy_proof ...]` handoff. Contracts, VC generation, and proof
-registration remain planned; only the bytecode/embedding slice is implemented.
+registration remain planned. Stack admission establishes structural properties;
+type/local-initialization safety and program contracts remain separate work.
 
 The [prototype plan](docs/PROTOTYPE.md) specifies the first Python fragment,
 normal and exceptional contracts, termination obligations, artifact provenance,
@@ -32,15 +35,16 @@ With that toolchain installed through Elan, build the core library with:
 lake build
 ```
 
-Check the bytecode examples, malformed inputs, and representation proofs with:
+Check bytecode examples, admission/rejection cases, and proof dependencies with:
 
 ```sh
-lake build BytecodeTests
+lake build BytecodeTests StackCertificateTests StackTests AdmissionTests
 python3 tests/check_cpython.py  # requires CPython 3.14.4
 ```
 
 The Python check compares real code objects and normal/exceptional outcomes with
-the Lean model. It is a test oracle, not a production source-to-bytecode tool.
+the Lean model and checks stack admission for the corpus. It is a test oracle,
+not a production source-to-bytecode tool.
 
 To check the five Crush proof examples, with cvc5 1.3.4 or a compatible version
 on `PATH`:
@@ -66,8 +70,10 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `VeriPyAsm/Target.lean` | Intended interpreter metadata |
 | `VeriPyAsm/Semantics/` | Scalars, frames, outcomes, semantic commands, bounded execution |
 | `VeriPyAsm/CPython/V314/` | Artifact data, reference language, conservative decoder |
+| `VeriPyAsm/CPython/V314/Stack/` | Stack rules, certificate checker, analysis, soundness proofs |
 | `VeriPyAsm/Embedding.lean` | Shallow translation and correspondence proofs |
-| `VeriPyAsm/Bytecode.lean` | `bytecode%` term elaborator |
+| `VeriPyAsm/Admission.lean` | Stack admission bound to the exact artifact and capacity |
+| `VeriPyAsm/Bytecode.lean` | `bytecode%` and `admit_bytecode%` term elaborators |
 | `VeriPyAsm/Examples/Bytecode.lean` | Five literal artifacts and certified embeddings |
 | `tests/` | Kernel-checked regression cases and CPython conformance checks |
 | `docs/BYTECODE.md` | Implemented slice, usage, and limitations |

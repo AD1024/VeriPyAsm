@@ -7,8 +7,10 @@ the earlier reconstruction-only policy to support explicit solver trust.
 **Implementation status:** the [first bytecode slice](BYTECODE.md) now implements
 scalar reference semantics, a conservative baseline decoder, shallow command
 translation, and the `bytecode%` elaborator with decoding/representation
-certificates. It does not yet provide full artifact admission, specifications,
-VC generation, or the proof registry below.
+certificates. `admit_bytecode%` additionally produces a stack certificate bound to
+the exact decoded code and declared capacity, with stack-safety proofs for every
+fuel bound. Value-tag/local-initialization safety, full artifact admission,
+specifications, VC generation, and the proof registry below remain future work.
 
 ## 1. Inputs and embedding
 

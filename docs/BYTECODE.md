@@ -1,8 +1,8 @@
-# First bytecode slice
+# Bytecode and stack admission
 
-This step implements the bytecode language, executable semantics, and translation
-boundary from [the design](DESIGN.md). It does not implement contracts, VC generation,
-proof registration, or solver integration.
+The implemented slice covers the bytecode language, executable semantics,
+translation, and stack admission from [the design](DESIGN.md). Contracts, VC
+generation, proof registration, and solver integration remain later milestones.
 
 ## Use
 
@@ -16,6 +16,10 @@ scalar constants, code-object metadata, version/profile, and build provenance.
 - `program`: a shallow Lean function mapping offsets to semantic commands;
 - `correct`: `step program = referenceStep code`.
 
+`admit_bytecode% artifact` returns `StackAdmitted artifact`, containing that
+`translation` and a `stack` certificate indexed by exactly `translation.code`
+and `artifact.stackSize`. Translation alone does not check stack admission.
+
 For example:
 
 ```lean
@@ -24,18 +28,47 @@ import VeriPyAsm.Examples.Bytecode
 open VeriPyAsm VeriPyAsm.Semantics VeriPyAsm.Examples
 
 def imported : Embedding.Translation add1Artifact := bytecode% add1Artifact
+def admitted : StackAdmitted add1Artifact := admit_bytecode% add1Artifact
 
 #check imported.decoded
 #check imported.correct
+#check admitted.stack.valid
+#check StackAdmitted.run_no_underflow
 #eval run (step imported.program) 5 { locals := [some (.int 41)] }
 -- returns int 42, at byte offset 18
 ```
 
 An unsupported literal causes an elaboration error with a byte offset and reason.
 For data processed at runtime, `Embedding.translate` returns
-`Except DecodeError (Translation artifact)` instead. There is no JSON/marshal
-loader yet. The interface cannot represent constants outside int/bool/None;
-external tools must reject those constants rather than coerce or omit them.
+`Except DecodeError (Translation artifact)`, while `admit` returns
+`Except AdmissionError (StackAdmitted artifact)`. Admission errors distinguish
+decoding failures from stack-analysis failures. There is no JSON/marshal loader
+yet. The interface cannot represent constants outside int/bool/None; external
+tools must reject those constants rather than coerce or omit them.
+
+## Stack certificate boundary
+
+The implementation separates four responsibilities:
+
+| Module under `CPython/V314/Stack/` | Responsibility |
+| --- | --- |
+| `Rules.lean` | Required operands, produced values, and the exact one-value return rule |
+| `Certificate.lean` | Finite height table and the independently decidable `Valid` proposition |
+| `Analyze.lean` | Worklist that proposes heights and reports inconsistent edges or capacity errors |
+| `Soundness.lean` | Proofs relating those rules and certificates to instruction and execution semantics |
+
+`Valid` requires entry PC 0 at height 0, unique table offsets, a valid instruction
+at every listed offset, enough operands, input/output heights within capacity,
+and matching heights at every normal successor. Both conditional edges are
+checked even when a condition is constant. These local checks close the table
+under control flow, including cycles. The worklist's traversal and fuel bound
+are not trusted: admission requires the separate certificate proof.
+
+Only instructions reachable through normal control-flow edges need stack-table
+entries. Dead instructions still undergo the decoder's global encoding checks.
+Python exception paths terminate in this handler-free fragment, so an operation
+that can raise TypeError or UnboundLocalError remains admissible when its normal
+path has a valid shape.
 
 ## Language and execution
 
@@ -83,12 +116,14 @@ never become executable instructions. Unsupported instructions are rejected even
 when unreachable. `EXTENDED_ARG`, fused loads/stores, other arithmetic, handlers,
 calls, heap objects, and asynchronous instructions remain unsupported.
 
-**Successful decoding does not yet establish program safety.** Stack-height and
-join consistency, `co_stacksize`, and definite initialization are not checked.
-The current semantic stack is unbounded; underflow, invalid locals, and invalid
-Boolean branches have explicit fault outcomes. These gaps must be addressed
-before claiming an artifact is admitted for verification. The full prototype's
-artifact schema/identity checks and loader also remain incomplete.
+**Stack admission does not establish complete program safety.** It checks heights,
+joins, return shape, and `co_stacksize`; it does not establish value tags or local
+initialization. Invalid-local, unchecked-unbound-local, and non-Boolean-branch
+faults remain explicit possibilities. Python exceptions are allowed, and no
+termination or functional contract is claimed. The model uses an unbounded list
+for the stack; the certificate proves that admitted executions from entry stay
+within the declared capacity. Artifact identity checks and the full loader also
+remain incomplete.
 
 ## Evidence and boundary
 
@@ -98,16 +133,25 @@ that result to every fuel bound. No change in step count is hidden. These are
 representation proofs relative to the defined semantics, not a refinement proof
 of CPython's implementation or a proof of a function's intended contract.
 
+The stack soundness proofs establish instruction and continuation-height
+preservation, absence of stack underflow, and an empty operand stack after return.
+`StackAdmitted.run_no_underflow`, `run_exhausted_bound`, and `run_return_stack`
+transport these properties to the shallow program for every fuel bound from an
+entry frame with an empty stack. The guarantees allow both divergence and Python
+exceptions; they do not depend on a particular worklist result or test input.
+
 ```sh
-lake build
-lake build BytecodeTests
+lake build VeriPyAsm BytecodeTests StackCertificateTests StackTests AdmissionTests
 python3 tests/check_cpython.py
 ```
 
 The Lean checks cover normal/exceptional execution, branch offsets, operand order,
 malformed inputs, unsupported features, fuel exhaustion on a cycle, elaborator
-rejection, and failure to reuse a certificate for changed bytes. The differential
-harness checks 162 CPython outcomes across 19 artifacts and compares five stored
+rejection, and failure to reuse a certificate for changed bytes or capacity.
+Stack checks also cover missing/tampered certificate entries, inconsistent joins
+and backedges, operand requirements distinct from net effects, excess values at
+return, capacity violations, and valid infinite loops. The differential harness
+checks 162 CPython outcomes, stack-admits all 19 artifacts, and compares five stored
 artifacts with actual code objects. It includes negative and large integers,
 bool/int interactions, all implemented arithmetic/comparisons, both branch
 directions, and unbound locals. These checks support conformance; they do not
@@ -117,6 +161,7 @@ axioms nor external solver trust.
 Instruction behavior was checked against the pinned
 [CPython definitions](https://github.com/python/cpython/blob/v3.14.4/Python/bytecodes.c)
 and [opcode IDs](https://github.com/python/cpython/blob/v3.14.4/Include/opcode_ids.h).
-The next focused step is structural stack validation and the remaining encodings
-needed by `triangular`, especially fused instructions and extended operands,
-before starting specifications or VC generation.
+The next focused step is the remaining encodings needed by `triangular`, especially
+fused instructions and extended operands. Any new instruction must extend the
+stack rules and their semantic proof, including intermediate peak height when
+needed, before specifications or VC generation use it.
