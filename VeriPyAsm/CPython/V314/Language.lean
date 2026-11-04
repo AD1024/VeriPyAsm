@@ -37,6 +37,16 @@ structure Code where
   instructions : List Instruction
   deriving Repr, DecidableEq
 
+/-- All normal control-flow successors, including both conditional edges.
+Terminal returns/exceptions have no normal successor. -/
+def Instruction.successors (i : Instruction) : List Nat :=
+  match i.op with
+  | .returnValue => []
+  | .jump target => [target]
+  | .popJumpIfFalse target fallthrough | .popJumpIfTrue target fallthrough =>
+    [target, fallthrough]
+  | _ => [i.next]
+
 /-- Instruction semantics shared with the shallow combinators. Borrowing is
 unobservable only within the stated scalar/runtime profile. -/
 def Instruction.denote (i : Instruction) : Command :=

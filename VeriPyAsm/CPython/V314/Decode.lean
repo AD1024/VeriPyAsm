@@ -115,14 +115,6 @@ private def decodeInstructions (a : Artifact) :
     let tail ← decodeInstructions a fuel next (rest.drop width)
     pure ({ offset := pc, next, opcode, arg, op } :: tail)
 
-private def successors (i : Instruction) : List Nat :=
-  match i.op with
-  | .returnValue => []
-  | .jump target => [target]
-  | .popJumpIfFalse target fallthrough | .popJumpIfTrue target fallthrough =>
-    [target, fallthrough]
-  | _ => [i.next]
-
 /-- Decode every instruction (also unreachable ones), checking all target and
 fallthrough boundaries. A successful decode is not yet a program-safety proof. -/
 def decode (artifact : Artifact) : Except DecodeError Code := do
@@ -130,7 +122,7 @@ def decode (artifact : Artifact) : Except DecodeError Code := do
   let instructions ← decodeInstructions artifact artifact.code.length 0 artifact.code
   check (artifact.code[0]? == some 128) 0 "expected entry RESUME"
   for instruction in instructions do
-    for target in successors instruction do
+    for target in instruction.successors do
       check ((fetch instructions target).isSome) instruction.offset
         s!"control-flow target {target} is not an instruction boundary"
   pure { instructions }
