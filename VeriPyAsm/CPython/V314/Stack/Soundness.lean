@@ -22,6 +22,7 @@ private theorem denote_stack_result (i : Instruction) (s : Frame)
     cases op <;>
       simp_all only [Instruction.StackReady, Op.pops, Instruction.denote,
         Command.jump, Command.push, Command.load, Command.store,
+        Command.loadPair, Command.storeLoad, Command.storePair,
         Command.binary, Command.toBool, Command.branch, Command.ret]
     all_goals
       repeat first

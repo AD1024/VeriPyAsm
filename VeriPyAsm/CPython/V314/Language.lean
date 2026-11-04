@@ -1,5 +1,5 @@
 import VeriPyAsm.CPython.V314.Artifact
-import VeriPyAsm.Semantics.Machine
+import VeriPyAsm.Semantics.Fused
 
 /-! Decoded reference language. The raw opcode/argument and byte offsets remain
 available even when an operand is resolved to a value or an absolute target. -/
@@ -16,6 +16,10 @@ inductive Op where
   | loadFastBorrow (index : Nat)
   | loadFastCheck (index : Nat)
   | storeFast (index : Nat)
+  | loadFastLoadFast (first second : Nat)
+  | loadFastBorrowLoadFastBorrow (first second : Nat)
+  | storeFastLoadFast (storeIndex loadIndex : Nat)
+  | storeFastStoreFast (first second : Nat)
   | binary (operation : BinaryOp)
   | compare (operation : CompareOp)
   | toBool
@@ -57,6 +61,10 @@ def Instruction.denote (i : Instruction) : Command :=
   | .loadFast index | .loadFastBorrow index => Command.load false i.next index
   | .loadFastCheck index => Command.load true i.next index
   | .storeFast index => Command.store i.next index
+  | .loadFastLoadFast first second | .loadFastBorrowLoadFastBorrow first second =>
+    Command.loadPair i.next first second
+  | .storeFastLoadFast storeIndex loadIndex => Command.storeLoad i.next storeIndex loadIndex
+  | .storeFastStoreFast first second => Command.storePair i.next first second
   | .binary op => Command.binary i.next (Semantics.binary op)
   | .compare op => Command.binary i.next (Semantics.compare op)
   | .toBool => Command.toBool i.next
