@@ -1,0 +1,22 @@
+name = "veripyasm"
+version = "0.1.0"
+defaultTargets = ["VeriPyAsm"]
+
+[leanOptions]
+autoImplicit = false
+
+[[lean_lib]]
+name = "VeriPyAsm"
+
+[[lean_lib]]
+name = "CrushObligations"
+srcDir = "experiments"
+
+[[lean_lib]]
+name = "BytecodeTests"
+srcDir = "tests"
+
+[[require]]
+name = "crush"
+git = "https://github.com/AD1024/lean-crush"
+rev = "26b00a788943619f3335fa8e8de1da8ce1ee4362"
