@@ -35,6 +35,9 @@ implemented.
 `VerifiedArtifact` now combines stack/ownership admission, partial or total
 correctness, and a proof that every contract pre-state satisfies the certificates'
 call-entry domain. The existing artifact judgments remain lower-level interfaces.
+The shared `AxiomAudit` now rejects unexpected transitive axioms in core/example
+exports and the CI audit, including definitions containing certificates.
+`make check` covers all project modules, regression libraries, and the CPython harness.
 The full specification DSL, automatic VC generation, and proof registry below
 remain future work.
 
@@ -139,6 +142,13 @@ Audit the complete proof dependency closure, including supplied proofs. Reject
 Keep other nonstandard axioms outside the default policy. The actual dependencies
 determine assurance: a trusted-mode call can still produce a checked proof, while
 a supplied theorem using solver trust is not upgraded by being labeled manual.
+
+The implemented `#veripy_audit Namespace` command enforces checked policy only:
+the allowlist is `propext`, `Classical.choice`, and `Quot.sound`. It fails on
+unknown declarations and audits safe definitions as well as theorems, including
+private dependencies. Unsafe/partial metaprograms are not accepted as proof
+evidence. Solver-trusted verification still requires a separate future policy
+interface; there is no implicit exception for Crush.
 
 ## 4. Manual proof handoff
 

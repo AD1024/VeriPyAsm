@@ -1,4 +1,5 @@
 import Crush
+import VeriPyAsm.Verification.AxiomAudit
 
 /-!
 # Candidate verification conditions for VeriPyAsm
@@ -53,3 +54,5 @@ theorem frameCondition (before after : Nat → Int) (i j : Nat) (value : Int)
 #print axioms frameCondition
 
 end VeriPyAsm.CrushExperiment
+
+#veripy_audit VeriPyAsm.CrushExperiment

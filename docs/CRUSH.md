@@ -160,6 +160,9 @@ cvc5 1.3.4 under the strict options above and a five-second solver timeout.
 The target audits their complete axiom dependency closures and fails on anything
 outside `propext`, `Classical.choice`, and `Quot.sound`. This includes rejecting
 `sorryAx`, `Crush.crushSorry`, and native-decision axioms.
+Both experiment targets now use the shared `Verification/AxiomAudit.lean`
+checker. `make check-crush` includes them in the full regression/audit/CPython
+check; `make check` runs that suite without requiring an external SMT solver.
 
 These are hand-extracted VCs with an explicit Crush proof provider. The target
 prints theorem axiom dependencies; it does not yet implement the designed
@@ -184,6 +187,6 @@ assembly, and checked Crush proofs are implemented. Remaining steps:
    translation, solver, reconstruction, and timeout failures separately.
 5. Supply checked domain lemmas where a solver understands an operation but replay
    cannot justify it. Keep a clear path to ordinary Lean proofs for difficult goals.
-6. Run the existing axiom audits and artifact-identity regressions in CI.
-   Keep one execution test, one VC proof, and a whole-program correctness theorem
-   as distinct kinds of evidence in project reporting.
+6. Keep execution tests, VC proofs, and whole-program correctness theorems
+   distinct in reporting. The shared failing audit and `make check` CI entry
+   point now cover proof assumptions and artifact-identity regressions.

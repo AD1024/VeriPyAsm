@@ -299,6 +299,7 @@ identity required by the planned proof registry, which is not implemented yet.
 ## Validation and next step
 
 ```sh
+make check  # all Lean regressions, transitive axiom audit, and CPython 3.14.4 harness
 lake build VeriPyAsm ContractTests HoareTests BlockTests InstructionTests
 lake build LoopTests TriangularTests VCAssemblyTests VerifiedArtifactTests
 ```
@@ -321,6 +322,13 @@ freshly stack-admitted artifact that provably violates the original contract.
 `VCAssemblyTests` checks exact VC statements, rejects an incomplete proof bundle,
 guards the provider-free import boundary, and rejects nonstandard axioms in the
 conditional artifact theorem's dependency closure.
+The shared `#veripy_audit` command also runs on public core/example exports.
+`make check` discovers every project module and regression library and audits
+their safe declarations, including definitions carrying admission certificates
+and final verification packages. `#print axioms` remains diagnostic output;
+the failing allowlist check is the enforcement mechanism. Negative audit tests
+exercise indirect axioms, proof-containing data, admission axioms, and unknown
+names in a temporary environment that exports none of the rejected fixtures.
 
 See the [rule guide](RULES.md) for the soundness interfaces. The next step is
 exact-match registration for these named obligations, followed by reporting and

@@ -58,6 +58,18 @@ With that toolchain installed through Elan, build the core library with:
 lake build
 ```
 
+The core and public example exports run a failing transitive axiom audit.
+For the complete CI check, with CPython 3.14.4 available as `python3`, run:
+
+```sh
+make check
+```
+
+This discovers all project modules and regression libraries, builds them, audits
+safe declarations (including certificate definitions), and runs the CPython
+conformance harness. `make check-crush` also requires cvc5 and checks both Crush
+targets. Set `PYTHON=/path/to/python3.14` if the pinned interpreter has another name.
+
 Check bytecode examples, admission/rejection cases, and proof dependencies with:
 
 ```sh
@@ -66,11 +78,12 @@ lake build OwnershipTests
 lake build FusedSemanticsTests WordcodeTests ExtendedDecodeTests FusedDecodeTests
 lake build ContractTests HoareTests BlockTests InstructionTests
 lake build LoopTests TriangularTests VCAssemblyTests VerifiedArtifactTests
+lake build AxiomAuditTests
 python3 tests/check_cpython.py  # requires CPython 3.14.4
 ```
 
 The Python check compares real code objects and normal/exceptional outcomes with
-the Lean model and checks stack admission for the corpus. It is a test oracle,
+the Lean model and checks stack/ownership admission for the corpus. It is a test oracle,
 not a production source-to-bytecode tool.
 
 To check the Crush proof of the imported triangular artifact and the five
@@ -104,11 +117,13 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `VeriPyAsm/Bytecode.lean` | `bytecode%` and `admit_bytecode%` term elaborators |
 | `VeriPyAsm/Verification/` | Contracts, instruction/block/loop rules, partial/total correctness, artifact transport |
 | `VeriPyAsm/Verification/VerifiedArtifact.lean` | Final packages enforcing admission, entry compatibility, and correctness |
+| `VeriPyAsm/Verification/AxiomAudit.lean` | Shared failing check of transitive proof dependencies |
 | `VeriPyAsm/Examples/Bytecode.lean` | Five literal artifacts and certified embeddings |
 | `VeriPyAsm/Examples/Add1.lean` | Universal total-correctness proof for imported integer `add1` |
 | `VeriPyAsm/Examples/Triangular.lean` | Public entry point for the imported loop and its universal total-correctness theorem |
 | `VeriPyAsm/Examples/Triangular/` | Artifact, symbolic blocks, closed VCs, conditional assembly, and separate arithmetic proofs |
 | `tests/` | Kernel-checked regression cases and CPython conformance checks |
+| `scripts/check.py`, `Makefile` | Complete CI entry point with automatic module/test discovery |
 | `docs/BYTECODE.md` | Implemented slice, usage, and limitations |
 | `docs/CONTRACTS.md` | Contract interface, execution rules, universal program proofs |
 | `docs/RULES.md` | Sound instruction/block/loop rules, continuation boundaries, invariant and ranking proofs |

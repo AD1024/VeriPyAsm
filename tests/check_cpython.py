@@ -162,6 +162,7 @@ def main():
     ])
 
     lines = ["import BytecodeTests", "import VeriPyAsm.Examples.Triangular",
+             "import VeriPyAsm.Verification.AxiomAudit",
              "set_option Elab.async false", "set_option stderrAsMessages false",
              "namespace VeriPyAsm.Conformance",
              "open Semantics CPython.V314 Examples Tests"]
@@ -174,9 +175,9 @@ def main():
         if case.wide_opcodes:
             lines.append(progress(f"Checking extended operands: {name}"))
         lines.append(budgeted(case, artifact(generated, function)))
-        lines.append(budgeted(case, f"def admitted_{name} : StackAdmitted {generated} := admit_bytecode% {generated}"))
+        lines.append(budgeted(case, f"def admitted_{name} : Admitted {generated} := admit_bytecode% {generated}"))
         if case.wide_opcodes:
-            lines.append(progress(f"Stack admission checked: {name}"))
+            lines.append(progress(f"Stack and ownership admission checked: {name}"))
         shape = decoded_shape(case)
         instruction_count += len(shape)
         lines.append(budgeted(case,
@@ -194,6 +195,7 @@ def main():
                          f".ok ({expected(function, args)}) := by decide +kernel"))
             count += 1
     lines.append("end VeriPyAsm.Conformance")
+    lines.append("#veripy_audit VeriPyAsm.Conformance")
     with tempfile.TemporaryDirectory(prefix="veripy-conformance-") as directory:
         path = Path(directory) / "Conformance.lean"
         path.write_text("\n\n".join(lines) + "\n")
@@ -201,7 +203,7 @@ def main():
         result = subprocess.run(["lake", "env", "lean", str(path)], cwd=ROOT)
         if result.returncode:
             raise SystemExit(result.returncode)
-    print(f"Passed: {count} CPython outcomes across {len(cases)} stack-admitted artifacts; "
+    print(f"Passed: {count} CPython outcomes across {len(cases)} stack/ownership-admitted artifacts; "
           f"{len(fixtures)} literal fixtures matched code-object metadata; "
           f"{instruction_count} decoded instruction spans matched dis.")
 

@@ -1,5 +1,6 @@
 import VeriPyAsm.Examples.Bytecode
 import VeriPyAsm.Verification.VerifiedArtifact
+import VeriPyAsm.Verification.AxiomAudit
 import VeriPyAsm.Verification.Hoare
 import VeriPyAsm.Verification.Instruction
 
@@ -119,3 +120,5 @@ theorem add1_no_fault (n : Int) (fuel : Nat) (reason : Fault) (failureFrame : Fr
   exact (add1_total n).partialCorrect.run_halted (ghost := ()) rfl execution
 
 end VeriPyAsm.Examples
+
+#veripy_audit VeriPyAsm.Examples

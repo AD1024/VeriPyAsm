@@ -1,5 +1,6 @@
 import VeriPyAsm.Examples.Triangular.Assembly
 import Crush
+import VeriPyAsm.Verification.AxiomAudit
 
 /-! Checked Crush proofs of the actual triangular VCs and their assembly into
 total correctness of the imported artifact. The ordinary arithmetic provider
@@ -51,12 +52,8 @@ def verified : VerifiedArtifact triangularArtifact triangularContract := Assembl
 #eval show Lean.CoreM Unit from do
   if (← Lean.getEnv).contains `VeriPyAsm.Examples.Triangular.Arithmetic.proofs then
     throwError "The Crush provider unexpectedly imports the ordinary arithmetic proofs"
-  let approved := [``propext, ``Classical.choice, ``Quot.sound]
-  for name in [``init, ``preserve, ``exit, ``decrease, ``proofs, ``artifact_total, ``verified] do
-    let axioms ← Lean.collectAxioms name
-    for axiomName in axioms do
-      unless approved.contains axiomName do
-        throwError "{name} depends on unapproved axiom {axiomName}"
+
+#veripy_audit VeriPyAsm.Examples.Triangular.CrushProofs
 
 #print axioms init
 #print axioms preserve

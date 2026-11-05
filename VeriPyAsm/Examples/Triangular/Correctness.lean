@@ -1,5 +1,6 @@
 import VeriPyAsm.Examples.Triangular.Assembly
 import VeriPyAsm.Examples.Triangular.Arithmetic
+import VeriPyAsm.Verification.AxiomAudit
 
 /-! Public total-correctness theorems, obtained by supplying the ordinary Lean
 proofs of the named VCs to the provider-independent assembly theorem. -/
@@ -61,3 +62,5 @@ theorem triangular_no_fault (N : Int) (nonnegative : 0 ≤ N) (fuel : Nat)
   exact (triangular_total N).partialCorrect.run_halted (ghost := ()) ⟨nonnegative, rfl⟩ execution
 
 end VeriPyAsm.Examples
+
+#veripy_audit VeriPyAsm.Examples

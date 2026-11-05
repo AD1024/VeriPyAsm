@@ -1,5 +1,5 @@
 import VeriPyAsm.Examples.Triangular.Assembly
-import Lean
+import VeriPyAsm.Verification.AxiomAudit
 
 /-! The conditional assembly is usable without either proof provider. Check
 the exact closed propositions, require all four premises, and audit assumptions. -/
@@ -50,13 +50,8 @@ example : True := by
       `VeriPyAsm.Examples.triangular_total, `Crush.crushSorry] do
     if environment.contains name then
       throwError "Conditional assembly unexpectedly imports {name}"
-  let approved := [``propext, ``Classical.choice, ``Quot.sound]
-  for name in [``Assembly.loop_total, ``Assembly.program_total, ``Assembly.total,
-      ``Assembly.artifact_total, ``conditional_artifact] do
-    let axioms ← Lean.collectAxioms name
-    for axiomName in axioms do
-      unless approved.contains axiomName do
-        throwError "{name} depends on unapproved axiom {axiomName}"
+
+#veripy_audit VeriPyAsm
 
 #print axioms Assembly.artifact_total
 #print axioms conditional_artifact
