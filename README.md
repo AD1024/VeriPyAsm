@@ -19,6 +19,8 @@ proof for the imported `add1` artifact: every integer input returns its successo
 preserves its local, and terminates without Python exceptions or VM faults.
 Scoped `{ P } S { Q }` and `{{ P }} S {{ Q }}` notation expresses partial and
 total correctness with frame predicates, including operand-stack conditions.
+The explicit `returns Q` postcondition also observes the returned value;
+`Examples/Add1.lean` uses this form for its successor guarantee.
 
 The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
 contracts, VC generation, configurable Crush discharge, proof reporting, and the

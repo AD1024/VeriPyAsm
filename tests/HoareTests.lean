@@ -18,6 +18,18 @@ example (P Q : Frame → Prop) (S : Program) :
     ({{ P }} S {{ Q }}) =
       TotalCorrect (step S) (Contract.ofFramePredicates P Q) := rfl
 
+example (P : Frame → Prop) (Q : Value → Frame → Prop) (S : Program) :
+    ({ P } S { returns Q }) =
+      PartialCorrect (step S) (Contract.ofReturnPredicates P Q) := rfl
+
+example (P : Frame → Prop) (Q : Value → Frame → Prop) (S : Program) :
+    ({{ P }} S {{ returns Q }}) =
+      TotalCorrect (step S) (Contract.ofReturnPredicates P Q) := rfl
+
+example (P : Frame → Prop) (Q : Value → Frame → Prop) (S : Program) :
+    {{ P }} S {{ returns Q }} → { P } S { returns Q } :=
+  fun correct => correct.partialCorrect
+
 -- The final brace does not consume a following implication or conjunction.
 example (P Q : Frame → Prop) (S : Program) :
     {{ P }} S {{ Q }} → { P } S { Q } := fun correct => correct.partialCorrect
@@ -38,12 +50,22 @@ private def returnProgram : Program := fun _ => some Command.ret
 /-- The returned value has been popped: Q sees the remaining operand stack. -/
 theorem return_stack (value : Value) (rest : List Value) :
     {{ fun initial => initial.stack = value :: rest }} returnProgram
-    {{ fun final => final.stack = rest }} := by
+    {{ returns fun returned final => returned = value ∧ final.stack = rest }} := by
   apply TotalCorrect.of_run
   intro _ initial pre
   change initial.stack = value :: rest at pre
-  refine ⟨1, .returned value { initial with stack := rest }, ?_, rfl⟩
+  refine ⟨1, .returned value { initial with stack := rest }, ?_, rfl, rfl⟩
   simp [run, step, returnProgram, Command.ret, pre]
+
+-- A result-aware postcondition must not silently discard the returned value.
+theorem wrong_return_rejected :
+    ¬ ({ fun initial => initial.stack = [.int 0] } returnProgram
+      { returns fun value _ => value = .int 1 }) := by
+  intro correct
+  have allowed := correct.run_halted (ghost := ()) (initial := { stack := [.int 0] }) rfl
+    (show run (step returnProgram) 1 { stack := [.int 0] } =
+      .halted (.returned (.int 0) {}) from rfl)
+  exact (by decide : ¬ ((0 : Int) = 1)) (Value.int.inj allowed)
 
 -- A parenthesized application can supply S, and nested records can occur in P.
 -- Outer inputs remain bound across both predicate lambdas.
@@ -55,10 +77,10 @@ theorem add1_notation (n : Int) :
   intro _ initial pre
   change initial = { locals := [some (.int n)] } at pre
   subst initial
-  obtain ⟨outcome, execution⟩ := add1_total.terminates n
+  obtain ⟨outcome, execution⟩ := (add1_total n).terminates ()
     { locals := [some (.int n)] } rfl
   refine ⟨outcome, execution, ?_⟩
-  have allowed := add1_total.partialCorrect n _ rfl outcome execution
+  have allowed := (add1_total n).partialCorrect () _ rfl outcome execution
   cases outcome with
   | returned value final => exact ⟨allowed.2.1, allowed.2.2⟩
   | raised exception final => exact False.elim allowed
@@ -100,6 +122,8 @@ theorem exception_rejected :
   exact correct () {} trivial (.raised .typeError {}) (.halt rfl)
 
 #print axioms return_stack
+#print axioms wrong_return_rejected
+#print axioms add1_total
 #print axioms add1_notation
 #print axioms loop_partial
 #print axioms loop_not_total

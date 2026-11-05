@@ -74,42 +74,53 @@ example (P Q : Frame → Prop) (S : Program) :
     {{ P }} S {{ Q }} → { P } S { Q } :=
   fun total => total.partialCorrect
 
--- The postcondition can describe the actual final operand stack.
+-- Return binds an ordinary stack value; Q relates it to the stack after the pop.
 example (value : Value) (rest : List Value) :
     {{ fun initial => initial.stack = value :: rest }}
       (fun _ => some Command.ret)
-    {{ fun final => final.stack = rest }} := by
+    {{ returns fun returned final => returned = value ∧ final.stack = rest }} := by
   apply TotalCorrect.of_run
   intro _ initial pre
   change initial.stack = value :: rest at pre
-  refine ⟨1, .returned value { initial with stack := rest }, ?_, rfl⟩
+  refine ⟨1, .returned value { initial with stack := rest }, ?_, rfl, rfl⟩
   simp [run, step, Command.ret, pre]
 ```
 
-The two forms elaborate to Lean proof obligations:
+The partial and total forms elaborate to Lean proof obligations. An explicit
+`returns` marker makes the returned value available to the postcondition:
 
 | Notation | Meaning |
 | --- | --- |
 | `{ P } S { Q }` | `PartialCorrect (step S) (Contract.ofFramePredicates P Q)` |
 | `{{ P }} S {{ Q }}` | `TotalCorrect (step S) (Contract.ofFramePredicates P Q)` |
+| `{ P } S { returns Q }` | `PartialCorrect (step S) (Contract.ofReturnPredicates P Q)` |
+| `{{ P }} S {{ returns Q }}` | `TotalCorrect (step S) (Contract.ofReturnPredicates P Q)` |
 
-`P` and `Q` have type `Frame → Prop`; inspect `frame.stack` for stack predicates
-or `frame.locals` and `frame.pc` for other state conditions. `S` has type
+`P` always has type `Frame → Prop`. Without `returns`, `Q` has type `Frame → Prop`;
+with `returns`, it has type `Value → Frame → Prop`. Inspect `frame.stack` for
+stack predicates or `frame.locals` and `frame.pc` for other state conditions. `S` has type
 `Program`, so use `translation.program`, not `step translation.program` or a
 single instruction command. Parenthesize program applications, for example
 `(Embedding.compile code)`. Outer theorem binders such as `value` and `rest`
 above remain available to both predicates.
 
-Both forms require normal return satisfying `Q` and reject Python exceptions and
+All forms require normal return satisfying `Q` and reject Python exceptions and
 VM faults. Partial correctness allows divergence; total correctness additionally
 requires termination from every frame satisfying `P`. These are whole-program
 judgments, not single-instruction or block rules. `Q` observes the actual final
-frame: `RETURN_VALUE` has already popped the returned value. Use the full
-`Contract` interface to constrain that value, relate initial and final states,
-or permit an exception.
+frame: `RETURN_VALUE` has already popped the returned value. The `returns` form
+passes that value separately to `Q`; it does not put it back on the stack. Use
+the same `Value` operations and relations for the returned value and stack
+elements: the marker names a value at a control-flow exit, not a different kind
+of value. `Q` can relate it to any values in the final stack or locals, or to
+logical inputs captured by the precondition. Use the full `Contract` interface
+to relate initial and final states or permit an exception.
+Keeping result binding explicit also leaves room for future rules
+about non-return instructions; those rules are not implemented by these triples.
 
-The adapter uses a `Unit` ghost, `pre := P`, `post := Q` on the final frame, and
-`raises := False`. Expansion to each existing correctness predicate is checked
+Both adapters use a `Unit` ghost, `pre := P`, and `raises := False`; their
+postconditions observe the final frame or the returned value and final frame.
+Expansion to each existing correctness predicate is checked
 by `rfl`. The notation introduces a proposition for the user to prove; it does
 not automatically prove the triple or run a VC generator.
 
@@ -119,15 +130,25 @@ not automatically prove the triple or run a VC generator.
 import VeriPyAsm.Examples.Add1
 
 open VeriPyAsm VeriPyAsm.Semantics VeriPyAsm.Verification VeriPyAsm.Examples
+open scoped VeriPyAsm.Verification.Hoare
 
 #check add1Admitted.stack.valid
 #check add1_total
 #check add1_artifact_total
 #check add1_no_exception
 #check add1_no_fault
+
+-- This is the statement proved directly by add1_total in Examples/Add1.lean.
+example (n : Int) :
+    {{ fun initial => initial = { locals := [some (.int n)] } }}
+      add1Admitted.translation.program
+    {{ returns fun value final =>
+      value = .int (n + 1) ∧ final.locals = [some (.int n)] ∧ final.stack = [] }} :=
+  add1_total n
 ```
 
-`add1Contract : Contract Int` specifies:
+`add1_total n` proves the result-aware total triple above. The retained
+`add1Contract : Contract Int` specifies the same behavior relationally:
 
 - Precondition: PC 0, empty stack, and exactly one local containing the integer `n`.
 - Normal result: integer `n + 1`, unchanged locals, and an empty returned stack.
@@ -136,8 +157,9 @@ open VeriPyAsm VeriPyAsm.Semantics VeriPyAsm.Verification VeriPyAsm.Examples
 The public contract mentions neither instruction offsets nor a fixed fuel budget.
 The supporting `add1_run` lemma proves symbolically, by `rfl`, that the certified
 shallow program returns the specified result in five instructions for **every
-`n : Int`**. `add1_total` assembles total correctness, and its corollaries exclude
-exceptions and faults at every fuel bound. Boolean inputs are outside this
+`n : Int`**. `add1_total` assembles total correctness using the Hoare notation;
+`add1_contract_total` derives the relational contract for artifact transport.
+Its corollaries exclude exceptions and faults at every fuel bound. Boolean inputs are outside this
 contract, though the modeled Python arithmetic also accepts them.
 
 `Verification/Artifact.lean` defines `ArtifactPartialCorrect` and
@@ -162,7 +184,8 @@ freshly admitted mutation of `add1` changes `LOAD_SMALL_INT 1` to `2`; a checked
 counterexample refutes the original contract for that artifact. Proof-dependency
 reports audit the execution rules, contract rules, and universal example.
 Hoare tests additionally check exact expansion, parser precedence and ordinary
-record syntax, captured inputs, and the post-return stack.
+record syntax, captured inputs, the post-return stack, and rejection of an
+incorrect returned-value postcondition.
 
 The next step is reusable instruction/block and invariant rules, followed by the
 manual invariant and termination proof for `triangular`. General VC generation,
