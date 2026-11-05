@@ -1,5 +1,6 @@
 import VeriPyAsm.Verification.Instruction
 import VeriPyAsm.Verification.Hoare
+import VeriPyAsm.Verification.FusedInstruction
 
 /-! Compositional examples exercise operand order, local updates, truthiness and
 both branch edges, preserved exception snapshots, and forbidden VM faults.
@@ -124,6 +125,29 @@ theorem return_requires_value :
   intro correct
   exact correct {} rfl
 
+/-- The fused load is atomic and places the second local on top. Both local
+values and the prior stack remain symbolic, so swapping the operands is visible. -/
+theorem fused_load_order (first second : Value) (rest : List Value) :
+    InstructionCorrect (Command.loadPair 9 0 1)
+      (fun s => s.locals = [some first, some second] ∧ s.stack = rest)
+      { continues := fun s => s.pc = 9 ∧ s.stack = second :: first :: rest ∧
+          s.locals = [some first, some second] } := by
+  apply (InstructionCorrect.loadPair 9 0 1 _).consequence (post := fun _ h => h)
+  rintro s ⟨locals, stack⟩
+  exact ⟨first, second, by simp [locals], by simp [locals], rfl, by simp [stack], locals⟩
+
+example (value : Value) (rest : List Value) :
+    InstructionCorrect (Command.loadPair 1 0 0)
+      (fun s => s = { locals := [some value], stack := rest })
+      { continues := fun s => s.stack = value :: value :: rest } :=
+  (InstructionCorrect.loadPair 1 0 0 _).on_frame ⟨value, value, rfl, rfl, rfl⟩
+
+theorem fused_second_unbound_rejected :
+    ¬ InstructionCorrect (Command.loadPair 1 0 1)
+      (fun s => s.locals = [some (.int 1), none]) permissive := by
+  intro correct
+  exact correct { locals := [some (.int 1), none] } rfl
+
 private def jumpLoop : Program := fun _ => some (Command.jump 2)
 
 private theorem jumpLoop_no_exit {s : Frame} {result : StepResult}
@@ -153,6 +177,8 @@ theorem prepend_divergent : { fun _ => True } jumpLoop { fun _ => False } := by
 #print axioms subtraction_cases
 #print axioms truthiness_branch
 #print axioms checked_unbound
+#print axioms InstructionCorrect.loadPair
+#print axioms fused_load_order
 #print axioms prepend_divergent
 
 end VeriPyAsm.Tests.Instruction
