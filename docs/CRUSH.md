@@ -8,11 +8,13 @@ verification-condition generation rules independently in Lean.
 The [verification-flow design](DESIGN.md) defines the current discharge policies,
 per-obligation report, and manual proof registry with `rfl`-certified equality
 between the supplied theorem type and generated VC. Both checked reconstruction and
-explicit solver trust are supported in the design; the experiment uses checked mode.
+explicit solver trust are supported in the design; the current examples use checked mode.
 
 Crush is a pinned Lake dependency so both builds and the VS Code Lean extension
-can resolve the experiment's imports. The core library does not import Crush;
-integration with actual bytecode verification conditions remains M3/M4 work.
+can resolve the imports. The core library does not import Crush. The separate
+`TriangularCrush` target now proves the actual loop VCs and assembles correctness
+of the imported artifact. Automatic generation, proof registration, configurable
+discharge policies, and per-obligation reporting remain prototype work.
 
 ## Where it fits
 
@@ -105,8 +107,8 @@ All five checked successfully using Lean 4.34.0 and cvc5 1.3.4 with a five-secon
 per-query solver timeout. `#print axioms` reported only `propext`,
 `Classical.choice`, and `Quot.sound` for each theorem. Neither `sorryAx` nor
 `Crush.crushSorry` occurred. This is a small feasibility experiment, not a coverage
-or performance benchmark and not a proof about Python bytecode. Connecting these
-obligations to the actual instructions remains M2/M3 work.
+or performance benchmark and not a proof about Python bytecode. The separate
+artifact proof below now supplies that connection for the triangular loop.
 
 The Lake configuration and manifest pin Crush to
 `26b00a788943619f3335fa8e8de1da8ce1ee4362`, with Lean 4.34.0. The package is
@@ -119,25 +121,67 @@ With cvc5 on `PATH`, run from the VeriPyAsm project root:
 lake build CrushObligations
 ```
 
-`lake build` builds the core library. The experiment is a separate named target;
-no automated test driver is configured yet. Lake also supplies its import paths
-to VS Code, without a custom `LEAN_PATH` setting.
+`lake build` builds the core library. The experiment is a separate named target.
+Lake also supplies its import paths to VS Code, without a custom `LEAN_PATH`
+setting. The README lists the separate regression targets.
+
+## Imported triangular artifact
+
+[`TriangularCrush.lean`](../experiments/TriangularCrush.lean) imports the conditional
+assembly and supplies proofs of the four closed propositions in
+[`Triangular/VC.lean`](../VeriPyAsm/Examples/Triangular/VC.lean):
+
+| VC | Checked proof script after introducing the binders |
+| --- | --- |
+| `loop6.init` | `crush` |
+| `loop6.preserve` | `crush` |
+| `loop6.exit` | `crush` |
+| `loop6.decrease` | `rw [Int.toNat_lt_toNat positive]`, then `crush` |
+
+The exit VC establishes both the zero counter and the result equation. A direct
+Crush call on the original ranking goal returned `unknown`; the proved rewrite
+converts its `Nat` comparison to integer arithmetic before discharge. It leaves
+the named VC unchanged and introduces no additional premise.
+
+The target imports neither `Arithmetic.lean` nor the existing unconditional
+correctness theorem. `Triangular.CrushProofs.artifact_total` applies the same
+`Assembly.artifact_total` theorem to the new proof bundle. Its conclusion is
+`ArtifactTotalCorrect triangularArtifact triangularContract`, bound to the exact
+imported bytes through the representation certificate.
+
+```sh
+lake build TriangularCrush
+```
+
+All four VCs and the assembled artifact theorem checked with Lean 4.34.0 and
+cvc5 1.3.4 under the strict options above and a five-second solver timeout.
+The target audits their complete axiom dependency closures and fails on anything
+outside `propext`, `Classical.choice`, and `Quot.sound`. This includes rejecting
+`sorryAx`, `Crush.crushSorry`, and native-decision axioms.
+
+These are hand-extracted VCs with an explicit Crush proof provider. The target
+prints theorem axiom dependencies; it does not yet implement the designed
+proof-provider registry, pending-goal export, or backend-routing report. The cvc5
+configuration alone is not evidence of which internal reconstruction path ran.
 
 ## Integration tasks
 
-1. Prove the first bytecode loop with explicit semantic steps; apply Crush to the
-   resulting pure obligations and record which hints are necessary.
-2. Expose a narrow automation interface to the pinned Crush dependency, without
+The first loop, sound instruction/block/loop rules, named VCs, conditional
+assembly, and checked Crush proofs are implemented. Remaining steps:
+
+1. Register proofs by VC name with a kernel-checked `rfl` certificate for the
+   complete theorem type; reject mismatches and duplicate registrations.
+2. Expose a configurable automation interface to the pinned Crush dependency, without
    making semantic definitions import solver machinery. Enforce the selected
-   trust policy and report actual proof dependencies and backend provenance.
-3. Prove sound block/loop VC rules, including exceptional exits, state validity,
-   and the chosen termination condition. Automation must construct Lean proof
-   terms applying these rules to the original artifact.
+   trust policy, report actual proof dependencies and backend provenance, and
+   export exact pending statements.
+3. Automate the current extraction and assembly by applying the proved rules to
+   annotated artifacts, retaining exceptional exits and termination conditions.
 4. Maintain an obligation corpus: linear/nonlinear arithmetic, signed division,
    datatype/tag facts, heap updates, and later async transition invariants. Report
    translation, solver, reconstruction, and timeout failures separately.
 5. Supply checked domain lemmas where a solver understands an operation but replay
    cannot justify it. Keep a clear path to ordinary Lean proofs for difficult goals.
-6. Audit axioms and artifact identity in CI when the first program proofs land.
+6. Run the existing axiom audits and artifact-identity regressions in CI.
    Keep one execution test, one VC proof, and a whole-program correctness theorem
    as distinct kinds of evidence in project reporting.

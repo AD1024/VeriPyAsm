@@ -24,7 +24,10 @@ nonempty iteration, invariant preservation, and, for total correctness, a
 terminating iteration with strict decrease in a well-founded relation.
 The triangular example now exposes four named, closed VCs and a conditional
 artifact-correctness assembly theorem, with ordinary Lean proofs supplied
-separately. These VCs are extracted by hand from the proved block summaries.
+separately. The optional `TriangularCrush` target supplies checked Crush proofs
+of the same VCs and assembles the same artifact contract. These VCs are extracted
+by hand from the proved block summaries; automatic backend reporting is not yet
+implemented.
 The full specification DSL, automatic VC generation, and proof registry below
 remain future work.
 

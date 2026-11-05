@@ -250,6 +250,10 @@ example (obligations : Triangular.VC.Proofs) :
 `Arithmetic.proofs` supplies the ordinary Lean proofs; `Correctness.lean` applies
 the assembly theorem to that bundle. Alternative providers can import the same
 VC definitions and assembly without importing `Arithmetic` or `Correctness`.
+`experiments/TriangularCrush.lean` does exactly this with checked Crush proofs;
+`lake build TriangularCrush` builds it separately when cvc5 is installed. Its
+assembled artifact theorem has the same conclusion, and the target rejects any
+axiom outside Lean's standard three. See the [Crush guide](CRUSH.md).
 The expanded VC statements match their names by `rfl`; this is the statement
 identity required by the planned proof registry, which is not implemented yet.
 

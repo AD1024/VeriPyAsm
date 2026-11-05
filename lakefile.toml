@@ -13,6 +13,10 @@ name = "CrushObligations"
 srcDir = "experiments"
 
 [[lean_lib]]
+name = "TriangularCrush"
+srcDir = "experiments"
+
+[[lean_lib]]
 name = "BytecodeTests"
 srcDir = "tests"
 

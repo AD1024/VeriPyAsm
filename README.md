@@ -27,6 +27,8 @@ composition, with explicit continuation, return, and exception postconditions.
 Loop termination uses a well-founded ranking between successive invariant states.
 The triangular proof now exposes four named, closed VCs and a conditional assembly
 theorem. Ordinary Lean proofs discharge those VCs in a separate module.
+An optional Crush target proves the same VCs with checked reconstruction and
+assembles the same artifact contract.
 
 The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
 contracts, VC generation, configurable Crush discharge, proof reporting, and the
@@ -39,8 +41,8 @@ The [prototype plan](docs/PROTOTYPE.md) specifies the first Python fragment,
 normal and exceptional contracts, termination obligations, artifact provenance,
 validation strategy, and the staged route to async verification.
 
-The [Crush integration assessment](docs/CRUSH.md) proposes checked automation for
-verification conditions and records a small successful proof experiment.
+The [Crush integration guide](docs/CRUSH.md) records the checked artifact proof,
+the earlier standalone experiment, and the remaining automation work.
 
 ## Build
 
@@ -65,11 +67,11 @@ The Python check compares real code objects and normal/exceptional outcomes with
 the Lean model and checks stack admission for the corpus. It is a test oracle,
 not a production source-to-bytecode tool.
 
-To check the five Crush proof examples, with cvc5 1.3.4 or a compatible version
-on `PATH`:
+To check the Crush proof of the imported triangular artifact and the five
+standalone examples, with cvc5 1.3.4 or a compatible version on `PATH`:
 
 ```sh
-lake build CrushObligations
+lake build TriangularCrush CrushObligations
 ```
 
 Open this project directory in VS Code. Lake supplies Crush's import paths to the
@@ -107,6 +109,7 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `docs/CRUSH.md` | Automation design, trust policy, and experiment results |
 | `examples/python/triangular.py` | Source example for the first verified bytecode loop |
 | `experiments/CrushObligations.lean` | Checked VC experiment, built with `lake build CrushObligations` |
+| `experiments/TriangularCrush.lean` | Checked Crush proofs of the actual loop VCs, assembled into artifact total correctness |
 
 The guarantees are relative to the explicit Lean operational semantics.
 Correspondence with the actual CPython runtime is a separate
