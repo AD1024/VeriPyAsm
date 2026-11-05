@@ -30,8 +30,7 @@ The triangular example now exposes four named, closed VCs and a conditional
 artifact-correctness assembly theorem, with ordinary Lean proofs supplied
 separately. The optional `TriangularCrush` target supplies checked Crush proofs
 of the same VCs and assembles the same artifact contract. These VCs are extracted
-by hand from the proved block summaries; automatic backend reporting is not yet
-implemented.
+by hand from the proved block summaries.
 `VerifiedArtifact` now combines stack/ownership admission, partial or total
 correctness, and a proof that every contract pre-state satisfies the certificates'
 call-entry domain. The existing artifact judgments remain lower-level interfaces.
@@ -41,6 +40,10 @@ exports and the CI audit, including definitions containing certificates.
 Exact proof registration is implemented in `Verification/VC/Registry.lean`:
 `@[veripy_proof Goal]` kernel-checks and retains the statement equality certificate,
 audits the proof, and rejects duplicates. Imported proofs are rechecked at use.
+`Verification/VC/Manifest.lean`, `Report.lean`, and `Discharge.lean` now implement
+manifest validation, discovery, exact statement emission, per-obligation reports,
+and final package assembly. The core resolves registered proofs without importing
+Crush; an optional adapter supplies automation.
 The full specification DSL and automatic VC generation remain future work.
 
 ## 1. Inputs and embedding
@@ -149,8 +152,58 @@ The implemented `#veripy_audit Namespace` command enforces checked policy only:
 the allowlist is `propext`, `Classical.choice`, and `Quot.sound`. It fails on
 unknown declarations and audits safe definitions as well as theorems, including
 private dependencies. Unsafe/partial metaprograms are not accepted as proof
-evidence. Solver-trusted verification still requires a separate future policy
-interface; there is no implicit exception for Crush.
+evidence. VC registration/discharge uses the separate `VC.Policy` interface for
+explicit solver trust; the namespace audit never implicitly allows Crush's axiom.
+
+### Implemented commands
+
+The generated-side module declares closed VCs and a proof structure, supplies a
+conditional assembly function, then lists every field in constructor order:
+
+```lean
+import VeriPyAsm.Examples.Triangular.Manifest
+import VeriPyAsm.Verification.VC.Discharge
+
+-- The imported manifest was declared with:
+-- veripy_vcs obligations : VerifiedArtifact triangularArtifact triangularContract
+--     via Assembly.verified where
+--   init : VC.loop6.init at 6 vc_kind "initialization"
+--   preserve : VC.loop6.preserve at 6 vc_kind "preservation"
+--   exit : VC.loop6.exit at 58 vc_kind "normal_exit"
+--   decrease : VC.loop6.decrease at 6 vc_kind "ranking"
+
+set_option veripy.auto false in
+veripy_discover exploration from VeriPyAsm.Examples.Triangular.obligations
+
+#veripy_report exploration.report
+```
+
+Discovery emits proved VC declarations and `exploration.report`, but no final
+artifact package. Pending goals include full, parseable statements, imports,
+byte offsets, kinds, and reasons. After importing registered proofs, use
+`veripy_verify verified from ...` to create the final `verified : VerifiedArtifact ...`
+and `verified.report`. An incomplete strict run fails and rolls back all generated
+declarations. Reports are Lean data; `#veripy_report name.report` emits JSON.
+`set_option veripy.json true` also includes JSON in diagnostics, including failures.
+
+Run options are `veripy.policy` (`"checked"` by default, or `"solver_trusted"`),
+`veripy.backend` (`"cvc5"`, `"z3"`, or `"bitwuzla"`), `veripy.timeout` (positive
+seconds, default 5), and `veripy.auto` (default true). Per-goal overrides follow
+the command, for example:
+
+```lean
+-- veripy_verify verified from obligations with
+--   VC.loop6.exit (backend := "z3") (timeout := 2) (policy := "checked")
+```
+
+The manifest currently accepts a closed assembly function taking a single,
+unparameterized proof structure and returning `VerifiedArtifact`. It rejects
+missing, reordered, mismatched, or dependent proof fields. Its assembly rules
+must themselves pass checked policy. Each run recomputes a diagnostic fingerprint
+of transitive declaration content (including artifact, contract, VCs, and semantic
+dependencies), workflow version, Lean version, and location metadata. This is not
+a cryptographic cache key: no proof-result cache is implemented, and every use is
+checked again regardless of the fingerprint.
 
 ## 4. Manual proof handoff
 

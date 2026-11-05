@@ -57,6 +57,7 @@ def registerProof (theoremName goalName : Name) (policy : Policy := .checked) : 
   if let some previous ← registeredProof? goalName then
     throwError "duplicate VC registration for {goalName}: already registered {previous}"
   discard <| audit theoremName policy
+  discard <| audit goalName policy
   certifyExact (theoremName ++ `veripy_match) theoremName goalName
   modifyEnv fun env => registry.addEntry env (goalName, theoremName)
 
@@ -66,6 +67,7 @@ def resolveRegistered (goalName certificate : Name) (policy : Policy := .checked
     CoreM (Option (Name × Array Name)) := do
   let some theoremName ← registeredProof? goalName | return none
   let axioms ← audit theoremName policy
+  discard <| audit goalName policy
   certifyExact certificate theoremName goalName
   return some (theoremName, axioms)
 
