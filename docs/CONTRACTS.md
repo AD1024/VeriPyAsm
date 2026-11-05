@@ -2,8 +2,9 @@
 
 The current contract interface uses native Lean predicates. It supports partial
 and total correctness for the deterministic scalar machine, including normal and
-exceptional exits. It does not yet provide a specification parser, loop rules,
-generated VCs, proof registration, or solver discharge.
+exceptional exits, with scoped Hoare notation for frame predicates. It does not
+yet provide a full specification DSL, loop rules, generated VCs, proof
+registration, or solver discharge.
 
 ## Execution boundary
 
@@ -57,6 +58,61 @@ stack capacity, or a separate state invariant. The stack certificate provides
 its own guarantees under the entry assumptions. Later invariant rules will
 address additional reachable-state properties.
 
+## Pre/post notation
+
+Import `VeriPyAsm.Verification.Hoare` (also exported by `VeriPyAsm`) and enable
+`open scoped VeriPyAsm.Verification.Hoare`:
+
+```lean
+import VeriPyAsm.Verification.Hoare
+
+open VeriPyAsm.Semantics VeriPyAsm.Verification
+open scoped VeriPyAsm.Verification.Hoare
+
+-- P and Q are predicates over frames; S is the shallow program.
+example (P Q : Frame → Prop) (S : Program) :
+    {{ P }} S {{ Q }} → { P } S { Q } :=
+  fun total => total.partialCorrect
+
+-- The postcondition can describe the actual final operand stack.
+example (value : Value) (rest : List Value) :
+    {{ fun initial => initial.stack = value :: rest }}
+      (fun _ => some Command.ret)
+    {{ fun final => final.stack = rest }} := by
+  apply TotalCorrect.of_run
+  intro _ initial pre
+  change initial.stack = value :: rest at pre
+  refine ⟨1, .returned value { initial with stack := rest }, ?_, rfl⟩
+  simp [run, step, Command.ret, pre]
+```
+
+The two forms elaborate to Lean proof obligations:
+
+| Notation | Meaning |
+| --- | --- |
+| `{ P } S { Q }` | `PartialCorrect (step S) (Contract.ofFramePredicates P Q)` |
+| `{{ P }} S {{ Q }}` | `TotalCorrect (step S) (Contract.ofFramePredicates P Q)` |
+
+`P` and `Q` have type `Frame → Prop`; inspect `frame.stack` for stack predicates
+or `frame.locals` and `frame.pc` for other state conditions. `S` has type
+`Program`, so use `translation.program`, not `step translation.program` or a
+single instruction command. Parenthesize program applications, for example
+`(Embedding.compile code)`. Outer theorem binders such as `value` and `rest`
+above remain available to both predicates.
+
+Both forms require normal return satisfying `Q` and reject Python exceptions and
+VM faults. Partial correctness allows divergence; total correctness additionally
+requires termination from every frame satisfying `P`. These are whole-program
+judgments, not single-instruction or block rules. `Q` observes the actual final
+frame: `RETURN_VALUE` has already popped the returned value. Use the full
+`Contract` interface to constrain that value, relate initial and final states,
+or permit an exception.
+
+The adapter uses a `Unit` ghost, `pre := P`, `post := Q` on the final frame, and
+`raises := False`. Expansion to each existing correctness predicate is checked
+by `rfl`. The notation introduces a proposition for the user to prove; it does
+not automatically prove the triple or run a VC generator.
+
 ## Imported `add1`
 
 ```lean
@@ -96,7 +152,7 @@ of the CPython executable.
 ## Validation and next step
 
 ```sh
-lake build VeriPyAsm ContractTests
+lake build VeriPyAsm ContractTests HoareTests
 ```
 
 The regressions distinguish partial from total correctness on a divergent loop,
@@ -105,6 +161,8 @@ exercise allowed Python exceptions, and test fuel/continuation boundaries. A
 freshly admitted mutation of `add1` changes `LOAD_SMALL_INT 1` to `2`; a checked
 counterexample refutes the original contract for that artifact. Proof-dependency
 reports audit the execution rules, contract rules, and universal example.
+Hoare tests additionally check exact expansion, parser precedence and ordinary
+record syntax, captured inputs, and the post-return stack.
 
 The next step is reusable instruction/block and invariant rules, followed by the
 manual invariant and termination proof for `triangular`. General VC generation,

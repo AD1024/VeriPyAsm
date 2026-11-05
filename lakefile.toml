@@ -48,6 +48,10 @@ srcDir = "tests"
 name = "ContractTests"
 srcDir = "tests"
 
+[[lean_lib]]
+name = "HoareTests"
+srcDir = "tests"
+
 [[require]]
 name = "crush"
 git = "https://github.com/AD1024/lean-crush"

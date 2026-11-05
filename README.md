@@ -17,10 +17,12 @@ certificate; its functional and termination contract is not yet verified.
 The [contract interface](docs/CONTRACTS.md) now has a universal total-correctness
 proof for the imported `add1` artifact: every integer input returns its successor,
 preserves its local, and terminates without Python exceptions or VM faults.
+Scoped `{ P } S { Q }` and `{{ P }} S {{ Q }}` notation expresses partial and
+total correctness with frame predicates, including operand-stack conditions.
 
 The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
 contracts, VC generation, configurable Crush discharge, proof reporting, and the
-manual `@[veripy_proof ...]` handoff. A specification DSL, VC generation, and proof
+manual `@[veripy_proof ...]` handoff. A full specification DSL, VC generation, and proof
 registration remain planned. Stack admission establishes structural properties;
 functional correctness and exception freedom require separate contract proofs.
 
@@ -45,7 +47,7 @@ Check bytecode examples, admission/rejection cases, and proof dependencies with:
 ```sh
 lake build BytecodeTests StackCertificateTests StackTests AdmissionTests
 lake build FusedSemanticsTests WordcodeTests ExtendedDecodeTests FusedDecodeTests
-lake build ContractTests
+lake build ContractTests HoareTests
 python3 tests/check_cpython.py  # requires CPython 3.14.4
 ```
 
