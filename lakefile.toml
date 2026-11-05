@@ -17,6 +17,10 @@ name = "TriangularCrush"
 srcDir = "experiments"
 
 [[lean_lib]]
+name = "VCDischargeCrush"
+srcDir = "experiments"
+
+[[lean_lib]]
 name = "BytecodeTests"
 srcDir = "tests"
 

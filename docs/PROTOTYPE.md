@@ -12,7 +12,8 @@ integer `triangular` are implemented. Sound [instruction, block, and loop rules]
 compose these proofs. M1/M2/M3 remain incomplete: broader fragment coverage and
 program case studies are pending. M4 now includes hand-extracted closed VCs and
 conditional assembly for triangular, with separate ordinary Lean and checked
-Crush proofs; automatic generation and the registry remain.
+Crush proofs, exact proof registration, pending statement emission, JSON reporting,
+and configurable checked/solver-trusted discharge; automatic generation remains.
 `VerifiedArtifact` combines admission, entry compatibility, and correctness.
 The shared transitive axiom audit and `make check` CI entry point enforce the
 checked proof policy across all project modules and regression libraries.
@@ -232,7 +233,8 @@ them, not empty modules to generate immediately:
 | `Semantics/Execution` | Multi-step execution, outcomes, traces, and bounded evaluator |
 | `Logic/Contract` | Normal/exceptional contracts and termination definitions |
 | `Logic/Rules` | Sound instruction, block, branch, loop, and later call rules |
-| `Automation/Crush` (later) | Configurable checked/solver-trusted discharge and per-VC provenance |
+| `Verification/VC` | Exact proof registry, manifests, policy, handoffs, reports, and final assembly |
+| `Automation/Crush` | Configurable checked/solver-trusted discharge and per-VC provenance |
 | `Examples` | Theorems about concrete imported artifacts |
 | `Runtime` (later) | Heap, call stack, builtins, external-operation contracts |
 | `Async` (later) | Suspended continuations, tasks, futures, scheduler, cancellation |
@@ -292,7 +294,7 @@ to the contract as well: a code hash alone does not bind mutable globals or call
 | M1 — artifact path (partial) | External artifact schema/loader, exact-version check, decoder, admission checker, opcode inventory | Real `add1`, branch, and loop artifacts decode; malformed offsets, operands, cache layouts, and unsupported features are rejected; artifact round trips are checked |
 | M2 — executable semantics (partial) | Scalar operations, frame transitions, exceptions, execution relation, bounded runner | Determinism/preservation lemmas; interpreter/relational agreement; differential results for normal and exceptional cases |
 | M3 — first program proofs (partial) | Universal `add1` and total `triangular` proofs implemented using sound instruction/block/loop rules; additional branching and arithmetic case studies remain | Universal, kernel-checked `add1`, branching, and total `triangular` theorems about imported artifacts, with no `sorry` or project-specific axioms |
-| M4 — reusable prototype (partial) | Proved loop rules, hand-extracted closed VCs, and conditional assembly implemented; invariant annotations, automatic VC generation, proof registration, and configurable Crush integration remain | Factorial, GCD, and division contracts; changed artifacts invalidate stale cached proofs; assurance and pending obligations are reported |
+| M4 — reusable prototype (partial) | Loop rules, hand-extracted VCs, exact registration, conditional/final assembly, reporting, and configurable Crush discharge implemented; invariant annotations and automatic VC generation remain | Factorial, GCD, and division contracts; changed artifacts invalidate stale cached proofs; assurance and pending obligations are reported |
 | M5 — sequential real-world slice | Calls, heap-backed lists/dicts, aliases, selected builtins, exception handlers/finally | A selected real function with verified dependency contracts, mutation/frame properties, and both exit cases |
 | M6 — async slice | Resumable coroutines plus a scoped scheduler/future/task model | A small actual asyncio program satisfies a safety property across permitted schedules; a progress property states its fairness and environment assumptions |
 
@@ -322,10 +324,12 @@ fails the functional contract despite retaining valid stack behavior.
 
 Named, closed VCs and a conditional assembly theorem are now extracted from this
 manual proof. The assembly imports no VC proof provider; all four proofs are
-explicit premises. Next comes exact-match proof registration for these named
-obligations, followed by reporting and configurable Crush discharge. Automatic
-generation, additional P0 case studies, and opcode coverage remain part of the
-broader prototype roadmap.
+explicit premises. Exact-match registration, complete pending theorem handoffs,
+per-VC JSON reports, configurable Crush discharge, and final `VerifiedArtifact`
+assembly are implemented. The triangular workflow resolves the registered ranking
+proof and discharges the other three VCs automatically. Next comes automatic
+generation from annotations using the proved rules. Additional P0 case studies
+and opcode coverage remain part of the broader prototype roadmap.
 
 M1–M4 constitute the first prototype. Prove one loop before building a general
 verification-condition generator. If arithmetic support warrants Mathlib, add a

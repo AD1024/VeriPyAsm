@@ -104,6 +104,45 @@ veripy_verify badPolicy from obligations
   if (← Verification.VC.fingerprint changed) == original then
     throwError "changed metadata did not change fingerprint"
 
+def rejectedGoal : Prop := False
+def acceptedGoal : Prop := True
+
+structure UntrustedProofs : Prop where
+  bad : rejectedGoal
+  good : acceptedGoal
+
+def untrustedAssembly (_proofs : UntrustedProofs) :
+    VerifiedArtifact triangularArtifact triangularContract := Assembly.verified Arithmetic.proofs
+
+veripy_vcs untrusted : VerifiedArtifact triangularArtifact triangularContract via untrustedAssembly where
+  bad : rejectedGoal at 0 vc_kind "invalid_backend_evidence"
+  good : acceptedGoal at 2 vc_kind "valid_backend_evidence"
+
+-- A backend is an untrusted proof producer. Even a success response with an
+-- ill-typed expression must not insert Lean's recovery axiom, taint the next VC,
+-- or retain auxiliary declarations from the failed attempt.
+#guard_msgs (drop info, all) in
+run_cmd do
+  let environment ← getEnv
+  let previous ← Verification.VC.solverRef.get
+  try
+    Verification.VC.solverRef.set <| some fun _ goal => do
+      if goal.isConstOf ``rejectedGoal then
+        Verification.VC.addCheckedDeclaration (.thmDecl {
+          name := `BackendFixture.auxiliary, levelParams := [],
+          type := mkConst ``True, value := mkConst ``True.intro })
+      return { proof := some (mkConst ``True.intro) }
+    let manifest ← liftCoreM <| Verification.VC.getManifest ``untrusted
+    let report ← Verification.VC.runManifest manifest `BackendFixture.run false {}
+    unless report.obligations[0]!.failureKind == some "invalid_evidence" &&
+        report.obligations[1]!.status == "proved" do
+      throwError "backend evidence was not independently checked"
+    for name in [`BackendFixture.auxiliary, `BackendFixture.run.vc.bad, `BackendFixture.run] do
+      if (← getEnv).contains name then throwError "failed backend attempt exported {name}"
+  finally
+    Verification.VC.solverRef.set previous
+    setEnv environment
+
 #veripy_audit VeriPyAsm.Tests.VCDischarge
 
 end VeriPyAsm.Tests.VCDischarge

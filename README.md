@@ -29,17 +29,21 @@ composition, with explicit continuation, return, and exception postconditions.
 Loop termination uses a well-founded ranking between successive invariant states.
 The triangular proof now exposes four named, closed VCs and a conditional assembly
 theorem. Ordinary Lean proofs discharge those VCs in a separate module.
-An optional Crush target proves the same VCs with checked reconstruction and
-assembles the same artifact contract.
+An optional Crush target resolves an annotated ranking proof, automatically proves
+the remaining VCs with checked reconstruction, and assembles the artifact contract.
 `VerifiedArtifact` combines the contract proof with both admission certificates
 and a proof that every contract pre-state satisfies the call-entry assumptions.
 Both `add1_verified` and `triangular_verified` expose this final package.
 
-The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
-contracts, VC generation, configurable Crush discharge, proof reporting, and the
-manual `@[veripy_proof ...]` handoff. The current VCs are extracted by hand;
-a full specification DSL, automatic VC generation, and proof registration remain
-planned. Stack admission establishes structural properties;
+The [verification-flow design](docs/DESIGN.md) documents the implemented
+`@[veripy_proof ...]` exact-match registry, `veripy_vcs` manifests,
+`veripy_discover` handoffs, and `veripy_verify` final packages. Reports contain
+complete pending statements, proof providers, actual backend events when available,
+axiom dependencies, and aggregate assurance. Import `VeriPyAsm.Automation.Crush`
+to enable automatic discharge; checked mode is the default, with explicit
+`solver_trusted` configuration available. The current VCs are extracted by hand;
+a full specification DSL and automatic VC generation remain planned.
+Stack admission establishes structural properties;
 functional correctness and exception freedom require separate contract proofs.
 
 The [prototype plan](docs/PROTOTYPE.md) specifies the first Python fragment,
@@ -67,8 +71,9 @@ make check
 
 This discovers all project modules and regression libraries, builds them, audits
 safe declarations (including certificate definitions), and runs the CPython
-conformance harness. `make check-crush` also requires cvc5 and checks both Crush
-targets. Set `PYTHON=/path/to/python3.14` if the pinned interpreter has another name.
+conformance harness. `make check-crush` also requires cvc5 and checks the Crush
+targets, including discharge/trust-policy regressions. Set `PYTHON=/path/to/python3.14`
+if the pinned interpreter has another name.
 
 Check bytecode examples, admission/rejection cases, and proof dependencies with:
 
@@ -78,7 +83,7 @@ lake build OwnershipTests
 lake build FusedSemanticsTests WordcodeTests ExtendedDecodeTests FusedDecodeTests
 lake build ContractTests HoareTests BlockTests InstructionTests
 lake build LoopTests TriangularTests VCAssemblyTests VerifiedArtifactTests
-lake build AxiomAuditTests
+lake build AxiomAuditTests VCRegistryTests VCDischargeTests
 python3 tests/check_cpython.py  # requires CPython 3.14.4
 ```
 
@@ -90,7 +95,7 @@ To check the Crush proof of the imported triangular artifact and the five
 standalone examples, with cvc5 1.3.4 or a compatible version on `PATH`:
 
 ```sh
-lake build TriangularCrush CrushObligations
+lake build TriangularCrush CrushObligations VCDischargeCrush
 ```
 
 Open this project directory in VS Code. Lake supplies Crush's import paths to the
@@ -118,6 +123,8 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `VeriPyAsm/Verification/` | Contracts, instruction/block/loop rules, partial/total correctness, artifact transport |
 | `VeriPyAsm/Verification/VerifiedArtifact.lean` | Final packages enforcing admission, entry compatibility, and correctness |
 | `VeriPyAsm/Verification/AxiomAudit.lean` | Shared failing check of transitive proof dependencies |
+| `VeriPyAsm/Verification/VC/` | Exact registration, manifests, policy, complete handoffs, reports, and package assembly |
+| `VeriPyAsm/Automation/Crush.lean` | Optional configurable Crush adapter with observed backend provenance |
 | `VeriPyAsm/Examples/Bytecode.lean` | Five literal artifacts and certified embeddings |
 | `VeriPyAsm/Examples/Add1.lean` | Universal total-correctness proof for imported integer `add1` |
 | `VeriPyAsm/Examples/Triangular.lean` | Public entry point for the imported loop and its universal total-correctness theorem |
@@ -127,12 +134,13 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `docs/BYTECODE.md` | Implemented slice, usage, and limitations |
 | `docs/CONTRACTS.md` | Contract interface, execution rules, universal program proofs |
 | `docs/RULES.md` | Sound instruction/block/loop rules, continuation boundaries, invariant and ranking proofs |
-| `docs/DESIGN.md` | Verification flow and proposed user interface |
+| `docs/DESIGN.md` | Verification flow, implemented commands, and future generation interface |
 | `docs/PROTOTYPE.md` | Design and implementation milestones |
 | `docs/CRUSH.md` | Automation design, trust policy, and experiment results |
 | `examples/python/triangular.py` | Source example for the first verified bytecode loop |
 | `experiments/CrushObligations.lean` | Checked VC experiment, built with `lake build CrushObligations` |
 | `experiments/TriangularCrush.lean` | Checked Crush proofs of the actual loop VCs, assembled into artifact total correctness |
+| `experiments/VCDischargeCrush.lean` | Solver failure isolation and checked/solver-trusted policy regressions |
 
 The guarantees are relative to the explicit Lean operational semantics.
 Correspondence with the actual CPython runtime is a separate

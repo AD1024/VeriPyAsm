@@ -4,7 +4,9 @@ The implemented slice covers the bytecode language, executable semantics,
 translation, and stack/ownership admission from [the design](DESIGN.md). The separate
 [contract interface](CONTRACTS.md) adds partial/total correctness and a universal
 imported `add1` proof. Hand-extracted VCs and checked Crush proofs are implemented;
-automatic VC generation and proof registration remain later milestones.
+automatic VC generation remains a later milestone. Exact proof registration,
+pending VC emission, configurable Crush discharge, and final artifact assembly
+are documented in [the verification flow](DESIGN.md).
 
 ## Use
 

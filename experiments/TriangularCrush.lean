@@ -1,5 +1,5 @@
-import VeriPyAsm.Examples.Triangular.Assembly
-import Crush
+import VeriPyAsm.Examples.Triangular.Manifest
+import VeriPyAsm.Automation.Crush
 import VeriPyAsm.Verification.AxiomAudit
 
 /-! Checked Crush proofs of the actual triangular VCs and their assembly into
@@ -12,30 +12,26 @@ set_option crush.trust "reconstruct"
 set_option crush.timeout 5
 set_option crush.reconstruct.trustBvDecide false
 set_option crush.reconstruct.trustNativeDecide false
-set_option Elab.async false
 
 namespace VeriPyAsm.Examples.Triangular.CrushProofs
 
 open Verification
 
-theorem init : VC.loop6.init := by
-  intro N
-  crush
-
-theorem preserve : VC.loop6.preserve := by
-  intro N n sum invariant
-  crush
-
-theorem exit : VC.loop6.exit := by
-  intro N n sum nonnegative nonpositive invariant
-  crush
-
 /-- Normalize the Nat rank comparison to Int before invoking Crush. A direct
 call on the `toNat` comparison returned `unknown` in the initial experiment. -/
+@[veripy_proof VC.loop6.decrease]
 theorem decrease : VC.loop6.decrease := by
   intro n positive
   rw [Int.toNat_lt_toNat positive]
   crush
+
+-- Resolve the registered ranking proof first; automatically discharge the
+-- other three VCs with Crush, then assemble and audit the final artifact package.
+veripy_verify verified from obligations
+
+theorem init : VC.loop6.init := verified.vc.init
+theorem preserve : VC.loop6.preserve := verified.vc.preserve
+theorem exit : VC.loop6.exit := verified.vc.exit
 
 theorem proofs : VC.Proofs where
   init := init
@@ -46,7 +42,12 @@ theorem proofs : VC.Proofs where
 theorem artifact_total : ArtifactTotalCorrect triangularArtifact triangularContract :=
   Assembly.artifact_total proofs
 
-def verified : VerifiedArtifact triangularArtifact triangularContract := Assembly.verified proofs
+example : verified.report.complete = true := rfl
+example : verified.report.assurance = some "checked" := rfl
+example : verified.report.obligations[0]!.provider = "crush" := rfl
+example : verified.report.obligations[1]!.provider = "crush" := rfl
+example : verified.report.obligations[2]!.provider = "crush" := rfl
+example : verified.report.obligations[3]!.provider = "manual" := rfl
 
 -- This check fails the build if reconstruction introduces any nonstandard axiom.
 #eval show Lean.CoreM Unit from do

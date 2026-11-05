@@ -1,8 +1,8 @@
 # Verification flow
 
-Design: 2026-11-04. This is the proposed interface and architecture, not an
-implemented verifier. It refines the [prototype roadmap](PROTOTYPE.md) and updates
-the earlier reconstruction-only policy to support explicit solver trust.
+Design: 2026-11-04; implementation status updated 2026-11-05. This describes both
+the implemented prototype interfaces and the remaining generation work. It refines
+the [prototype roadmap](PROTOTYPE.md) and supports explicit solver trust.
 
 **Implementation status:** the [first bytecode slice](BYTECODE.md) now implements
 scalar reference semantics, a conservative baseline decoder, shallow command
@@ -43,7 +43,9 @@ audits the proof, and rejects duplicates. Imported proofs are rechecked at use.
 `Verification/VC/Manifest.lean`, `Report.lean`, and `Discharge.lean` now implement
 manifest validation, discovery, exact statement emission, per-obligation reports,
 and final package assembly. The core resolves registered proofs without importing
-Crush; an optional adapter supplies automation.
+Crush; importing `VeriPyAsm.Automation.Crush` installs the optional adapter.
+It enforces both policies, records actual Crush result events, and preserves
+unrecognized routes as unknown. The triangular target uses this full pipeline.
 The full specification DSL and automatic VC generation remain future work.
 
 ## 1. Inputs and embedding
@@ -195,6 +197,16 @@ the command, for example:
 -- veripy_verify verified from obligations with
 --   VC.loop6.exit (backend := "z3") (timeout := 2) (policy := "checked")
 ```
+
+The adapter unfolds the named VC by definitional reduction before calling Crush;
+the emitted proof is checked against the original named proposition. It forces
+the selected Crush trust setting and disables native/bitvector trust. It never
+selects `reconstructOrTrust`. Result traces identify selected facts, checked proofs
+before SMT, Alethe replay, or core reconstruction when those events are available.
+Solver errors retain their complete diagnostic alongside a best-effort category;
+an unrecognized message remains `automation_failed`. Configured backend and actual
+observed backend are separate report fields. The solver timeout applies to each
+query, not the entire Lean verification run.
 
 The manifest currently accepts a closed assembly function taking a single,
 unparameterized proof structure and returning `VerifiedArtifact`. It rejects

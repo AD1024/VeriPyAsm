@@ -8,13 +8,14 @@ verification-condition generation rules independently in Lean.
 The [verification-flow design](DESIGN.md) defines the current discharge policies,
 per-obligation report, and manual proof registry with `rfl`-certified equality
 between the supplied theorem type and generated VC. Both checked reconstruction and
-explicit solver trust are supported in the design; the current examples use checked mode.
+explicit solver trust are implemented; the public artifact examples use checked mode.
 
 Crush is a pinned Lake dependency so both builds and the VS Code Lean extension
 can resolve the imports. The core library does not import Crush. The separate
 `TriangularCrush` target now proves the actual loop VCs and assembles correctness
-of the imported artifact. Automatic generation, proof registration, configurable
-discharge policies, and per-obligation reporting remain prototype work.
+of the imported artifact through the exact proof registry and configurable adapter.
+Pending statement emission, per-obligation reports, and both trust policies are
+implemented. Automatic generation remains prototype work.
 
 ## Where it fits
 
@@ -160,33 +161,69 @@ cvc5 1.3.4 under the strict options above and a five-second solver timeout.
 The target audits their complete axiom dependency closures and fails on anything
 outside `propext`, `Classical.choice`, and `Quot.sound`. This includes rejecting
 `sorryAx`, `Crush.crushSorry`, and native-decision axioms.
-Both experiment targets now use the shared `Verification/AxiomAudit.lean`
+All three experiment targets use the shared `Verification/AxiomAudit.lean`
 checker. `make check-crush` includes them in the full regression/audit/CPython
 check; `make check` runs that suite without requiring an external SMT solver.
 
-These are hand-extracted VCs with an explicit Crush proof provider. The target
-prints theorem axiom dependencies; it does not yet implement the designed
-proof-provider registry, pending-goal export, or backend-routing report. The cvc5
-configuration alone is not evidence of which internal reconstruction path ran.
+These remain hand-extracted VCs. The target now registers only the ranking proof
+with `@[veripy_proof VC.loop6.decrease]`; `veripy_verify` automatically discharges
+initialization, preservation, and exit, then assembles the final package. Captured
+result events in the tested cvc5 run identify Alethe replay for all three automated
+VCs. Configuration alone is never used as evidence that replay or a solver ran.
 
-## Integration tasks
+## Using the discharge interface
 
-The first loop, sound instruction/block/loop rules, named VCs, conditional
-assembly, and checked Crush proofs are implemented. Remaining steps:
+```lean
+import VeriPyAsm.Examples.Triangular.Manifest
+import VeriPyAsm.Automation.Crush
 
-1. Register proofs by VC name with a kernel-checked `rfl` certificate for the
-   complete theorem type; reject mismatches and duplicate registrations.
-2. Expose a configurable automation interface to the pinned Crush dependency, without
-   making semantic definitions import solver machinery. Enforce the selected
-   trust policy, report actual proof dependencies and backend provenance, and
-   export exact pending statements.
-3. Automate the current extraction and assembly by applying the proved rules to
-   annotated artifacts, retaining exceptional exits and termination conditions.
-4. Maintain an obligation corpus: linear/nonlinear arithmetic, signed division,
-   datatype/tag facts, heap updates, and later async transition invariants. Report
-   translation, solver, reconstruction, and timeout failures separately.
-5. Supply checked domain lemmas where a solver understands an operation but replay
-   cannot justify it. Keep a clear path to ordinary Lean proofs for difficult goals.
-6. Keep execution tests, VC proofs, and whole-program correctness theorems
-   distinct in reporting. The shared failing audit and `make check` CI entry
-   point now cover proof assumptions and artifact-identity regressions.
+namespace Demo
+
+@[veripy_proof VeriPyAsm.Examples.Triangular.VC.loop6.decrease]
+theorem ranking : VeriPyAsm.Examples.Triangular.VC.loop6.decrease := by
+  intro n positive
+  omega
+
+veripy_verify verified from VeriPyAsm.Examples.Triangular.obligations
+
+#veripy_report verified.report
+
+end Demo
+```
+
+Use `veripy_discover exploration from ...` to attempt all VCs and report unresolved
+ones without creating a final package. It emits the full statement and imports
+for each pending VC; put its annotated proof in a separate user-owned module.
+A later strict `veripy_verify` run either creates an audited `VerifiedArtifact`
+and report or fails without exporting partial final results. See
+[the command reference](DESIGN.md#implemented-commands) for per-goal overrides.
+
+The default `veripy.policy` is `"checked"`. An explicit
+`set_option veripy.policy "solver_trusted" in` before a run allows
+`Crush.crushSorry`; the actual transitive axiom closure determines each proof's
+and the final package's assurance. Both modes reject `sorryAx`, native-decision
+trust, and other unapproved axioms. A checked run never falls back to solver trust.
+An invalid registered override stays pending with a diagnostic, rather than being
+silently bypassed by automation. “Manual” describes the registered provider; its
+proof body may itself use Crush.
+
+`VCDischargeCrush` tests real solver-trusted evidence, checked-mode rejection of
+that evidence when registered manually, and continued processing after a `sat`
+result. Trusted test declarations are removed before module export. The core
+`VCDischargeTests` additionally injects an ill-typed backend proof and checks that
+it creates neither a recovery axiom nor a final package. The shared audit remains
+strict for all exported regression declarations.
+
+## Remaining integration tasks
+
+1. Automate extraction and assembly by applying the proved rules to annotated
+   artifacts, retaining exceptional exits and termination conditions.
+2. Expand the obligation corpus: signed division, datatype/tag facts, heap
+   updates, and later async transition invariants. Preserve separate solver,
+   translation, reconstruction, timeout, and unknown diagnostics.
+3. Supply checked domain lemmas where a solver understands an operation but replay
+   needs help, retaining the exact manual-proof handoff.
+
+Execution tests, VC proofs, and whole-program correctness remain separate claims.
+The runtime interpretation still depends on the documented CPython correspondence
+boundary, including ownership safety and artifact identity.
