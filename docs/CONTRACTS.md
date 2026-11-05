@@ -1,10 +1,10 @@
-# Sequential contracts and the first program proof
+# Sequential contracts and program proofs
 
 The current contract interface uses native Lean predicates. It supports partial
 and total correctness for the deterministic scalar machine, including normal and
 exceptional exits, with scoped Hoare notation for frame predicates. Sound
-[instruction and block rules](RULES.md) support compositional proofs. It does not
-yet provide a full specification DSL, loop rules, generated VCs, proof
+[instruction, block, and loop rules](RULES.md) support compositional proofs. It does not
+yet provide a full specification DSL, generated VCs, proof
 registration, or solver discharge.
 
 ## Execution boundary
@@ -174,10 +174,55 @@ therefore concerns the original `add1Artifact`, with a separate stack-admission
 certificate. These judgments do not authenticate extraction or prove refinement
 of the CPython executable.
 
+## Imported `triangular`
+
+```lean
+import VeriPyAsm.Examples.Triangular
+
+open VeriPyAsm.Semantics VeriPyAsm.Verification VeriPyAsm.Examples
+open scoped VeriPyAsm.Verification.Hoare
+
+#check triangular_artifact_total
+#check triangular_no_exception
+#check triangular_no_fault
+
+example (N : Int) :
+    {{ fun initial => 0 ≤ N ∧ initial = { locals := [some (.int N), none] } }}
+      triangular.translation.program
+    {{ returns fun value final => ∃ result : Int,
+      value = .int result ∧ 2 * result = N * (N + 1) ∧
+      final.locals = [some (.int 0), some (.int result)] ∧ final.stack = [] }} :=
+  triangular_total N
+```
+
+`triangular_total N` proves termination and the return equation for every
+nonnegative exact integer input. The precondition starts at PC 0 with an empty
+stack, the input in local 0, and local 1 unbound. The program initializes local 1
+before reading it. Negative inputs and Boolean tags are outside this contract.
+The final locals contain zero and the returned sum; the final stack is empty.
+Python exceptions and VM faults are excluded at every fuel bound.
+
+At the loop header (PC 6), the invariant records locals `(n, sum)`, an empty stack,
+`0 ≤ n`, and `2*sum + n*(n+1) = N*(N+1)`. Each iteration executes at least one
+instruction and either returns to that header with locals `(n-1, sum+n)` or
+reaches the exit at PC 58. The positive branch strictly decreases `n.toNat`;
+at the exit, nonnegativity and the failed test establish `n = 0`. The generic
+well-founded loop rule assembles termination without assuming a fuel budget.
+
+The proof is divided into `Examples/Triangular/Artifact.lean` (bytes and stack
+certificate), `Blocks.lean` (entry, iteration, and return summaries),
+`Arithmetic.lean` (initialization, preservation, exit, and decrease), and
+`Correctness.lean` (invariant and whole-program assembly). Arithmetic uses
+kernel-checked Lean tactics with no additional dependency.
+`triangular_artifact_total` transports the result to `triangularArtifact` through
+the existing representation certificate. The runtime/extraction boundary is
+the same as for `add1`.
+
 ## Validation and next step
 
 ```sh
 lake build VeriPyAsm ContractTests HoareTests BlockTests InstructionTests
+lake build LoopTests TriangularTests
 ```
 
 The regressions distinguish partial from total correctness on a divergent loop,
@@ -190,8 +235,12 @@ Hoare tests additionally check exact expansion, parser precedence and ordinary
 record syntax, captured inputs, the post-return stack, and rejection of an
 incorrect returned-value postcondition.
 
-Instruction/block composition and its semantic soundness are now implemented;
-see the [rule guide](RULES.md) for the additional regression proofs. The next step
-is invariant and ranking rules, followed by the manual total-correctness proof
-for `triangular`. General VC generation,
-exact-match proof registration, and Crush integration follow those proofs.
+Loop tests cover nonempty progress, strict ranking, divergent bodies, and early
+terminal exits. The triangular regressions derive a finite execution for every
+natural input, check the zero-input consequence, and show why the nonnegative
+precondition matters. Changing the loop's addition to subtraction yields a
+freshly stack-admitted artifact that provably violates the original contract.
+
+See the [rule guide](RULES.md) for the soundness interfaces. The next step is
+named closed VCs and conditional assembly from this proof, followed by general
+VC generation, exact-match proof registration, and Crush integration.

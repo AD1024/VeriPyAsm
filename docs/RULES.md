@@ -105,6 +105,7 @@ The following theorems expose sufficient preconditions for each scalar command:
 | --- | --- |
 | `jump`, `push` | Continuation postcondition holds on the updated frame |
 | `load` | Indexed local exists and contains the loaded value |
+| `loadPair` (import `Verification.FusedInstruction`) | Both indexed locals are initialized; the second loaded value is on top |
 | `load_unbound` | Checked load finds an unbound local and `raises` permits it |
 | `store` | Local index is in bounds, stack has a top value, updated frame satisfies `continues` |
 | `binary` | Stack is `right :: left :: rest`, operation returns `.ok value`, updated frame satisfies `continues` |
@@ -117,7 +118,8 @@ Arithmetic and comparisons share `binary`, whose operation remains an explicit
 argument. Rules preserve the rest of the frame through record updates. The
 conditions are ordinary Lean goals available to later VC generation and Crush.
 The present interface also accepts a directly proved `InstructionCorrect` for
-any shallow command. Dedicated fused-instruction rules can be added as needed.
+any shallow command. The atomic pair-of-loads rule supports the first loop proof;
+dedicated rules for fused stores can be added as needed.
 
 Here is a non-returning instruction with a stack postcondition:
 
@@ -171,10 +173,15 @@ Multiple header locations are possible when `I` covers each one. Local cycle
 coverage is a proof obligation: a total iteration must reach its next cutpoint
 or halt. A decreasing header rank does not discharge an inner divergent path.
 
+The [triangular proof](CONTRACTS.md#imported-triangular) applies these rules to the
+imported bytes with cutpoints 6 and 58, the mathematical sum invariant, and rank
+`n.toNat`. Its separate entry and return blocks assemble the full contract.
+
 ## Validation
 
 ```sh
 lake build VeriPyAsm BlockTests InstructionTests LoopTests ContractTests HoareTests
+lake build TriangularTests
 ```
 
 The regressions cover first-exit behavior, early return/exception propagation,

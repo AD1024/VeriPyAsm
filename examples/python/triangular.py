@@ -1,4 +1,4 @@
-"""Stack-admitted bytecode example; functional and termination proofs are pending."""
+"""Bytecode example with a total-correctness proof for nonnegative integer inputs."""
 
 
 def triangular(n):

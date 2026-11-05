@@ -194,8 +194,8 @@ and [opcode IDs](https://github.com/python/cpython/blob/v3.14.4/Include/opcode_i
 Prefix and span handling was also checked against
 [`dis`](https://github.com/python/cpython/blob/v3.14.4/Lib/dis.py) and the
 [assembler](https://github.com/python/cpython/blob/v3.14.4/Python/assemble.c).
-The contract/execution interface and first universal `add1` proof are described
-in the [contract guide](CONTRACTS.md). Instruction/block and loop rules come next,
-before the `triangular` contract and general VC generation.
+The contract/execution interface and universal `add1` and `triangular` proofs are
+described in the [contract guide](CONTRACTS.md). Sound instruction/block/loop rules
+support those proofs; general VC generation remains future work.
 Any later instruction must extend the stack rules and their semantic proof,
 including intermediate peak height when needed.

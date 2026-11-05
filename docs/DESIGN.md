@@ -10,15 +10,18 @@ translation, and the `bytecode%` elaborator with decoding/representation
 certificates. `admit_bytecode%` additionally produces a stack certificate bound to
 the exact decoded code and declared capacity, with stack-safety proofs for every
 fuel bound. Fused local instructions and extended operands are supported; the
-compiled `triangular` loop is stack-admitted. Generic value-tag/local-initialization
-analysis, full artifact admission, and its functional/termination proof remain
-separate work. The [native contract interface](CONTRACTS.md) now defines partial and total
+compiled `triangular` loop is stack-admitted and has a universal total-correctness
+proof for nonnegative integer inputs. Generic value-tag/local-initialization
+analysis and full artifact admission remain separate work. The
+[native contract interface](CONTRACTS.md) now defines partial and total
 correctness, relates finite execution to the runner, and transports correctness
 to raw artifacts. Imported `add1` has a universal integer total-correctness proof.
 Scoped Hoare notation supports frame pre/postconditions for both correctness modes.
-The [instruction and block rules](RULES.md) distinguish continuing, returned, and
+The [instruction, block, and loop rules](RULES.md) distinguish continuing, returned, and
 exceptional outcomes, prove composition sound against the machine semantics,
-and derive the imported `add1` theorem. Loop rules remain future work.
+and derive the imported `add1` and `triangular` theorems. Loop rules require a
+nonempty iteration, invariant preservation, and, for total correctness, a
+terminating iteration with strict decrease in a well-founded relation.
 The full specification DSL, VC generation, and proof registry below remain future work.
 
 ## 1. Inputs and embedding
