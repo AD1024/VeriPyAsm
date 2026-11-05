@@ -10,8 +10,9 @@ translation into shallow Lean commands. `admit_bytecode% artifact` also checks
 stack requirements, consistent heights across control flow, exact return shape,
 and the artifact's declared stack capacity. The resulting certificate supports
 kernel-checked stack-safety theorems. See the [bytecode guide](docs/BYTECODE.md)
-for the precise guarantees and remaining limits. The `triangular` contract is
-not yet verified.
+for the precise guarantees and remaining limits. Fused local instructions and
+extended operands are supported. The compiled `triangular` loop has a stack
+certificate; its functional and termination contract is not yet verified.
 
 The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
 contracts, VC generation, configurable Crush discharge, proof reporting, and the
@@ -39,6 +40,7 @@ Check bytecode examples, admission/rejection cases, and proof dependencies with:
 
 ```sh
 lake build BytecodeTests StackCertificateTests StackTests AdmissionTests
+lake build FusedSemanticsTests WordcodeTests ExtendedDecodeTests FusedDecodeTests
 python3 tests/check_cpython.py  # requires CPython 3.14.4
 ```
 
@@ -75,6 +77,7 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `VeriPyAsm/Admission.lean` | Stack admission bound to the exact artifact and capacity |
 | `VeriPyAsm/Bytecode.lean` | `bytecode%` and `admit_bytecode%` term elaborators |
 | `VeriPyAsm/Examples/Bytecode.lean` | Five literal artifacts and certified embeddings |
+| `VeriPyAsm/Examples/Triangular.lean` | Imported loop, stack certificate, and no-underflow theorem |
 | `tests/` | Kernel-checked regression cases and CPython conformance checks |
 | `docs/BYTECODE.md` | Implemented slice, usage, and limitations |
 | `docs/DESIGN.md` | Verification flow and proposed user interface |

@@ -1,4 +1,4 @@
-"""First planned verification example; no bytecode proof exists yet."""
+"""Stack-admitted bytecode example; functional and termination proofs are pending."""
 
 
 def triangular(n):

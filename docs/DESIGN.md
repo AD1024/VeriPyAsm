@@ -9,8 +9,10 @@ scalar reference semantics, a conservative baseline decoder, shallow command
 translation, and the `bytecode%` elaborator with decoding/representation
 certificates. `admit_bytecode%` additionally produces a stack certificate bound to
 the exact decoded code and declared capacity, with stack-safety proofs for every
-fuel bound. Value-tag/local-initialization safety, full artifact admission,
-specifications, VC generation, and the proof registry below remain future work.
+fuel bound. Fused local instructions and extended operands are supported; the
+compiled `triangular` loop is stack-admitted. Value-tag/local-initialization safety,
+full artifact admission, specifications, VC generation, and the proof registry
+below remain future work.
 
 ## 1. Inputs and embedding
 
@@ -39,6 +41,11 @@ data. Elaboration must produce a **checked representation theorem** connecting t
 shallow program to that artifact. Splitting fused instructions or normalizing
 control flow requires proved correspondence, including relevant termination and
 error behavior. Producing a new Lean algorithm with similar intent is insufficient.
+
+The current reference step groups `EXTENDED_ARG` prefixes with their terminal
+opcode and caches, and executes compiler-fused local operations atomically.
+Fuel counts decoded groups. The exact shallow/reference equality is relative to
+this model; correspondence to CPython's internal dispatches remains separate.
 
 ## 2. Generation and soundness
 
