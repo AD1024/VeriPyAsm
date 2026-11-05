@@ -1,4 +1,5 @@
 import VeriPyAsm.Examples.Add1
+import VeriPyAsm.Verification.Hoare
 
 /-! Contract-boundary regressions. These distinguish divergence from termination,
 Python exceptions from VM faults, and a proof about one raw artifact from a
@@ -7,37 +8,33 @@ freshly admitted mutation with different behavior. -/
 namespace VeriPyAsm.Tests.Contracts
 
 open Semantics Verification Examples CPython.V314
-
-private def impossibleExits : Contract Unit where
-  pre _ _ := True
-  post _ _ _ _ := False
-  raises _ _ _ _ := False
+open scoped VeriPyAsm.Verification.Hoare
 
 private def permissive : Contract Unit where
   pre _ _ := True
   post _ _ _ _ := True
   raises _ _ _ _ := True
 
-private def selfLoop : Frame → StepResult := fun initial => .next initial
+private def selfLoop : Program := fun _ => some (fun initial => .next initial)
 
 private theorem selfLoop_no_execution {initial : Frame} {outcome : Halt}
-    (execution : Executes selfLoop initial outcome) : False := by
+    (execution : Executes (step selfLoop) initial outcome) : False := by
   induction execution with
   | halt transition => cases transition
   | step _ _ ih => exact ih
 
-theorem divergence_partial : PartialCorrect selfLoop impossibleExits := by
+theorem divergence_partial : { fun _ => True } selfLoop { fun _ => False } := by
   intro _ _ _ _ execution
   exact False.elim (selfLoop_no_execution execution)
 
-theorem divergence_not_total : ¬ TotalCorrect selfLoop impossibleExits := by
+theorem divergence_not_total : ¬ ({{ fun _ => True }} selfLoop {{ fun _ => False }}) := by
   intro correct
   obtain ⟨_, execution⟩ := correct.terminates () {} trivial
   exact selfLoop_no_execution execution
 
 -- Even every finite fuel bound being exhausted does not establish termination.
 example (fuel : Nat) (initial : Frame) :
-    run selfLoop fuel initial = .exhausted initial := by
+    run (step selfLoop) fuel initial = .exhausted initial := by
   induction fuel with
   | zero => rfl
   | succ fuel ih => exact ih
@@ -45,7 +42,8 @@ example (fuel : Nat) (initial : Frame) :
 private def immediateFault : Frame → StepResult := fun initial =>
   .halted (.fault (.invalidPC initial.pc) initial)
 
--- Neither user postcondition can legalize an internal VM fault.
+-- Keep the full contract here: neither user postcondition, including an allowed
+-- exceptional exit, can legalize an internal VM fault.
 theorem immediate_fault_rejected : ¬ PartialCorrect immediateFault permissive := by
   intro correct
   exact correct.no_fault (ghost := ()) (initial := {}) trivial (.invalidPC 0) {}
@@ -76,7 +74,8 @@ theorem allowed_exception_total : TotalCorrect raisesTypeError exceptionalContra
   intro _ initial _
   exact ⟨1, .raised .typeError initial, rfl, rfl, rfl⟩
 
-theorem forbidden_exception_rejected : ¬ PartialCorrect raisesTypeError impossibleExits := by
+theorem forbidden_exception_rejected :
+    ¬ ({ fun _ => True } (fun _ => some raisesTypeError) { fun _ => False }) := by
   intro correct
   exact correct () {} trivial (.raised .typeError {}) (.halt rfl)
 
