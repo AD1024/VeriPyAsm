@@ -38,8 +38,10 @@ call-entry domain. The existing artifact judgments remain lower-level interfaces
 The shared `AxiomAudit` now rejects unexpected transitive axioms in core/example
 exports and the CI audit, including definitions containing certificates.
 `make check` covers all project modules, regression libraries, and the CPython harness.
-The full specification DSL, automatic VC generation, and proof registry below
-remain future work.
+Exact proof registration is implemented in `Verification/VC/Registry.lean`:
+`@[veripy_proof Goal]` kernel-checks and retains the statement equality certificate,
+audits the proof, and rejects duplicates. Imported proofs are rechecked at use.
+The full specification DSL and automatic VC generation remain future work.
 
 ## 1. Inputs and embedding
 
@@ -167,7 +169,7 @@ metavariables. Include its bytecode location, obligation kind, and failure reaso
 Provide an expanded statement even when a short named proposition is available.
 Unfinished templates belong in diagnostic output, not automatically imported files.
 
-Proposed attribute syntax (not yet implemented):
+Implemented attribute syntax:
 
 ```lean
 -- Generated/Demo.lean
@@ -193,6 +195,11 @@ show T = G from rfl
 Here `T` and `G` denote propositions. `rfl` checks statement identity up to Lean's
 definitional equality (including unfolding a named VC); it is not a restriction
 on the supplied theorem's proof body. Audit that proof's axioms separately.
+The default registration policy is checked. The explicit form
+`@[veripy_proof Goal solver_trusted]` permits `Crush.crushSorry`; a later checked
+run still rejects such a proof. Registration currently requires closed proposition
+definitions and theorem types without universe parameters. Wrap polymorphic
+schemas in closed VCs first. The certificate is named `theoremName.veripy_match`.
 Do not use logical-equivalence lemmas, simplification, solver calls, weakening,
 or implicit theorem specialization to establish a match. Compare all binders and
 hypotheses, reject unresolved metavariables, and reject ambiguous duplicate
