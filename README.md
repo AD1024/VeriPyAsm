@@ -4,7 +4,7 @@ VeriPyAsm will verify Python programs by proving properties of their compiled
 CPython bytecode in Lean 4. The long-term target includes mutable objects,
 exceptions, library calls, and asynchronous programs.
 
-**Status:** the scalar bytecode slice and stack admission are implemented.
+**Status:** scalar bytecode, stack admission, and sequential contracts are implemented.
 `bytecode% artifact` decodes CPython 3.14.4 baseline bytes and produces a certified
 translation into shallow Lean commands. `admit_bytecode% artifact` also checks
 stack requirements, consistent heights across control flow, exact return shape,
@@ -14,11 +14,15 @@ for the precise guarantees and remaining limits. Fused local instructions and
 extended operands are supported. The compiled `triangular` loop has a stack
 certificate; its functional and termination contract is not yet verified.
 
+The [contract interface](docs/CONTRACTS.md) now has a universal total-correctness
+proof for the imported `add1` artifact: every integer input returns its successor,
+preserves its local, and terminates without Python exceptions or VM faults.
+
 The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
 contracts, VC generation, configurable Crush discharge, proof reporting, and the
-manual `@[veripy_proof ...]` handoff. Contracts, VC generation, and proof
+manual `@[veripy_proof ...]` handoff. A specification DSL, VC generation, and proof
 registration remain planned. Stack admission establishes structural properties;
-type/local-initialization safety and program contracts remain separate work.
+functional correctness and exception freedom require separate contract proofs.
 
 The [prototype plan](docs/PROTOTYPE.md) specifies the first Python fragment,
 normal and exceptional contracts, termination obligations, artifact provenance,
@@ -41,6 +45,7 @@ Check bytecode examples, admission/rejection cases, and proof dependencies with:
 ```sh
 lake build BytecodeTests StackCertificateTests StackTests AdmissionTests
 lake build FusedSemanticsTests WordcodeTests ExtendedDecodeTests FusedDecodeTests
+lake build ContractTests
 python3 tests/check_cpython.py  # requires CPython 3.14.4
 ```
 
@@ -70,22 +75,25 @@ release. External tools supply artifacts; there is no production extractor yet.
 | --- | --- |
 | `VeriPyAsm.lean` | Library entry point |
 | `VeriPyAsm/Target.lean` | Intended interpreter metadata |
-| `VeriPyAsm/Semantics/` | Scalars, frames, outcomes, semantic commands, bounded execution |
+| `VeriPyAsm/Semantics/` | Scalars, frames, commands, finite execution relations, and bounded runner |
 | `VeriPyAsm/CPython/V314/` | Artifact data, reference language, conservative decoder |
 | `VeriPyAsm/CPython/V314/Stack/` | Stack rules, certificate checker, analysis, soundness proofs |
 | `VeriPyAsm/Embedding.lean` | Shallow translation and correspondence proofs |
 | `VeriPyAsm/Admission.lean` | Stack admission bound to the exact artifact and capacity |
 | `VeriPyAsm/Bytecode.lean` | `bytecode%` and `admit_bytecode%` term elaborators |
+| `VeriPyAsm/Verification/` | Normal/exceptional contracts, partial/total correctness, artifact transport |
 | `VeriPyAsm/Examples/Bytecode.lean` | Five literal artifacts and certified embeddings |
+| `VeriPyAsm/Examples/Add1.lean` | Universal total-correctness proof for imported integer `add1` |
 | `VeriPyAsm/Examples/Triangular.lean` | Imported loop, stack certificate, and no-underflow theorem |
 | `tests/` | Kernel-checked regression cases and CPython conformance checks |
 | `docs/BYTECODE.md` | Implemented slice, usage, and limitations |
+| `docs/CONTRACTS.md` | Contract interface, execution rules, first program proof |
 | `docs/DESIGN.md` | Verification flow and proposed user interface |
 | `docs/PROTOTYPE.md` | Design and implementation milestones |
 | `docs/CRUSH.md` | Automation design, trust policy, and experiment results |
 | `examples/python/triangular.py` | First planned program proof |
 | `experiments/CrushObligations.lean` | Checked VC experiment, built with `lake build CrushObligations` |
 
-The initial guarantee will be correctness under an explicit Lean operational
-semantics. Correspondence with the actual CPython runtime is a separate
+The guarantees are relative to the explicit Lean operational semantics.
+Correspondence with the actual CPython runtime is a separate
 obligation, supported initially by source inspection and differential testing.

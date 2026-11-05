@@ -10,9 +10,12 @@ translation, and the `bytecode%` elaborator with decoding/representation
 certificates. `admit_bytecode%` additionally produces a stack certificate bound to
 the exact decoded code and declared capacity, with stack-safety proofs for every
 fuel bound. Fused local instructions and extended operands are supported; the
-compiled `triangular` loop is stack-admitted. Value-tag/local-initialization safety,
-full artifact admission, specifications, VC generation, and the proof registry
-below remain future work.
+compiled `triangular` loop is stack-admitted. Generic value-tag/local-initialization
+analysis, full artifact admission, and its functional/termination proof remain
+separate work. The [native contract interface](CONTRACTS.md) now defines partial and total
+correctness, relates finite execution to the runner, and transports correctness
+to raw artifacts. Imported `add1` has a universal integer total-correctness proof.
+The specification DSL, VC generation, and proof registry below remain future work.
 
 ## 1. Inputs and embedding
 

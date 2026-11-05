@@ -1,8 +1,10 @@
 # Bytecode and stack admission
 
 The implemented slice covers the bytecode language, executable semantics,
-translation, and stack admission from [the design](DESIGN.md). Contracts, VC
-generation, proof registration, and solver integration remain later milestones.
+translation, and stack admission from [the design](DESIGN.md). The separate
+[contract interface](CONTRACTS.md) adds partial/total correctness and a universal
+imported `add1` proof. VC generation, proof registration, and solver integration
+remain later milestones.
 
 ## Use
 
@@ -192,7 +194,8 @@ and [opcode IDs](https://github.com/python/cpython/blob/v3.14.4/Include/opcode_i
 Prefix and span handling was also checked against
 [`dis`](https://github.com/python/cpython/blob/v3.14.4/Lib/dis.py) and the
 [assembler](https://github.com/python/cpython/blob/v3.14.4/Python/assemble.c).
-The next focused step is a contract/execution interface and a first manual proof
-for an imported scalar program, before loop proofs and general VC generation.
+The contract/execution interface and first universal `add1` proof are described
+in the [contract guide](CONTRACTS.md). Instruction/block and loop rules come next,
+before the `triangular` contract and general VC generation.
 Any later instruction must extend the stack rules and their semantic proof,
 including intermediate peak height when needed.
