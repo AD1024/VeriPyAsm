@@ -17,7 +17,8 @@ no separate value category. Its predicate can relate that value to stack values.
 
 These expand definitionally to the existing correctness predicates. They create
 Lean propositions, not proofs or a verification-condition generation pass.
-They concern whole-program execution, not a single instruction or block. -/
+They concern whole-program execution. For continuation postconditions and
+instruction/block composition, import `VeriPyAsm.Verification.Instruction`. -/
 
 namespace VeriPyAsm.Verification
 

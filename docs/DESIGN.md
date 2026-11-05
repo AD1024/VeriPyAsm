@@ -16,6 +16,9 @@ separate work. The [native contract interface](CONTRACTS.md) now defines partial
 correctness, relates finite execution to the runner, and transports correctness
 to raw artifacts. Imported `add1` has a universal integer total-correctness proof.
 Scoped Hoare notation supports frame pre/postconditions for both correctness modes.
+The [instruction and block rules](RULES.md) distinguish continuing, returned, and
+exceptional outcomes, prove composition sound against the machine semantics,
+and derive the imported `add1` theorem. Loop rules remain future work.
 The full specification DSL, VC generation, and proof registry below remain future work.
 
 ## 1. Inputs and embedding

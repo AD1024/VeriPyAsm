@@ -16,12 +16,12 @@ open Semantics
 
 structure Postcondition where
   continues : Frame → Prop := fun _ => False
-  returns : Value → Frame → Prop := fun _ _ => False
+  returned : Value → Frame → Prop := fun _ _ => False
   raises : PythonException → Frame → Prop := fun _ _ => False
 
 def Postcondition.Accepts (post : Postcondition) : StepResult → Prop
   | .next frame => post.continues frame
-  | .halted (.returned value frame) => post.returns value frame
+  | .halted (.returned value frame) => post.returned value frame
   | .halted (.raised exception frame) => post.raises exception frame
   | .halted (.fault _ _) => False
 
@@ -29,7 +29,7 @@ def Postcondition.Accepts (post : Postcondition) : StepResult → Prop
 a whole-program outcome; the soundness rules below require an empty exit set. -/
 def Postcondition.toContract (post : Postcondition) (pre : Frame → Prop) : Contract Unit where
   pre _ := pre
-  post _ _ := post.returns
+  post _ _ := post.returned
   raises _ _ := post.raises
 
 def BlockPartialCorrect (next : Frame → StepResult) (exits : Nat → Prop)

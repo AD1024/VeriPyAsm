@@ -21,6 +21,8 @@ Scoped `{ P } S { Q }` and `{{ P }} S {{ Q }}` notation expresses partial and
 total correctness with frame predicates, including operand-stack conditions.
 The explicit `returns Q` postcondition also observes the returned value;
 `Examples/Add1.lean` uses this form for its successor guarantee.
+The [instruction and block rules](docs/RULES.md) now derive that proof by
+composition, with explicit continuation, return, and exception postconditions.
 
 The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
 contracts, VC generation, configurable Crush discharge, proof reporting, and the
@@ -49,7 +51,7 @@ Check bytecode examples, admission/rejection cases, and proof dependencies with:
 ```sh
 lake build BytecodeTests StackCertificateTests StackTests AdmissionTests
 lake build FusedSemanticsTests WordcodeTests ExtendedDecodeTests FusedDecodeTests
-lake build ContractTests HoareTests
+lake build ContractTests HoareTests BlockTests InstructionTests
 python3 tests/check_cpython.py  # requires CPython 3.14.4
 ```
 
@@ -85,13 +87,14 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `VeriPyAsm/Embedding.lean` | Shallow translation and correspondence proofs |
 | `VeriPyAsm/Admission.lean` | Stack admission bound to the exact artifact and capacity |
 | `VeriPyAsm/Bytecode.lean` | `bytecode%` and `admit_bytecode%` term elaborators |
-| `VeriPyAsm/Verification/` | Normal/exceptional contracts, partial/total correctness, artifact transport |
+| `VeriPyAsm/Verification/` | Contracts, instruction/block rules, partial/total correctness, artifact transport |
 | `VeriPyAsm/Examples/Bytecode.lean` | Five literal artifacts and certified embeddings |
 | `VeriPyAsm/Examples/Add1.lean` | Universal total-correctness proof for imported integer `add1` |
 | `VeriPyAsm/Examples/Triangular.lean` | Imported loop, stack certificate, and no-underflow theorem |
 | `tests/` | Kernel-checked regression cases and CPython conformance checks |
 | `docs/BYTECODE.md` | Implemented slice, usage, and limitations |
 | `docs/CONTRACTS.md` | Contract interface, execution rules, first program proof |
+| `docs/RULES.md` | Sound instruction/block rules, continuation boundaries, compositional proofs |
 | `docs/DESIGN.md` | Verification flow and proposed user interface |
 | `docs/PROTOTYPE.md` | Design and implementation milestones |
 | `docs/CRUSH.md` | Automation design, trust policy, and experiment results |

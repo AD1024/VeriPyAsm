@@ -2,7 +2,8 @@
 
 The current contract interface uses native Lean predicates. It supports partial
 and total correctness for the deterministic scalar machine, including normal and
-exceptional exits, with scoped Hoare notation for frame predicates. It does not
+exceptional exits, with scoped Hoare notation for frame predicates. Sound
+[instruction and block rules](RULES.md) support compositional proofs. It does not
 yet provide a full specification DSL, loop rules, generated VCs, proof
 registration, or solver discharge.
 
@@ -115,8 +116,9 @@ elements: the marker names a value at a control-flow exit, not a different kind
 of value. `Q` can relate it to any values in the final stack or locals, or to
 logical inputs captured by the precondition. Use the full `Contract` interface
 to relate initial and final states or permit an exception.
-Keeping result binding explicit also leaves room for future rules
-about non-return instructions; those rules are not implemented by these triples.
+The [block judgments](RULES.md) express continuation postconditions for
+non-return instructions, with separate fields for continuation, return, and
+exception exits. The whole-program triples keep the meaning described above.
 
 Both adapters use a `Unit` ghost, `pre := P`, and `raises := False`; their
 postconditions observe the final frame or the returned value and final frame.
@@ -155,9 +157,10 @@ example (n : Int) :
 - Exceptional result: `False`.
 
 The public contract mentions neither instruction offsets nor a fixed fuel budget.
-The supporting `add1_run` lemma proves symbolically, by `rfl`, that the certified
-shallow program returns the specified result in five instructions for **every
-`n : Int`**. `add1_total` assembles total correctness using the Hoare notation;
+`add1_total` composes the resume, load, push, binary-operation, and return rules,
+checking their lookup in the certified shallow program. All inputs remain
+symbolic. The separate `add1_run` lemma proves the five-instruction execution
+fact by `rfl` for **every `n : Int`**. The total theorem uses the Hoare notation;
 `add1_contract_total` derives the relational contract for artifact transport.
 Its corollaries exclude exceptions and faults at every fuel bound. Boolean inputs are outside this
 contract, though the modeled Python arithmetic also accepts them.
@@ -174,7 +177,7 @@ of the CPython executable.
 ## Validation and next step
 
 ```sh
-lake build VeriPyAsm ContractTests HoareTests
+lake build VeriPyAsm ContractTests HoareTests BlockTests InstructionTests
 ```
 
 The regressions distinguish partial from total correctness on a divergent loop,
@@ -187,6 +190,8 @@ Hoare tests additionally check exact expansion, parser precedence and ordinary
 record syntax, captured inputs, the post-return stack, and rejection of an
 incorrect returned-value postcondition.
 
-The next step is reusable instruction/block and invariant rules, followed by the
-manual invariant and termination proof for `triangular`. General VC generation,
+Instruction/block composition and its semantic soundness are now implemented;
+see the [rule guide](RULES.md) for the additional regression proofs. The next step
+is invariant and ranking rules, followed by the manual total-correctness proof
+for `triangular`. General VC generation,
 exact-match proof registration, and Crush integration follow those proofs.

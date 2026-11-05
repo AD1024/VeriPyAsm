@@ -7,6 +7,7 @@ certificates have semantic preservation, capacity, underflow-exclusion, and retu
 shape proofs. Fused local instructions and extended operands are supported, and
 the imported `triangular` loop is stack-admitted. The [contract interface](CONTRACTS.md)
 and universal total-correctness proof for imported integer `add1` are implemented.
+Sound [instruction and block rules](RULES.md) now compose that proof.
 M1/M2/M3 remain incomplete; loop contracts and generated VCs are still pending.
 
 The [verification-flow design](DESIGN.md) defines the current interface decisions:
@@ -274,7 +275,7 @@ to the contract as well: a code hash alone does not bind mutable globals or call
 | M0 — scaffold (complete) | Pinned Lake library, target metadata, example, plan, optional Crush experiment target | `lake build` succeeds; `lake build CrushObligations` checks the separate experiment |
 | M1 — artifact path (partial) | External artifact schema/loader, exact-version check, decoder, admission checker, opcode inventory | Real `add1`, branch, and loop artifacts decode; malformed offsets, operands, cache layouts, and unsupported features are rejected; artifact round trips are checked |
 | M2 — executable semantics (partial) | Scalar operations, frame transitions, exceptions, execution relation, bounded runner | Determinism/preservation lemmas; interpreter/relational agreement; differential results for normal and exceptional cases |
-| M3 — first program proofs (partial) | Native contracts and universal `add1` proof implemented; instruction/block and loop proofs next, using checked Crush on residual obligations | Universal, kernel-checked `add1`, branching, and total `triangular` theorems about imported artifacts, with no `sorry` or project-specific axioms |
+| M3 — first program proofs (partial) | Native contracts, sound instruction/block composition, and universal `add1` proof implemented; loop invariants and termination next, using checked Crush on residual obligations | Universal, kernel-checked `add1`, branching, and total `triangular` theorems about imported artifacts, with no `sorry` or project-specific axioms |
 | M4 — reusable prototype | Proved loop rules, invariant annotations, sound VC generation, proof registration, configurable Crush integration | Factorial, GCD, and division contracts; changed artifacts invalidate stale cached proofs; assurance and pending obligations are reported |
 | M5 — sequential real-world slice | Calls, heap-backed lists/dicts, aliases, selected builtins, exception handlers/finally | A selected real function with verified dependency contracts, mutation/frame properties, and both exit cases |
 | M6 — async slice | Resumable coroutines plus a scoped scheduler/future/task model | A small actual asyncio program satisfies a safety property across permitted schedules; a progress property states its fairness and environment assumptions |
@@ -294,9 +295,11 @@ the imported `add1` proof covers every integer and excludes exceptions and fault
 Changing its small-integer operand yields a freshly admitted artifact that
 provably violates the original contract.
 
-The next small milestone is reusable instruction/block and invariant rules,
-followed by the manual invariant and termination proof for `triangular`, before
-automating VC generation.
+Instruction/block rules now distinguish continuation, return, and exception
+postconditions, preserve first-exit boundaries, and connect to the original
+execution semantics. `add1` uses these rules compositionally. The next small
+milestone is invariant and ranking rules, followed by the manual invariant and
+termination proof for `triangular`, before automating VC generation.
 
 M1–M4 constitute the first prototype. Prove one loop before building a general
 verification-condition generator. If arithmetic support warrants Mathlib, add a

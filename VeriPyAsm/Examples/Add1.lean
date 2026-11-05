@@ -1,6 +1,7 @@
 import VeriPyAsm.Examples.Bytecode
 import VeriPyAsm.Verification.Artifact
 import VeriPyAsm.Verification.Hoare
+import VeriPyAsm.Verification.Instruction
 
 /-! A universal contract proof for the imported scalar `add1` artifact.
 The instruction bytes and their checked translation are reused from the literal
@@ -37,13 +38,45 @@ theorem add1_total (n : Int) :
       add1Admitted.translation.program
     {{ returns fun value final =>
       value = .int (n + 1) ∧ final.locals = [some (.int n)] ∧ final.stack = [] }} := by
-  apply TotalCorrect.of_run
-  intro _ initial hpre
-  change initial = { locals := [some (.int n)] } at hpre
-  subst initial
-  refine ⟨5, .returned (.int (n + 1)) { pc := 18, locals := [some (.int n)] },
-    add1_run n, ?_⟩
-  exact ⟨rfl, rfl, rfl⟩
+  let state (pc : Nat) (stack : List Value) : Frame :=
+    { pc, locals := [some (.int n)], stack }
+  let post : Postcondition :=
+    { returned := fun value final =>
+        value = .int (n + 1) ∧ final.locals = [some (.int n)] ∧ final.stack = [] }
+
+  -- RETURN_VALUE at 18: pop the ordinary result and close the block.
+  have returnRule := (InstructionCorrect.ret post).on_frame
+    (initial := state 18 [.int (n + 1)]) ⟨.int (n + 1), [], rfl, rfl, rfl, rfl⟩
+  have returned : BlockTotalCorrect (step add1Admitted.translation.program) (fun _ => False)
+      (fun s => s = state 18 [.int (n + 1)]) post :=
+    returnRule.to_block (by rintro s rfl; rfl) (fun _ _ h => h) (fun _ h => h)
+
+  -- BINARY_OP + at 6: its inline caches end at offset 18.
+  have addRule := (InstructionCorrect.binary 18 (Semantics.binary .add)
+    { post with continues := fun s => s = state 18 [.int (n + 1)] }).on_frame
+    (initial := state 6 [.int 1, .int n])
+    ⟨.int n, .int 1, [], .int (n + 1), rfl, rfl, rfl⟩
+  have added := addRule.prepend
+    (by rintro s rfl; rfl) (fun _ _ h => h) returned
+
+  have pushRule := (InstructionCorrect.push 6 (.int 1)
+    { post with continues := fun s => s = state 6 [.int 1, .int n] }).on_frame
+    (initial := state 4 [.int n]) rfl
+  have pushed := pushRule.prepend
+    (by rintro s rfl; rfl) (fun _ _ h => h) added
+
+  have loadRule := (InstructionCorrect.load false 4 0
+    { post with continues := fun s => s = state 4 [.int n] }).on_frame
+    (initial := state 2 []) ⟨.int n, rfl, rfl⟩
+  have loaded := loadRule.prepend
+    (by rintro s rfl; rfl) (fun _ _ h => h) pushed
+
+  -- RESUME at 0 is the scalar profile's jump to the next instruction.
+  have resumeRule := (InstructionCorrect.jump 2
+    { post with continues := fun s => s = state 2 [] }).on_frame
+    (initial := state 0 []) rfl
+  exact (resumeRule.prepend
+    (by rintro s rfl; rfl) (fun _ _ h => h) loaded).to_totalCorrect
 
 /-- Package the notation-based theorem in the original relational contract.
 The entry precondition identifies the local preserved by the postcondition. -/

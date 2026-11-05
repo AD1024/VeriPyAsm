@@ -67,10 +67,10 @@ theorem exit_precedes_return (value : Value) :
 still an ordinary stack value, and its relation to the remaining stack survives. -/
 theorem early_return (value : Value) (rest : List Value) :
     TotalCorrect (step returnProgram)
-      (({ returns := fun returned final => returned = value ∧ final.stack = rest } :
+      (({ returned := fun returned final => returned = value ∧ final.stack = rest } :
         Postcondition).toContract (fun s => s = { stack := value :: rest })) := by
   let post : Postcondition :=
-    { returns := fun returned final => returned = value ∧ final.stack = rest }
+    { returned := fun returned final => returned = value ∧ final.stack = rest }
   have first : BlockTotalCorrect (step returnProgram) (fun pc => pc = 1)
       (fun s => s = { stack := value :: rest }) { post with continues := fun _ => False } := by
     apply BlockTotalCorrect.of_execution
@@ -99,7 +99,7 @@ private def invalid : Frame → StepResult := fun s => .halted (.fault .stackUnd
 
 theorem faults_forbidden :
     ¬ BlockPartialCorrect invalid (fun _ => False) (fun _ => True)
-      { continues := fun _ => True, returns := fun _ _ => True, raises := fun _ _ => True } := by
+      { continues := fun _ => True, returned := fun _ _ => True, raises := fun _ _ => True } := by
   intro correct
   exact correct {} trivial _ (.halt (fun h => h) rfl)
 
