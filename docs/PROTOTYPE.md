@@ -118,8 +118,11 @@ Extend the inventory for constants, boolean branches, unbound-local checks, stac
 operations, and large operands as the corpus grows. `EXTENDED_ARG` and inline cache
 layout belong to decoding. Cache words are payload, not ordinary executable NOPs.
 Retain byte offsets and version-specific jump origins. Abstracting `RESUME`,
-`NOT_TAKEN`, borrowing, and ownership bookkeeping is justified only within the
-stated runtime profile and scalar fragment. [1, 3]
+`NOT_TAKEN` is abstracted within the stated runtime profile. Borrowing additionally
+requires checked reference lifetimes: exact scalar values alone do not justify
+erasing ownership. The current ownership certificate tracks supporting locals,
+rejects stores of borrowed values, and checks intermediate fused stores. Runtime
+refinement of this protocol remains an explicit external assumption. [1, 3]
 
 ## 3. Formal specifications
 

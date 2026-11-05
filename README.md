@@ -4,12 +4,14 @@ VeriPyAsm will verify Python programs by proving properties of their compiled
 CPython bytecode in Lean 4. The long-term target includes mutable objects,
 exceptions, library calls, and asynchronous programs.
 
-**Status:** scalar bytecode, stack admission, and sequential contracts are implemented.
+**Status:** scalar bytecode, stack/ownership admission, and sequential contracts are implemented.
 `bytecode% artifact` decodes CPython 3.14.4 baseline bytes and produces a certified
 translation into shallow Lean commands. `admit_bytecode% artifact` also checks
 stack requirements, consistent heights across control flow, exact return shape,
-and the artifact's declared stack capacity. The resulting certificate supports
-kernel-checked stack-safety theorems. See the [bytecode guide](docs/BYTECODE.md)
+and the artifact's declared stack capacity. It also rejects overwriting a local
+with a live borrow or storing borrowed values, including fused instructions.
+Separate certificates support kernel-checked stack and ownership-protocol proofs.
+See the [bytecode guide](docs/BYTECODE.md)
 for the precise guarantees and remaining limits. Fused local instructions and
 extended operands are supported. The compiled `triangular` loop has a stack
 certificate and a universal total-correctness proof: every nonnegative integer
@@ -57,6 +59,7 @@ Check bytecode examples, admission/rejection cases, and proof dependencies with:
 
 ```sh
 lake build BytecodeTests StackCertificateTests StackTests AdmissionTests
+lake build OwnershipTests
 lake build FusedSemanticsTests WordcodeTests ExtendedDecodeTests FusedDecodeTests
 lake build ContractTests HoareTests BlockTests InstructionTests
 lake build LoopTests TriangularTests VCAssemblyTests
@@ -92,8 +95,9 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `VeriPyAsm/Semantics/` | Scalars, frames, commands, finite execution relations, and bounded runner |
 | `VeriPyAsm/CPython/V314/` | Artifact data, reference language, conservative decoder |
 | `VeriPyAsm/CPython/V314/Stack/` | Stack rules, certificate checker, analysis, soundness proofs |
+| `VeriPyAsm/CPython/V314/Ownership/` | Borrow provenance, live-owner checks, certificate analysis and soundness |
 | `VeriPyAsm/Embedding.lean` | Shallow translation and correspondence proofs |
-| `VeriPyAsm/Admission.lean` | Stack admission bound to the exact artifact and capacity |
+| `VeriPyAsm/Admission.lean` | Stack and ownership admission bound to the exact artifact; lower-level stack-only interface |
 | `VeriPyAsm/Bytecode.lean` | `bytecode%` and `admit_bytecode%` term elaborators |
 | `VeriPyAsm/Verification/` | Contracts, instruction/block/loop rules, partial/total correctness, artifact transport |
 | `VeriPyAsm/Examples/Bytecode.lean` | Five literal artifacts and certified embeddings |

@@ -19,7 +19,11 @@ to raw artifacts. Imported `add1` has a universal integer total-correctness proo
 Scoped Hoare notation supports frame pre/postconditions for both correctness modes.
 The [instruction, block, and loop rules](RULES.md) distinguish continuing, returned, and
 exceptional outcomes, prove composition sound against the machine semantics,
-and derive the imported `add1` and `triangular` theorems. Loop rules require a
+and derive the imported `add1` and `triangular` theorems. Default admission also
+checks a separate ownership certificate: borrowed stack values cannot outlive
+their supporting locals or be stored into locals, including within fused stores.
+The value semantics erases ownership; its runtime interpretation requires this
+protocol and the external runtime-correspondence assumptions. Loop rules require a
 nonempty iteration, invariant preservation, and, for total correctness, a
 terminating iteration with strict decrease in a well-founded relation.
 The triangular example now exposes four named, closed VCs and a conditional
@@ -76,7 +80,7 @@ flowchart LR
   P --> R[Report and final theorem]
 ```
 
-Validate decoding, stack/control-flow structure, metadata, and supported features
+Validate decoding, stack/control-flow structure, ownership lifetimes, metadata, and supported features
 before verification. Symbolically execute blocks using proved semantic rules.
 Cutpoint invariants summarize cycles; check that the cutpoints cover every cycle
 handled by the loop rule. Missing annotations are actionable diagnostics.

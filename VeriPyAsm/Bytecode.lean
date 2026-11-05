@@ -2,7 +2,8 @@ import VeriPyAsm.Admission
 import Lean
 
 /-! `bytecode% artifact` elaborates a closed literal artifact into a certified
-translation. `admit_bytecode% artifact` additionally checks stack admission.
+translation. `admit_bytecode% artifact` additionally checks stack and ownership
+admission; `admit_stack_bytecode%` exposes the lower-level stack-only interface.
 Both produce kernel-checked certificates. Runtime importers can instead use
 `Embedding.translate` and `admit`, respectively. -/
 
@@ -12,6 +13,7 @@ open Lean Meta Elab Term
 
 syntax (name := bytecodeTerm) "bytecode% " term : term
 syntax (name := admitBytecodeTerm) "admit_bytecode% " term : term
+syntax (name := admitStackBytecodeTerm) "admit_stack_bytecode% " term : term
 
 /-- Reduce closed computations using the kernel. Meta-level reduction repeatedly
 unfolds decoder continuations and scales poorly even for small loops. This only
@@ -76,17 +78,17 @@ private def readStackError (error : Expr) : MetaM CPython.V314.Stack.Error := do
     | _ => throwError "unrecognized stack-analysis error kind"
   return ⟨← nat offset, reason⟩
 
-@[term_elab admitBytecodeTerm] def elabAdmitBytecode : TermElab := fun stx _ => do
-  let (artifact, translation) ← elaborateTranslation stx[1]
+private def elaborateStack (stx : Syntax) : TermElabM Expr := do
+  let (artifact, translation) ← elaborateTranslation stx
   let code ← mkAppM ``Embedding.Translation.code #[translation]
   let capacity ← mkAppM ``CPython.V314.Artifact.stackSize #[artifact]
   let proposed ← mkAppM ``CPython.V314.Stack.infer #[code, capacity]
   let result ← reduceClosed proposed
   if result.isAppOfArity ``Except.error 3 then
     let error ← readStackError result.getAppArgs[2]!
-    throwErrorAt stx[1] "stack admission rejected: {error.message}"
+    throwErrorAt stx "stack admission rejected: {error.message}"
   unless result.isAppOfArity ``Except.ok 3 do
-    throwErrorAt stx[1] "stack admission could not reduce the analysis"
+    throwErrorAt stx "stack admission could not reduce the analysis"
   let heights := result.getAppArgs[2]!
   let obligation ← mkAppM ``CPython.V314.Stack.Valid #[code, capacity, heights]
   -- The analyzer only proposes a table. Admission separately proves its validity
@@ -94,5 +96,50 @@ private def readStackError (error : Expr) : MetaM CPython.V314.Stack.Error := do
   let proof ← mkDecideProof obligation
   let certificate ← mkAppM ``CPython.V314.Stack.Certificate.mk #[heights, proof]
   mkAppM ``StackAdmitted.mk #[translation, certificate]
+
+@[term_elab admitStackBytecodeTerm] def elabAdmitStackBytecode : TermElab := fun stx _ =>
+  elaborateStack stx[1]
+
+private def readOwnershipError (error : Expr) : MetaM CPython.V314.Ownership.Error := do
+  let error ← withTransparency .all <| reduce error
+  let_expr CPython.V314.Ownership.Error.mk offset reason := error
+    | throwError "unexpected ownership-analysis error representation"
+  let nat (e : Expr) : MetaM Nat := do
+    let some value ← getNatValue? e | throwError "expected an ownership-analysis natural literal"
+    pure value
+  let reason : CPython.V314.Ownership.ErrorReason ← match_expr reason with
+    | CPython.V314.Ownership.ErrorReason.missingInstruction => pure .missingInstruction
+    | CPython.V314.Ownership.ErrorReason.inconsistentJoin => pure .inconsistentJoin
+    | CPython.V314.Ownership.ErrorReason.analysisLimit => pure .analysisLimit
+    | CPython.V314.Ownership.ErrorReason.invalidCertificate => pure .invalidCertificate
+    | CPython.V314.Ownership.ErrorReason.violation violation => do
+      let violation ← match_expr violation with
+        | CPython.V314.Ownership.Violation.underflow => pure .underflow
+        | CPython.V314.Ownership.Violation.storeBorrow source destination =>
+          pure (.storeBorrow (← nat source) (← nat destination))
+        | CPython.V314.Ownership.Violation.overwriteBorrowed index =>
+          pure (.overwriteBorrowed (← nat index))
+        | _ => throwError "unrecognized ownership violation"
+      pure (.violation violation)
+    | _ => throwError "unrecognized ownership-analysis error kind"
+  return ⟨← nat offset, reason⟩
+
+@[term_elab admitBytecodeTerm] def elabAdmitBytecode : TermElab := fun stx expectedType? => do
+  let structural ← elaborateStack stx[1]
+  let translation ← mkAppM ``StackAdmitted.translation #[structural]
+  let code ← mkAppM ``Embedding.Translation.code #[translation]
+  let proposed ← mkAppM ``CPython.V314.Ownership.infer #[code]
+  let result ← reduceClosed proposed
+  if result.isAppOfArity ``Except.error 3 then
+    let error ← readOwnershipError result.getAppArgs[2]!
+    throwErrorAt stx[1] "ownership admission rejected: {error.message}"
+  unless result.isAppOfArity ``Except.ok 3 do
+    throwErrorAt stx[1] "ownership admission could not reduce the analysis"
+  let table := result.getAppArgs[2]!
+  let obligation ← mkAppM ``CPython.V314.Ownership.Valid #[code, table]
+  let proof ← mkDecideProof obligation
+  let certificate ← mkAppM ``CPython.V314.Ownership.Certificate.mk #[table, proof]
+  let admitted ← mkAppM ``Admitted.mk #[structural, certificate]
+  ensureHasType expectedType? admitted
 
 end VeriPyAsm

@@ -8,8 +8,9 @@ fault is detected after an internal lookup or proposed store.
 The intermediate stack heights are bounded by the endpoints: a pair of loads
 only grows the stack; store-load first removes then replaces its top; a pair of
 stores only shrinks it. Thus input/output capacity checks suffice for these
-particular fusions. Borrowing and reference ownership remain unobservable in
-the exact-scalar profile. -/
+particular fusions. This value model erases borrowing; the separate ownership
+certificate checks reference-lifetime requirements, including intermediate stores.
+Exact scalar types alone do not justify erasing reference lifetimes. -/
 
 namespace VeriPyAsm.Semantics.Command
 

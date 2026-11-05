@@ -56,8 +56,9 @@ def Instruction.successors (i : Instruction) : List Nat :=
     [target, fallthrough]
   | _ => [i.next]
 
-/-- Instruction semantics shared with the shallow combinators. Borrowing is
-unobservable only within the stated scalar/runtime profile. -/
+/-- Value semantics shared with the shallow combinators. Reference lifetimes
+are erased here: runtime correspondence additionally requires the ownership
+protocol checked by Ownership.Certificate. Scalar types alone do not suffice. -/
 def Instruction.denote (i : Instruction) : Command :=
   match i.op with
   | .resume | .notTaken => Command.jump i.next

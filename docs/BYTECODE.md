@@ -1,10 +1,10 @@
-# Bytecode and stack admission
+# Bytecode, stack, and ownership admission
 
 The implemented slice covers the bytecode language, executable semantics,
-translation, and stack admission from [the design](DESIGN.md). The separate
+translation, and stack/ownership admission from [the design](DESIGN.md). The separate
 [contract interface](CONTRACTS.md) adds partial/total correctness and a universal
-imported `add1` proof. VC generation, proof registration, and solver integration
-remain later milestones.
+imported `add1` proof. Hand-extracted VCs and checked Crush proofs are implemented;
+automatic VC generation and proof registration remain later milestones.
 
 ## Use
 
@@ -18,9 +18,12 @@ scalar constants, code-object metadata, version/profile, and build provenance.
 - `program`: a shallow Lean function mapping offsets to semantic commands;
 - `correct`: `step program = referenceStep code`.
 
-`admit_bytecode% artifact` returns `StackAdmitted artifact`, containing that
-`translation` and a `stack` certificate indexed by exactly `translation.code`
-and `artifact.stackSize`. Translation alone does not check stack admission.
+`admit_bytecode% artifact` returns `Admitted artifact`, containing that
+`translation`, a `stack` certificate indexed by exactly `translation.code`
+and `artifact.stackSize`, and an `ownership` certificate for the same code.
+`StackAdmitted` and `admit_stack_bytecode%` retain the explicitly stack-only
+interface. `Admitted` coerces to `StackAdmitted` for existing structural proofs.
+Translation alone checks neither property.
 
 For example:
 
@@ -30,11 +33,12 @@ import VeriPyAsm.Examples.Bytecode
 open VeriPyAsm VeriPyAsm.Semantics VeriPyAsm.Examples
 
 def imported : Embedding.Translation add1Artifact := bytecode% add1Artifact
-def admitted : StackAdmitted add1Artifact := admit_bytecode% add1Artifact
+def admitted : Admitted add1Artifact := admit_bytecode% add1Artifact
 
 #check imported.decoded
 #check imported.correct
 #check admitted.stack.valid
+#check admitted.ownership.valid
 #check StackAdmitted.run_no_underflow
 #eval run (step imported.program) 5 { locals := [some (.int 41)] }
 -- returns int 42, at byte offset 18
@@ -43,8 +47,9 @@ def admitted : StackAdmitted add1Artifact := admit_bytecode% add1Artifact
 An unsupported literal causes an elaboration error with a byte offset and reason.
 For data processed at runtime, `Embedding.translate` returns
 `Except DecodeError (Translation artifact)`, while `admit` returns
-`Except AdmissionError (StackAdmitted artifact)`. Admission errors distinguish
-decoding failures from stack-analysis failures. There is no JSON/marshal loader
+`Except AdmissionError (Admitted artifact)`. `admitStack` returns the lower-level
+`StackAdmitted` result. Errors distinguish decoding, stack, and ownership failures.
+There is no JSON/marshal loader
 yet. The interface cannot represent constants outside int/bool/None; external
 tools must reject those constants rather than coerce or omit them.
 
@@ -71,6 +76,36 @@ entries. Dead instructions still undergo the decoder's global encoding checks.
 Python exception paths terminate in this handler-free fragment, so an operation
 that can raise TypeError or UnboundLocalError remains admissible when its normal
 path has a valid shape.
+
+## Ownership certificate boundary
+
+Scalar values do not make reference lifetimes unobservable. Crafted bytes can
+borrow a computed integer, overwrite its supporting local, and later read freed
+storage. The value semantics still returns the old mathematical integer, while
+CPython may observe a different value or fail. Stack-only certificates do not
+exclude this behavior. The review reproduction is retained in `OwnershipTests`;
+default admission now rejects its owner overwrite at byte offset 24.
+
+`CPython/V314/Ownership/` separates transfer rules, the independent table checker,
+the proposing worklist, and soundness proofs. Every stack slot is either independent
+of locals or borrowed from a particular local. A store must consume an owned slot
+and leave no borrow of the overwritten local live. Fused stores check each write
+in order, including references still waiting for the second store. Both branch
+edges and back edges are checked; incompatible provenance at a join is rejected
+conservatively. No immortal-value or aliasing exceptions are inferred.
+
+Arithmetic, comparisons, and Boolean conversion produce independent references.
+Returning a still-live borrow is allowed: CPython upgrades it before frame cleanup.
+These rules follow the pinned [compiler lifetime requirements](https://github.com/python/cpython/blob/v3.14.4/Python/flowgraph.c#L2574-L2608)
+and [instruction definitions](https://github.com/python/cpython/blob/v3.14.4/Python/bytecodes.c).
+
+The soundness theorem decorates every continuing scalar execution with a checked
+provenance history and excludes a protocol violation at the next instruction.
+It does not formalize allocation, reference counts, or CPython's C implementation.
+Runtime correspondence still assumes valid supporting references on entry,
+the declared runtime profile, and fidelity of the modeled lifetime rules.
+Clients using only `Translation` or `StackAdmitted` must additionally assume or
+independently establish borrow safety; a scalar contract alone cannot supply it.
 
 ## Language and execution
 
@@ -106,7 +141,7 @@ about extraction and execution, not authenticated evidence.
 | --- | --- |
 | `RESUME`, `NOT_TAKEN` | Entry `RESUME 0`; no instrumentation or asynchronous runtime events |
 | `LOAD_CONST`, `LOAD_SMALL_INT` | Scalar constants; one-byte small integer operand |
-| `LOAD_FAST`, `LOAD_FAST_BORROW`, `LOAD_FAST_CHECK`, `STORE_FAST` | Checked local indices; borrowing unobservable in this scalar profile |
+| `LOAD_FAST`, `LOAD_FAST_BORROW`, `LOAD_FAST_CHECK`, `STORE_FAST` | Checked local indices; separate ownership certificate checks borrow lifetimes |
 | `LOAD_FAST_LOAD_FAST`, `LOAD_FAST_BORROW_LOAD_FAST_BORROW` | Two locals packed into high/low nibbles; second value ends up on top |
 | `STORE_FAST_LOAD_FAST`, `STORE_FAST_STORE_FAST` | Packed local indices; store before reload, or store the top value first; aliases preserve assignment order |
 | `BINARY_OP` | Add, subtract, multiply, and their scalar in-place variants |
