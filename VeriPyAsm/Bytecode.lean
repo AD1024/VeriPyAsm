@@ -13,15 +13,28 @@ open Lean Meta Elab Term
 syntax (name := bytecodeTerm) "bytecode% " term : term
 syntax (name := admitBytecodeTerm) "admit_bytecode% " term : term
 
+/-- Reduce closed computations using the kernel. Meta-level reduction repeatedly
+unfolds decoder continuations and scales poorly even for small loops. This only
+selects the result constructor; generated certificates are still kernel checked. -/
+private def reduceClosed (term : Expr) : MetaM Expr := do
+  let term ← instantiateMVars term
+  if term.hasMVar || term.hasFVar then
+    throwError "bytecode reduction requires a closed expression without metavariables"
+  match Kernel.whnf (← getEnv) (← getLCtx) term with
+  | .ok result => pure result
+  | .error error => throwError "bytecode reduction failed: {error.toMessageData (← getOptions)}"
+
 private def elaborateTranslation (stx : Syntax) : TermElabM (Expr × Expr) := do
   let artifact ← elabTermEnsuringType stx (mkConst ``CPython.V314.Artifact)
   let artifact ← instantiateMVars artifact
   if artifact.hasMVar || artifact.hasFVar then
     throwErrorAt stx "bytecode elaboration requires a closed artifact without metavariables"
   let decoded ← mkAppM ``CPython.V314.decode #[artifact]
-  let result ← withTransparency .all <| reduce decoded
+  let result ← reduceClosed decoded
   if result.isAppOfArity ``Except.error 3 then
-    throwErrorAt stx "bytecode rejected: {result.getAppArgs[2]!}"
+    -- Normalize only the diagnostic payload, not the successful instruction data.
+    let error ← withTransparency .all <| reduce result.getAppArgs[2]!
+    throwErrorAt stx "bytecode rejected: {error}"
   unless result.isAppOfArity ``Except.ok 3 do
     throwErrorAt stx "bytecode elaboration could not reduce the artifact decoder"
   let code := result.getAppArgs[2]!
@@ -29,7 +42,11 @@ private def elaborateTranslation (stx : Syntax) : TermElabM (Expr × Expr) := do
   let correct ← mkAppM ``Embedding.compile_correct #[code]
   -- `decode artifact = .ok code` is checked by definitional equality.
   let decodedProof ← mkEqRefl decoded
-  let translation ← mkAppM ``Embedding.Translation.mk #[code, decodedProof, program, correct]
+  -- All arguments are known. Avoid repeating decoder reduction in Meta's
+  -- implicit-argument unification; the kernel checks this constructor application,
+  -- including the definitional equality required by `decodedProof`.
+  let translation := mkAppN (mkConst ``Embedding.Translation.mk)
+    #[artifact, code, decodedProof, program, correct]
   return (artifact, translation)
 
 @[term_elab bytecodeTerm] def elabBytecode : TermElab := fun stx _ => do
@@ -38,6 +55,7 @@ private def elaborateTranslation (stx : Syntax) : TermElabM (Expr × Expr) := do
 /-- Read only constructor data for diagnostics, without executing compiled code.
 Rendering a reduced String directly would expose its internal byte-array term. -/
 private def readStackError (error : Expr) : MetaM CPython.V314.Stack.Error := do
+  let error ← withTransparency .all <| reduce error
   let_expr CPython.V314.Stack.Error.mk offset reason := error
     | throwError "unexpected stack-analysis error representation"
   let nat (e : Expr) : MetaM Nat := do
@@ -63,7 +81,7 @@ private def readStackError (error : Expr) : MetaM CPython.V314.Stack.Error := do
   let code ← mkAppM ``Embedding.Translation.code #[translation]
   let capacity ← mkAppM ``CPython.V314.Artifact.stackSize #[artifact]
   let proposed ← mkAppM ``CPython.V314.Stack.infer #[code, capacity]
-  let result ← withTransparency .all <| reduce proposed
+  let result ← reduceClosed proposed
   if result.isAppOfArity ``Except.error 3 then
     let error ← readStackError result.getAppArgs[2]!
     throwErrorAt stx[1] "stack admission rejected: {error.message}"
