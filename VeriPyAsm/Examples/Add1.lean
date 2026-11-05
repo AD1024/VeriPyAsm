@@ -1,5 +1,5 @@
 import VeriPyAsm.Examples.Bytecode
-import VeriPyAsm.Verification.Artifact
+import VeriPyAsm.Verification.VerifiedArtifact
 import VeriPyAsm.Verification.Hoare
 import VeriPyAsm.Verification.Instruction
 
@@ -14,7 +14,7 @@ namespace VeriPyAsm.Examples
 open Semantics Verification
 open scoped VeriPyAsm.Verification.Hoare
 
-def add1Admitted : StackAdmitted add1Artifact := admit_bytecode% add1Artifact
+def add1Admitted : Admitted add1Artifact := admit_bytecode% add1Artifact
 
 /-- Every integer input returns its successor after five decoded instructions.
 The final PC is an execution detail, not part of the public functional contract. -/
@@ -95,6 +95,15 @@ theorem add1_contract_total :
 program. The translation certificate supplies the representation equality. -/
 theorem add1_artifact_total : ArtifactTotalCorrect add1Artifact add1Contract :=
   add1Admitted.translation.artifact_total_iff.mpr add1_contract_total
+
+/-- Final package: both admission certificates, call-entry compatibility, and
+total correctness of the same certified translation. -/
+def add1_verified : VerifiedArtifact add1Artifact add1Contract where
+  admission := add1Admitted
+  entry := by
+    rintro n initial rfl
+    exact ⟨rfl, rfl, [.int n], rfl, rfl⟩
+  correctness := add1_contract_total
 
 theorem add1_no_exception (n : Int) (fuel : Nat) (exception : PythonException)
     (failureFrame : Frame) :

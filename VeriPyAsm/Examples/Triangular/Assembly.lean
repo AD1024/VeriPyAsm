@@ -1,6 +1,6 @@
 import VeriPyAsm.Examples.Triangular.Blocks
 import VeriPyAsm.Examples.Triangular.VC
-import VeriPyAsm.Verification.Artifact
+import VeriPyAsm.Verification.VerifiedArtifact
 import VeriPyAsm.Verification.Hoare
 
 /-! Specification and conditional total correctness of the imported artifact.
@@ -143,6 +143,13 @@ theorem contract_total (obligations : VC.Proofs) :
 theorem artifact_total (obligations : VC.Proofs) :
     ArtifactTotalCorrect triangularArtifact triangularContract :=
   triangular.translation.artifact_total_iff.mpr (contract_total obligations)
+
+def verified (obligations : VC.Proofs) : VerifiedArtifact triangularArtifact triangularContract where
+  admission := triangular
+  entry := by
+    rintro N initial ⟨_, rfl⟩
+    exact ⟨rfl, rfl, [.int N], rfl, rfl⟩
+  correctness := contract_total obligations
 
 end Triangular.Assembly
 

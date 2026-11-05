@@ -43,6 +43,9 @@ theorem triangular_contract_total :
 theorem triangular_artifact_total : ArtifactTotalCorrect triangularArtifact triangularContract :=
   Triangular.Assembly.artifact_total Triangular.Arithmetic.proofs
 
+def triangular_verified : VerifiedArtifact triangularArtifact triangularContract :=
+  Triangular.Assembly.verified Triangular.Arithmetic.proofs
+
 theorem triangular_no_exception (N : Int) (nonnegative : 0 ≤ N) (fuel : Nat)
     (exception : PythonException) (failureFrame : Frame) :
     run (step triangular.translation.program) fuel { locals := [some (.int N), none] } ≠

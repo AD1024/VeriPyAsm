@@ -45,12 +45,14 @@ theorem proofs : VC.Proofs where
 theorem artifact_total : ArtifactTotalCorrect triangularArtifact triangularContract :=
   Assembly.artifact_total proofs
 
+def verified : VerifiedArtifact triangularArtifact triangularContract := Assembly.verified proofs
+
 -- This check fails the build if reconstruction introduces any nonstandard axiom.
 #eval show Lean.CoreM Unit from do
   if (← Lean.getEnv).contains `VeriPyAsm.Examples.Triangular.Arithmetic.proofs then
     throwError "The Crush provider unexpectedly imports the ordinary arithmetic proofs"
   let approved := [``propext, ``Classical.choice, ``Quot.sound]
-  for name in [``init, ``preserve, ``exit, ``decrease, ``proofs, ``artifact_total] do
+  for name in [``init, ``preserve, ``exit, ``decrease, ``proofs, ``artifact_total, ``verified] do
     let axioms ← Lean.collectAxioms name
     for axiomName in axioms do
       unless approved.contains axiomName do

@@ -18,13 +18,13 @@ def triangularArtifact : Artifact :=
     constants := [.int 0]
     localNames := ["n", "s"] }
 
-def triangular : StackAdmitted triangularArtifact := admit_bytecode% triangularArtifact
+def triangular : Admitted triangularArtifact := admit_bytecode% triangularArtifact
 
 theorem triangular_no_underflow (fuel : Nat) (locals : List (Option Value))
     (failureFrame : Frame) :
     run (step triangular.translation.program) fuel { locals } ≠
       .halted (.fault .stackUnderflow failureFrame) :=
-  triangular.run_no_underflow fuel locals failureFrame
+  triangular.toStackAdmitted.run_no_underflow fuel locals failureFrame
 
 example : run (step triangular.translation.program) 100
     { locals := [some (.int 3), none] } =

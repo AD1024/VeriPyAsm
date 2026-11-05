@@ -4,7 +4,8 @@ import VeriPyAsm.Embedding
 /-! Contract statements anchored to raw artifacts via successful decoding.
 The translation's checked step equality transports correctness in both directions.
 These judgments state semantic correctness under the contract precondition;
-stack admission is a separate certificate, required by the verification workflow.
+stack and ownership admission are separate certificates. `VerifiedArtifact`
+combines them with correctness and the contract's entry-compatibility proof.
 Neither judgment authenticates extraction or proves CPython runtime refinement. -/
 
 namespace VeriPyAsm.Verification

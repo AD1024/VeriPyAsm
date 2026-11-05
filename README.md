@@ -31,6 +31,9 @@ The triangular proof now exposes four named, closed VCs and a conditional assemb
 theorem. Ordinary Lean proofs discharge those VCs in a separate module.
 An optional Crush target proves the same VCs with checked reconstruction and
 assembles the same artifact contract.
+`VerifiedArtifact` combines the contract proof with both admission certificates
+and a proof that every contract pre-state satisfies the call-entry assumptions.
+Both `add1_verified` and `triangular_verified` expose this final package.
 
 The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
 contracts, VC generation, configurable Crush discharge, proof reporting, and the
@@ -62,7 +65,7 @@ lake build BytecodeTests StackCertificateTests StackTests AdmissionTests
 lake build OwnershipTests
 lake build FusedSemanticsTests WordcodeTests ExtendedDecodeTests FusedDecodeTests
 lake build ContractTests HoareTests BlockTests InstructionTests
-lake build LoopTests TriangularTests VCAssemblyTests
+lake build LoopTests TriangularTests VCAssemblyTests VerifiedArtifactTests
 python3 tests/check_cpython.py  # requires CPython 3.14.4
 ```
 
@@ -100,6 +103,7 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `VeriPyAsm/Admission.lean` | Stack and ownership admission bound to the exact artifact; lower-level stack-only interface |
 | `VeriPyAsm/Bytecode.lean` | `bytecode%` and `admit_bytecode%` term elaborators |
 | `VeriPyAsm/Verification/` | Contracts, instruction/block/loop rules, partial/total correctness, artifact transport |
+| `VeriPyAsm/Verification/VerifiedArtifact.lean` | Final packages enforcing admission, entry compatibility, and correctness |
 | `VeriPyAsm/Examples/Bytecode.lean` | Five literal artifacts and certified embeddings |
 | `VeriPyAsm/Examples/Add1.lean` | Universal total-correctness proof for imported integer `add1` |
 | `VeriPyAsm/Examples/Triangular.lean` | Public entry point for the imported loop and its universal total-correctness theorem |

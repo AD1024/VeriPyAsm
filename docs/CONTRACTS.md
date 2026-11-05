@@ -4,8 +4,8 @@ The current contract interface uses native Lean predicates. It supports partial
 and total correctness for the deterministic scalar machine, including normal and
 exceptional exits, with scoped Hoare notation for frame predicates. Sound
 [instruction, block, and loop rules](RULES.md) support compositional proofs. It does not
-yet provide a full specification DSL, generated VCs, proof
-registration, or solver discharge.
+yet provide a full specification DSL, automatic VC generation, or proof
+registration. Hand-extracted VCs have ordinary Lean and checked Crush providers.
 
 ## Execution boundary
 
@@ -55,9 +55,47 @@ nondeterministic or asynchronous termination must quantify over schedules and
 state any fairness assumptions.
 
 These generic contracts do not automatically establish artifact metadata,
-stack capacity, or a separate state invariant. The stack certificate provides
-its own guarantees under the entry assumptions. Later invariant rules will
-address additional reachable-state properties.
+stack capacity, or reference lifetimes. Stack and ownership certificates provide
+their own guarantees under entry assumptions. The public verification package
+below enforces their combination with the contract.
+
+## Verified artifacts
+
+`Verification/VerifiedArtifact.lean` defines the public final result:
+`VerifiedArtifact artifact contract`, with total correctness by default, or
+`VerifiedArtifact artifact contract .partialCorrectness`. Its required fields are:
+
+- `admission`: decoding/representation, stack capacity, and ownership certificates
+  for the same artifact and decoded instructions.
+- `entry`: every contract pre-state satisfies `EntryFrame artifact initial`.
+  This requires PC zero, an empty stack, exactly `argCount` initialized positional
+  argument slots, and all remaining declared locals unbound.
+- `correctness`: the selected correctness judgment over that admitted translation.
+
+The entry proof connects the contract's domain to the certificates; it does not
+silently strengthen the user's precondition. The package exposes capacity and
+ownership guarantees from any contract pre-state, and transports correctness
+back to the raw artifact. Total packages can be converted to partial packages.
+
+```lean
+import VeriPyAsm.Examples.Add1
+import VeriPyAsm.Examples.Triangular
+
+open VeriPyAsm.Verification VeriPyAsm.Examples
+
+example : VerifiedArtifact add1Artifact add1Contract := add1_verified
+example : VerifiedArtifact triangularArtifact triangularContract := triangular_verified
+example : VerifiedArtifact triangularArtifact triangularContract .partialCorrectness :=
+  triangular_verified.to_partial
+```
+
+`ArtifactPartialCorrect` and `ArtifactTotalCorrect` remain lower-level semantic
+judgments; they do not themselves require admission. `VerifiedArtifactTests`
+proves that changing add1's capacity to zero preserves its lower-level theorem
+but makes a verified package impossible. Likewise, a valid contract starting at
+an internal return instruction cannot satisfy the public call-entry boundary.
+Neither layer authenticates extraction or proves correspondence with CPython's C
+implementation; the [ownership/runtime boundary](BYTECODE.md) still applies.
 
 ## Pre/post notation
 
@@ -216,7 +254,8 @@ conditional correctness), `Arithmetic.lean` (ordinary Lean proofs of the VCs),
 and `Correctness.lean` (the existing public theorems, using those proofs).
 Arithmetic uses kernel-checked Lean tactics with no additional dependency.
 `triangular_artifact_total` transports the result to `triangularArtifact` through
-the existing representation certificate. The runtime/extraction boundary is
+the existing representation certificate. `triangular_verified` also packages the
+admission and entry proofs. The runtime/extraction boundary is
 the same as for `add1`.
 
 ## Closed VCs and conditional assembly
@@ -261,7 +300,7 @@ identity required by the planned proof registry, which is not implemented yet.
 
 ```sh
 lake build VeriPyAsm ContractTests HoareTests BlockTests InstructionTests
-lake build LoopTests TriangularTests VCAssemblyTests
+lake build LoopTests TriangularTests VCAssemblyTests VerifiedArtifactTests
 ```
 
 The regressions distinguish partial from total correctness on a divergent loop,

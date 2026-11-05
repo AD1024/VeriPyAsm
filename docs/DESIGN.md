@@ -32,6 +32,9 @@ separately. The optional `TriangularCrush` target supplies checked Crush proofs
 of the same VCs and assembles the same artifact contract. These VCs are extracted
 by hand from the proved block summaries; automatic backend reporting is not yet
 implemented.
+`VerifiedArtifact` now combines stack/ownership admission, partial or total
+correctness, and a proof that every contract pre-state satisfies the certificates'
+call-entry domain. The existing artifact judgments remain lower-level interfaces.
 The full specification DSL, automatic VC generation, and proof registry below
 remain future work.
 
@@ -215,6 +218,10 @@ If all resolve, emit the final theorem and aggregate assurance: **checked** only
 when every dependency satisfies checked policy; otherwise **solver-trusted** with
 the added assumption visible. Do not describe either as a proof of CPython's C
 implementation; runtime correspondence remains a separate boundary.
+
+The final public result must be a `VerifiedArtifact` package, including its
+admission and entry-compatibility proofs. A standalone `ArtifactTotalCorrect`
+or `ArtifactPartialCorrect` theorem does not meet this completion requirement.
 
 ## 6. Extension to real-world and async code
 

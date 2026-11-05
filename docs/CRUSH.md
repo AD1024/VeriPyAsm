@@ -148,6 +148,8 @@ correctness theorem. `Triangular.CrushProofs.artifact_total` applies the same
 `Assembly.artifact_total` theorem to the new proof bundle. Its conclusion is
 `ArtifactTotalCorrect triangularArtifact triangularContract`, bound to the exact
 imported bytes through the representation certificate.
+`Triangular.CrushProofs.verified` additionally supplies the public verified
+package, including stack/ownership admission and entry compatibility.
 
 ```sh
 lake build TriangularCrush
