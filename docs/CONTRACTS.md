@@ -211,18 +211,53 @@ well-founded loop rule assembles termination without assuming a fuel budget.
 
 The proof is divided into `Examples/Triangular/Artifact.lean` (bytes and stack
 certificate), `Blocks.lean` (entry, iteration, and return summaries),
-`Arithmetic.lean` (initialization, preservation, exit, and decrease), and
-`Correctness.lean` (invariant and whole-program assembly). Arithmetic uses
-kernel-checked Lean tactics with no additional dependency.
+`VC.lean` (closed residual obligations), `Assembly.lean` (specification and
+conditional correctness), `Arithmetic.lean` (ordinary Lean proofs of the VCs),
+and `Correctness.lean` (the existing public theorems, using those proofs).
+Arithmetic uses kernel-checked Lean tactics with no additional dependency.
 `triangular_artifact_total` transports the result to `triangularArtifact` through
 the existing representation certificate. The runtime/extraction boundary is
 the same as for `add1`.
+
+## Closed VCs and conditional assembly
+
+The four proposition definitions in `Triangular.VC.loop6` quantify every symbolic
+integer and hypothesis. Their names identify the invariant at byte offset 6:
+
+| VC | Obligation |
+| --- | --- |
+| `init` | The invariant equation holds after initializing the sum to zero |
+| `preserve` | The equation survives `sum := sum + n; n := n - 1` |
+| `exit` | The invariant and failed test give both `n = 0` and the return equation |
+| `decrease` | A positive counter stays nonnegative after subtraction and its `toNat` rank strictly decreases |
+
+These VCs are extracted by hand from the checked summaries. Stack/local safety,
+branch coverage, and finite execution of each iteration are already proved in
+`Blocks.lean`. The remaining VCs are explicit proof fields of `VC.Proofs`, not
+assumptions declared as axioms. Importing only the assembly module provides a
+conditional artifact theorem without importing their proofs:
+
+```lean
+import VeriPyAsm.Examples.Triangular.Assembly
+
+open VeriPyAsm.Verification VeriPyAsm.Examples
+
+example (obligations : Triangular.VC.Proofs) :
+    ArtifactTotalCorrect triangularArtifact triangularContract :=
+  Triangular.Assembly.artifact_total obligations
+```
+
+`Arithmetic.proofs` supplies the ordinary Lean proofs; `Correctness.lean` applies
+the assembly theorem to that bundle. Alternative providers can import the same
+VC definitions and assembly without importing `Arithmetic` or `Correctness`.
+The expanded VC statements match their names by `rfl`; this is the statement
+identity required by the planned proof registry, which is not implemented yet.
 
 ## Validation and next step
 
 ```sh
 lake build VeriPyAsm ContractTests HoareTests BlockTests InstructionTests
-lake build LoopTests TriangularTests
+lake build LoopTests TriangularTests VCAssemblyTests
 ```
 
 The regressions distinguish partial from total correctness on a divergent loop,
@@ -240,7 +275,10 @@ terminal exits. The triangular regressions derive a finite execution for every
 natural input, check the zero-input consequence, and show why the nonnegative
 precondition matters. Changing the loop's addition to subtraction yields a
 freshly stack-admitted artifact that provably violates the original contract.
+`VCAssemblyTests` checks exact VC statements, rejects an incomplete proof bundle,
+guards the provider-free import boundary, and rejects nonstandard axioms in the
+conditional artifact theorem's dependency closure.
 
 See the [rule guide](RULES.md) for the soundness interfaces. The next step is
-named closed VCs and conditional assembly from this proof, followed by general
-VC generation, exact-match proof registration, and Crush integration.
+exact-match registration for these named obligations, followed by reporting and
+configurable Crush discharge. Automatic VC generation remains separate work.

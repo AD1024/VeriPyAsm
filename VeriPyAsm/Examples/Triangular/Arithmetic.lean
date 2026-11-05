@@ -1,7 +1,7 @@
-import Init
+import VeriPyAsm.Examples.Triangular.VC
 
-/-! Mathematical obligations for the triangular loop, independent of bytecode,
-frames, and proof automation packages. Lean reconstructs the arithmetic proofs. -/
+/-! Ordinary Lean proofs of the closed triangular VCs, independent of bytecode,
+frames, and external proof automation. This is one replaceable proof provider. -/
 
 namespace VeriPyAsm.Examples.Triangular.Arithmetic
 
@@ -21,5 +21,15 @@ theorem at_exit (N n sum : Int) (nonnegative : 0 ≤ n) (nonpositive : n ≤ 0)
 
 theorem decrease (n : Int) (positive : 0 < n) :
     0 ≤ n - 1 ∧ (n - 1).toNat < n.toNat := by omega
+
+theorem exit : VC.loop6.exit := by
+  intro N n sum nonnegative nonpositive invariant
+  exact ⟨by omega, at_exit N n sum nonnegative nonpositive invariant⟩
+
+theorem proofs : VC.Proofs where
+  init := at_entry
+  preserve := preserve
+  exit := exit
+  decrease := decrease
 
 end VeriPyAsm.Examples.Triangular.Arithmetic

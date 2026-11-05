@@ -22,7 +22,11 @@ exceptional outcomes, prove composition sound against the machine semantics,
 and derive the imported `add1` and `triangular` theorems. Loop rules require a
 nonempty iteration, invariant preservation, and, for total correctness, a
 terminating iteration with strict decrease in a well-founded relation.
-The full specification DSL, VC generation, and proof registry below remain future work.
+The triangular example now exposes four named, closed VCs and a conditional
+artifact-correctness assembly theorem, with ordinary Lean proofs supplied
+separately. These VCs are extracted by hand from the proved block summaries.
+The full specification DSL, automatic VC generation, and proof registry below
+remain future work.
 
 ## 1. Inputs and embedding
 
@@ -95,6 +99,13 @@ validated artifact
 The generator is a proof-producing elaborator applying proved rules. The kernel
 checks the assembled theorem against the original artifact/specification; reporting
 that some collection of SMT queries succeeded is not the soundness argument.
+
+The current hand-extracted instance lives in `Examples/Triangular/VC.lean` and
+`Assembly.lean`: `Triangular.Assembly.artifact_total` takes `VC.Proofs` and proves
+`ArtifactTotalCorrect triangularArtifact triangularContract`. It imports no proof
+provider. Instruction safety and finite execution of each iteration are already
+proved in `Blocks.lean`; initialization, invariant preservation, exit, and strict
+ranking are explicit residual premises. See the [contract guide](CONTRACTS.md).
 
 ## 3. Automated discharge and configuration
 

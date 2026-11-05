@@ -25,11 +25,14 @@ The explicit `returns Q` postcondition also observes the returned value;
 The [instruction, block, and loop rules](docs/RULES.md) derive these proofs by
 composition, with explicit continuation, return, and exception postconditions.
 Loop termination uses a well-founded ranking between successive invariant states.
+The triangular proof now exposes four named, closed VCs and a conditional assembly
+theorem. Ordinary Lean proofs discharge those VCs in a separate module.
 
 The [verification-flow design](docs/DESIGN.md) specifies shallow elaboration,
 contracts, VC generation, configurable Crush discharge, proof reporting, and the
-manual `@[veripy_proof ...]` handoff. A full specification DSL, VC generation, and proof
-registration remain planned. Stack admission establishes structural properties;
+manual `@[veripy_proof ...]` handoff. The current VCs are extracted by hand;
+a full specification DSL, automatic VC generation, and proof registration remain
+planned. Stack admission establishes structural properties;
 functional correctness and exception freedom require separate contract proofs.
 
 The [prototype plan](docs/PROTOTYPE.md) specifies the first Python fragment,
@@ -54,7 +57,7 @@ Check bytecode examples, admission/rejection cases, and proof dependencies with:
 lake build BytecodeTests StackCertificateTests StackTests AdmissionTests
 lake build FusedSemanticsTests WordcodeTests ExtendedDecodeTests FusedDecodeTests
 lake build ContractTests HoareTests BlockTests InstructionTests
-lake build LoopTests TriangularTests
+lake build LoopTests TriangularTests VCAssemblyTests
 python3 tests/check_cpython.py  # requires CPython 3.14.4
 ```
 
@@ -94,7 +97,7 @@ release. External tools supply artifacts; there is no production extractor yet.
 | `VeriPyAsm/Examples/Bytecode.lean` | Five literal artifacts and certified embeddings |
 | `VeriPyAsm/Examples/Add1.lean` | Universal total-correctness proof for imported integer `add1` |
 | `VeriPyAsm/Examples/Triangular.lean` | Public entry point for the imported loop and its universal total-correctness theorem |
-| `VeriPyAsm/Examples/Triangular/` | Separate artifact, symbolic blocks, arithmetic, and correctness assembly |
+| `VeriPyAsm/Examples/Triangular/` | Artifact, symbolic blocks, closed VCs, conditional assembly, and separate arithmetic proofs |
 | `tests/` | Kernel-checked regression cases and CPython conformance checks |
 | `docs/BYTECODE.md` | Implemented slice, usage, and limitations |
 | `docs/CONTRACTS.md` | Contract interface, execution rules, universal program proofs |
