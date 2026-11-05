@@ -116,9 +116,8 @@ The following theorems expose sufficient preconditions for each scalar command:
 Arithmetic and comparisons share `binary`, whose operation remains an explicit
 argument. Rules preserve the rest of the frame through record updates. The
 conditions are ordinary Lean goals available to later VC generation and Crush.
-Dedicated fused-instruction rules, loop invariants, and ranking rules remain
-the next extensions; the present interface accepts a directly proved
-`InstructionCorrect` for any shallow command.
+The present interface also accepts a directly proved `InstructionCorrect` for
+any shallow command. Dedicated fused-instruction rules can be added as needed.
 
 Here is a non-returning instruction with a stack postcondition:
 
@@ -144,10 +143,38 @@ involving a returned value. `Examples/Add1.lean` now derives its universal total
 triple from instruction rules, program-lookup proofs, and block composition.
 Its artifact theorem still follows from the translation's checked correspondence.
 
+## Loop invariants and ranking
+
+Import `VeriPyAsm.Verification.Loop` (also exported by `VeriPyAsm`). An
+`IterationExecutes` path must execute at least one instruction before observing
+its next cutpoint. It may return or raise first. `IterationPartialCorrect` and
+`IterationTotalCorrect` specify such paths. The rules
+`InstructionCorrect.start_iteration_partial` and `start_iteration` compose the
+first instruction with an ordinary block proof, checking program lookup.
+
+`BlockPartialCorrect.loop` requires an invariant `I` and a partially correct
+iteration: every continuing result either reaches a final exit satisfying
+`Q.continues`, or reestablishes `I`. Terminal results satisfy `Q` directly.
+Divergence is allowed; faults are forbidden. Its soundness proof inducts over
+finite execution progress, not over an assumed termination rank.
+
+`BlockTotalCorrect.loop` additionally requires total correctness of each
+iteration and a `rank : Frame → Nat` that **strictly decreases** whenever an
+iteration reestablishes `I`. Only comparisons between invariant states need a
+decrease. `loop_wellFounded` accepts any well-founded relation, oriented
+`decreases new old`, for lexicographic and other rankings.
+
+Both rules require every final exit to be among the iteration cutpoints and
+every invariant state to be outside the final exits. An entry prefix establishes
+`I`; the loop yields a block contract that can be sequenced with an exit suffix.
+Multiple header locations are possible when `I` covers each one. Local cycle
+coverage is a proof obligation: a total iteration must reach its next cutpoint
+or halt. A decreasing header rank does not discharge an inner divergent path.
+
 ## Validation
 
 ```sh
-lake build VeriPyAsm BlockTests InstructionTests ContractTests HoareTests
+lake build VeriPyAsm BlockTests InstructionTests LoopTests ContractTests HoareTests
 ```
 
 The regressions cover first-exit behavior, early return/exception propagation,
@@ -155,5 +182,8 @@ partial versus total correctness on divergence, store/reload composition,
 noncommutative operand order, both branch edges, and failures from invalid local
 access, unchecked unbound loads, non-boolean branches, and empty returns.
 The examples also relate the returned value to locals and a remaining stack.
+Loop regressions reject zero-step iterations, unchanged ranks, and divergent
+bodies in total mode, while permitting divergent invariant-preserving loops in
+partial mode and allowed early returns or exceptions in either mode.
 Dependency reports contain only standard Lean axioms, with no `sorryAx`, native
 decision axiom, project-specific axiom, or solver-trust dependency.

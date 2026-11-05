@@ -3,6 +3,7 @@ import VeriPyAsm.Bytecode
 import VeriPyAsm.Verification.Artifact
 import VeriPyAsm.Verification.Hoare
 import VeriPyAsm.Verification.Instruction
+import VeriPyAsm.Verification.Loop
 
 /-!
 # VeriPyAsm
