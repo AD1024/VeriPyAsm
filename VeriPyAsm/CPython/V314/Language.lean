@@ -1,8 +1,10 @@
 import VeriPyAsm.CPython.V314.Artifact
 import VeriPyAsm.Semantics.Fused
 
-/-! Decoded reference language. The raw opcode/argument and byte offsets remain
-available even when an operand is resolved to a value or an absolute target. -/
+/-! Decoded reference language. Each instruction groups any EXTENDED_ARG prefixes,
+the terminal opcode, and its caches. The terminal opcode, effective operand, and
+group span remain available; the original bytes are retained in Artifact.code.
+One reference step executes one group, not one CPython internal dispatch. -/
 
 namespace VeriPyAsm.CPython.V314
 
@@ -30,9 +32,12 @@ inductive Op where
   deriving Repr, DecidableEq
 
 structure Instruction where
+  /-- Group start: the first prefix if present, otherwise the opcode itself. -/
   offset : Nat
+  /-- First byte after the terminal opcode and its inline caches. -/
   next : Nat
   opcode : Nat
+  /-- Full operand after combining prefix bytes; never truncated to UInt8. -/
   arg : Nat
   op : Op
   deriving Repr, DecidableEq

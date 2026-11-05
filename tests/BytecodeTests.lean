@@ -29,11 +29,11 @@ def observe (artifact : Artifact) (args : List Value) (fuel : Nat := 1000) :
 example : observe add1Artifact [.bool true] = .ok (.returned (.int 2)) := by decide
 example : observe add1Artifact [.none] = .ok (.raised .typeError) := by decide
 example : observe checkedArtifact [.bool false] = .ok (.raised .unboundLocalError) := by decide
-example : observe checkedArtifact [.int 7] = .ok (.returned (.int 1)) := by decide
-example : observe countdownArtifact [.int (-3)] = .ok (.returned (.int (-3))) := by decide
+example : observe checkedArtifact [.int 7] = .ok (.returned (.int 1)) := by decide +kernel
+example : observe countdownArtifact [.int (-3)] = .ok (.returned (.int (-3))) := by decide +kernel
 example : observe chooseArtifact [.none, .int 8, .bool true] =
-    .ok (.returned (.bool true)) := by decide
-example : observe countdownArtifact [.int 3] 0 = .ok .exhausted := by decide
+    .ok (.returned (.bool true)) := by decide +kernel
+example : observe countdownArtifact [.int 3] 0 = .ok .exhausted := by decide +kernel
 
 -- These states expose the difference between a Python exception and a VM fault.
 example : Command.load false 2 0 { locals := [none] } =
@@ -73,9 +73,9 @@ example : rejection { add1Artifact with code := [128, 0, 86] } =
 example : rejection { add1Artifact with code := [128, 0, 300, 0] } =
     some ⟨2, "byte outside 0..255"⟩ := by decide
 example : rejection { add1Artifact with code := [128, 0, 69, 1] } =
-    some ⟨2, "EXTENDED_ARG is not supported in this slice"⟩ := by decide
-example : rejection { add1Artifact with code := [128, 0, 87, 0] } =
-    some ⟨2, "unsupported opcode 87"⟩ := by decide
+    some ⟨2, "dangling EXTENDED_ARG"⟩ := by decide
+example : rejection { add1Artifact with code := [128, 0, 85, 0] } =
+    some ⟨2, "unsupported opcode 85"⟩ := by decide
 example : rejection { add1Artifact with code := [128, 0, 0, 0] } =
     some ⟨2, "CACHE outside an instruction's cache payload"⟩ := by decide
 example : rejection { add1Artifact with code := [128, 0, 44, 0, 0, 0] } =
@@ -87,11 +87,11 @@ example : rejection { add1Artifact with code := add1Artifact.code.set 3 1 } =
 example : rejection { literalArtifact with code := [128, 0, 82, 1, 35, 0] } =
     some ⟨2, "constant index out of bounds"⟩ := by decide
 example : rejection { countdownArtifact with code := countdownArtifact.code.set 11 0 } =
-    none := by decide -- a zero-distance forward target is an instruction boundary
+    none := by decide +kernel -- a zero-distance forward target is an instruction boundary
 example : rejection { countdownArtifact with code := countdownArtifact.code.set 11 4 } =
-    some ⟨10, "control-flow target 22 is not an instruction boundary"⟩ := by decide
+    some ⟨10, "control-flow target 22 is not an instruction boundary"⟩ := by decide +kernel
 example : rejection { countdownArtifact with code := countdownArtifact.code.set 35 30 } =
-    some ⟨34, "backward jump before start of code"⟩ := by decide
+    some ⟨34, "backward jump before start of code"⟩ := by decide +kernel
 example : rejection { add1Artifact with code := [128, 0, 94, 1] } =
     some ⟨2, "control-flow target 4 is not an instruction boundary"⟩ := by decide
 example : rejection { countdownArtifact with code := countdownArtifact.code.set 7 149 } =

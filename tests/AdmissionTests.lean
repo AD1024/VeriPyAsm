@@ -40,7 +40,7 @@ example : accepted literalArtifact = true := by decide +kernel
 example : rejection { add1Artifact with stackSize := 1 } =
     some (.stack ⟨4, .capacityExceeded 2 1⟩) := by decide +kernel
 example : rejection { add1Artifact with code := [128, 0, 69, 1] } =
-    some (.decode ⟨2, "EXTENDED_ARG is not supported in this slice"⟩) := by decide
+    some (.decode ⟨2, "dangling EXTENDED_ARG"⟩) := by decide
 
 private def emptyReturn : Artifact :=
   { add1Artifact with code := [128, 0, 35, 0] }

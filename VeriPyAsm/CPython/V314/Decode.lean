@@ -1,8 +1,10 @@
 import VeriPyAsm.CPython.V314.Language
+import VeriPyAsm.CPython.V314.Wordcode
 
-/-! Conservative decoder for CPython 3.14.4 baseline code. Cache words are payload;
-they never become instructions. EXTENDED_ARG, fused/specialized instructions, and
-code-object features outside this first slice are rejected explicitly.
+/-! Conservative decoder for CPython 3.14.4 baseline code. Prefixes are parsed
+with their terminal opcode; cache words remain payload. Only the beginning of
+an instruction group is a legal control-flow target. Specialized instructions
+and code-object features outside this slice are rejected explicitly.
 
 This checks encoding, metadata, operand bounds, and control-flow boundaries.
 It does NOT yet prove stack-height consistency or definite initialization. -/
@@ -10,11 +12,6 @@ It does NOT yet prove stack-height consistency or definite initialization. -/
 namespace VeriPyAsm.CPython.V314
 
 open Semantics
-
-structure DecodeError where
-  offset : Nat
-  reason : String
-  deriving Repr, DecidableEq
 
 private def fail {α : Type} (offset : Nat) (reason : String) : Except DecodeError α :=
   .error { offset, reason }
@@ -71,6 +68,10 @@ private def decodeCompare (pc arg : Nat) : Except DecodeError CompareOp := do
 private def decodeOp (a : Artifact) (pc next opcode arg : Nat) :
     Except DecodeError Op := do
   let checkLocal := check (arg < a.localNames.length) pc "local index out of bounds"
+  let checkPacked := do
+    check (arg < 256) pc "fused local operands must fit in one byte"
+    check (arg / 16 < a.localNames.length) pc "first fused local index out of bounds"
+    check (arg % 16 < a.localNames.length) pc "second fused local index out of bounds"
   let noArg := check (arg == 0) pc "expected zero unused argument"
   -- CPython skips a following NOT_TAKEN on the untaken branch.
   let fallthrough := if a.code[next]? == some 28 then next + 2 else next
@@ -82,11 +83,17 @@ private def decodeOp (a : Artifact) (pc next opcode arg : Nat) :
   | 82 => match a.constants[arg]? with
     | some value => pure (.loadConst value)
     | none => fail pc "constant index out of bounds"
-  | 94 => pure (.loadSmallInt arg)
+  | 94 =>
+    check (arg < 256) pc "LOAD_SMALL_INT operand must fit in one byte"
+    pure (.loadSmallInt arg)
   | 84 => checkLocal; pure (.loadFast arg)
   | 86 => checkLocal; pure (.loadFastBorrow arg)
+  | 87 => checkPacked; pure (.loadFastBorrowLoadFastBorrow (arg / 16) (arg % 16))
   | 88 => checkLocal; pure (.loadFastCheck arg)
+  | 89 => checkPacked; pure (.loadFastLoadFast (arg / 16) (arg % 16))
   | 112 => checkLocal; pure (.storeFast arg)
+  | 113 => checkPacked; pure (.storeFastLoadFast (arg / 16) (arg % 16))
+  | 114 => checkPacked; pure (.storeFastStoreFast (arg / 16) (arg % 16))
   | 44 => return .binary (← decodeBinary pc arg)
   | 56 => return .compare (← decodeCompare pc arg)
   | 39 => noArg; pure .toBool
@@ -98,25 +105,25 @@ private def decodeOp (a : Artifact) (pc next opcode arg : Nat) :
   | 103 => pure (.popJumpIfTrue (next + 2 * arg) fallthrough)
   | 35 => noArg; pure .returnValue
   | 0 => fail pc "CACHE outside an instruction's cache payload"
-  | 69 => fail pc "EXTENDED_ARG is not supported in this slice"
   | _ => fail pc s!"unsupported opcode {opcode}"
 
 private def decodeInstructions (a : Artifact) :
     Nat → Nat → List Nat → Except DecodeError (List Instruction)
   | _, _, [] => pure []
   | 0, pc, _ => fail pc "decoder fuel exhausted"
-  | _ + 1, pc, [_] => fail pc "truncated code unit"
-  | fuel + 1, pc, opcode :: arg :: rest => do
-    let width := 2 * cacheWords opcode
-    let next := pc + 2 + width
-    let op ← decodeOp a pc next opcode arg
+  | fuel + 1, pc, bytes => do
+    let (header, rest) ← Wordcode.read pc bytes
+    let width := 2 * cacheWords header.opcode
+    let next := header.opcodeOffset + 2 + width
+    let op ← decodeOp a pc next header.opcode header.arg
     check (width ≤ rest.length) pc "truncated inline cache"
     check ((rest.take width).all (· == 0)) pc "expected zero baseline cache payload"
     let tail ← decodeInstructions a fuel next (rest.drop width)
-    pure ({ offset := pc, next, opcode, arg, op } :: tail)
+    pure ({ offset := header.start, next, opcode := header.opcode, arg := header.arg, op } :: tail)
 
 /-- Decode every instruction (also unreachable ones), checking all target and
-fallthrough boundaries. A successful decode is not yet a program-safety proof. -/
+fallthrough boundaries. Prefix interiors and terminal opcodes inside prefixed
+groups are not entry points. A successful decode is not a program-safety proof. -/
 def decode (artifact : Artifact) : Except DecodeError Code := do
   checkMetadata artifact
   let instructions ← decodeInstructions artifact artifact.code.length 0 artifact.code

@@ -32,6 +32,18 @@ srcDir = "tests"
 name = "FusedSemanticsTests"
 srcDir = "tests"
 
+[[lean_lib]]
+name = "WordcodeTests"
+srcDir = "tests"
+
+[[lean_lib]]
+name = "ExtendedDecodeTests"
+srcDir = "tests"
+
+[[lean_lib]]
+name = "FusedDecodeTests"
+srcDir = "tests"
+
 [[require]]
 name = "crush"
 git = "https://github.com/AD1024/lean-crush"
