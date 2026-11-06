@@ -40,6 +40,15 @@ def conjunction(nodes):
     return nodes[0] if len(nodes) == 1 else ast.BoolOp(op=ast.And(), values=nodes)
 
 
+def decode_source(raw):
+    """Decode Python source using its encoding cookie and physical newlines."""
+    # Encoding cookies can be on either of the first two physical lines, even
+    # with CR-only input. BytesIO.readline() alone recognizes only LF.
+    physical = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    encoding, _ = tokenize.detect_encoding(io.BytesIO(physical).readline)
+    return encoding, raw.decode(encoding).replace("\r\n", "\n").replace("\r", "\n")
+
+
 @dataclass
 class Loop:
     node: ast.While
@@ -102,7 +111,7 @@ class Function:
                       column=self.loop.body[0].col_offset, endLine=self.loop.body[-1].end_lineno,
                       endColumn=self.loop.body[-1].end_col_offset)))
         canonical = json.dumps(artifact, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        encoding, _ = tokenize.detect_encoding(io.BytesIO(self.raw).readline)
+        encoding, _ = decode_source(self.raw)
         bundle = dict(schemaVersion=1, generator="veripy_frontend", artifact=artifact, source=source,
                     sourceEncoding=encoding, sourceBytesBase64=base64.b64encode(self.raw).decode("ascii"),
                     artifactDigest=hashlib.sha256(canonical.encode()).hexdigest(),
@@ -133,13 +142,20 @@ def tagged(value):
 class Parser:
     def __init__(self, path, raw):
         self.path, self.raw = str(path), raw
-        encoding, _ = tokenize.detect_encoding(io.BytesIO(raw).readline)
-        self.text = raw.decode(encoding)
-        self.lines = self.text.splitlines()
-        self.tree = ast.parse(raw, filename=self.path)
+        # Python physical lines end only at LF, CRLF, or CR. Unicode splitlines()
+        # also splits characters that may legally occur *inside* a comment.
+        # Give the tokenizer, AST, and attachment lookup the same line numbering;
+        # compilation and the source bundle still retain the original bytes.
+        _, self.text = decode_source(raw)
+        self.lines = self.text.split("\n")
+        self.tree = ast.parse(self.text, filename=self.path)
         self.directives = {}
-        self.used = set()
-        for token in tokenize.tokenize(io.BytesIO(raw).readline):
+        self.code_lines = set()
+        trivia = {tokenize.COMMENT, tokenize.NL, tokenize.NEWLINE, tokenize.INDENT,
+                  tokenize.DEDENT, tokenize.ENDMARKER}
+        for token in tokenize.generate_tokens(io.StringIO(self.text).readline):
+            if token.type not in trivia:
+                self.code_lines.update(range(token.start[0], token.end[0] + 1))
             if token.type != tokenize.COMMENT:
                 continue
             match = re.fullmatch(r"#\s*veripy:\s*(\w+)(?:\s+(.*))?", token.string)
@@ -152,13 +168,16 @@ class Parser:
     def error(self, line, message):
         raise FrontendError(f"{self.path}:{line}: {message}")
 
+    def block_start(self, node):
+        """First physical line in the preceding comment/blank-line block."""
+        line = node.lineno - 1
+        while line > 0 and line not in self.code_lines:
+            line -= 1
+        return line + 1
+
     def block(self, node, allowed):
         result = []
-        line = node.lineno - 1
-        while line > 0:
-            text = self.lines[line - 1].strip()
-            if text and not text.startswith("#"):
-                break
+        for line in range(self.block_start(node), node.lineno):
             if line in self.directives:
                 directive = self.directives[line]
                 # Token columns count characters; AST columns count UTF-8 bytes.
@@ -168,9 +187,7 @@ class Parser:
                 if directive.kind not in allowed:
                     self.error(line, f"{directive.kind!r} cannot annotate this statement")
                 result.append(directive)
-                self.used.add(line)
-            line -= 1
-        return list(reversed(result))
+        return result
 
     def expression(self, directive, names, *, logical=True, result=False, expected="prop"):
         try:
@@ -287,12 +304,15 @@ class Parser:
         final_names = self.suite(function.body, self.parameters)
         header = self.block(function, {"requires", "ensures", "mode"})
         loop_headers = [self.block(loop.node, {"loop", "invariant", "decreases"}) for loop in self.loops]
+        consumed = {directive.line for block in [header, *loop_headers] for directive in block}
+        header_start = self.block_start(function)
         selected_end = next((node.lineno for node in self.tree.body if node.lineno > function.end_lineno), len(self.lines) + 1)
         for line, directive in self.directives.items():
+            in_header = header_start <= line < function.lineno
             in_body = function.lineno <= line <= function.end_lineno
             trailing_body_comment = (function.end_lineno < line < selected_end and
                                      directive.column > function.col_offset)
-            if (in_body or trailing_body_comment) and line not in self.used:
+            if (in_header or in_body or trailing_body_comment) and line not in consumed:
                 self.error(line, f"misplaced or unsupported annotation {directive.kind!r}")
         def of_kind(items, kind):
             return [item for item in items if item.kind == kind]

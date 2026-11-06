@@ -25,6 +25,19 @@ EXAMPLE = ROOT / "examples/python/triangular_annotated.py"
 SOURCE = EXAMPLE.read_text()
 NESTED = (ROOT / "examples/python/nested_product_annotated.py").read_text()
 
+ANNOTATION_LOSS_SOURCE = """# preface\fcontinuation
+# veripy: ensures False
+# veripy: requires is_int(n) and n >= 0
+# veripy: ensures result == 0
+def countdown(n):
+    # ordinary loop comment
+    # veripy: invariant n >= 0
+    # veripy: decreases n
+    while n > 0:
+        n = n - 1
+    return n
+"""
+
 
 class SourceFrontendTests(unittest.TestCase):
     def parse(self, source=SOURCE, *, inspection=False):
@@ -71,6 +84,93 @@ end {namespace}
         large = self.parse(SOURCE.replace("s = 0", "s = 1234567890123456789012345678901234567890"))
         self.assertIn({"tag": "int", "value": "1234567890123456789012345678901234567890"},
                       large.bundle()["artifact"]["constants"])
+
+    def test_physical_comment_lines_preserve_all_annotations(self):
+        # These characters split Unicode str.splitlines(), but not Python lines.
+        for separator in (" ", "\f", "\v", "\x1c", "\x1d", "\x1e", "\x85", "\u2028", "\u2029"):
+            source = ANNOTATION_LOSS_SOURCE.replace("\f", separator)
+            for newline in ("\n", "\r\n", "\r", "mixed"):
+                with self.subTest(separator=repr(separator), newline=repr(newline)):
+                    if newline == "mixed":
+                        endings = ("\n", "\r\n", "\r")
+                        text = "".join(line + endings[i % 3] for i, line in
+                                       enumerate(source.split("\n")[:-1]))
+                    else:
+                        text = source.replace("\n", newline)
+                    function = Parser("physical.py", text.encode()).parse("countdown")
+                    self.assertEqual(ast.unparse(function.ensures), "False and result == 0")
+                    self.assertEqual(ast.unparse(function.requires), "is_int(n) and n >= 0")
+                    self.assertEqual(ast.unparse(function.invariant), "n >= 0")
+                    self.assertEqual(function.node.lineno, 5)
+                    self.assertEqual(function.loop.lineno, 9)
+
+    def test_newlines_and_encodings_preserve_raw_source_and_positions(self):
+        source = ANNOTATION_LOSS_SOURCE.replace("preface", "préface")
+        for newline in ("\n", "\r\n", "\r"):
+            text = source.replace("\n", newline)
+            inputs = [text.encode(), b"\xef\xbb\xbf" + text.encode(),
+                      ("# coding: latin-1" + newline + text).encode("latin-1"),
+                      (newline + "# coding: latin-1" + newline + text).encode("latin-1")]
+            for raw in inputs:
+                with self.subTest(newline=repr(newline), prefix=raw[:20]):
+                    function = Parser("encoded.py", raw).parse("countdown")
+                    expected_ast = next(n for n in ast.parse(raw).body if isinstance(n, ast.FunctionDef))
+                    expected_code = next(c for c in compile(raw, "encoded.py", "exec",
+                        dont_inherit=True, optimize=0).co_consts if hasattr(c, "co_code"))
+                    self.assertEqual(function.node.lineno, expected_ast.lineno)
+                    self.assertEqual(list(function.code.co_positions()), list(expected_code.co_positions()))
+                    self.assertEqual(base64.b64decode(function.bundle()["sourceBytesBase64"]), raw)
+                    self.assertEqual(ast.unparse(function.ensures), "False and result == 0")
+
+    def test_unconsumed_function_header_directive_is_rejected(self):
+        class DroppingHeaderParser(Parser):
+            def block(self, node, allowed):
+                directives = super().block(node, allowed)
+                return [d for d in directives if d.text != "False"]
+        with self.assertRaisesRegex(FrontendError, "misplaced or unsupported annotation 'ensures'"):
+            DroppingHeaderParser("dropped.py", ANNOTATION_LOSS_SOURCE.replace("\f", " ").encode()).parse("countdown")
+
+    def test_false_postcondition_cannot_produce_verified_artifact(self):
+        for separator in ("\f", "\v", "\u2028", "\u2029"):
+            with self.subTest(separator=repr(separator)):
+                function = Parser("false_post.py", ANNOTATION_LOSS_SOURCE.replace("\f", separator).encode()).parse("countdown")
+                return_pc = next(i.offset for i in dis.get_instructions(function.code)
+                                 if i.opname == "RETURN_VALUE")
+                text = "import VeriPyAsm.Verification.VC.Discharge\n" + emit(function, "FalsePost")
+                text += """
+namespace FalsePost
+open VeriPyAsm.Semantics VeriPyAsm.Verification
+
+theorem precondition_inhabited : ∃ ghost initial, contract.pre ghost initial :=
+  ⟨0, { locals := [some (.int 0)] }, by simp [contract]⟩
+
+theorem no_verified_artifact : ¬ Nonempty (VerifiedArtifact artifact contract) := by
+  rintro ⟨verified⟩
+  have correct := admitted.translation.artifact_partial_iff.mp verified.artifact_partial
+  have observed : run (step admitted.translation.program) 100 { locals := [some (.int 0)] } =
+      .halted (.returned (.int 0) { pc := RETURN_PC, locals := [some (.int 0)] }) := by decide +kernel
+  have impossible := correct.run_halted (ghost := 0) (by simp [contract]) observed
+  simp [Contract.Accepts, contract] at impossible
+
+@[veripy_proof generated.VC.entry]
+theorem entry : generated.VC.entry := by
+  intro n _
+  exact ⟨[.int n], rfl, rfl⟩
+@[veripy_proof generated.VC.init]
+theorem init : generated.VC.init := True.intro
+
+/-- error: verification incomplete: 1 unresolved VC(s); no VerifiedArtifact exported -/
+#guard_msgs (drop info, all) in
+set_option veripy.auto false in
+veripy_verify rejected from generated
+
+#eval show Lean.CoreM Unit from do
+  for name in [`FalsePost.rejected, `FalsePost.rejected.vc.entry, `FalsePost.rejected.report] do
+    if (← Lean.getEnv).contains name then throwError "false postcondition exported {name}"
+#veripy_audit FalsePost
+end FalsePost
+""".replace("RETURN_PC", str(return_pc))
+                run_lean(text)
 
     def test_rejects_missing_type_guards_and_annotations(self):
         for source, diagnostic in [
