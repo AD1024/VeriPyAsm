@@ -103,8 +103,9 @@ python3 -m veripy_frontend generate examples/python/triangular_annotated.py \
 lake build VeriPyAsm.Examples.SourceTriangular.Proofs
 ```
 
-Generation emits a Lean module and a companion `.source.json` file. The separate
-[proof module](VeriPyAsm/Examples/SourceTriangular/Proofs.lean) discharges the VCs
+Generation emits a Lean module and a companion `.source.json` file containing the
+original source bytes and each attached directive's text, location, and target.
+The separate [proof module](VeriPyAsm/Examples/SourceTriangular/Proofs.lean) discharges the VCs
 and assembles the verified artifact; generating VCs alone does not prove the
 contract. For every nonnegative integer input `N`, the example proves termination
 with an integer result `r` satisfying `2*r = N*(N+1)`, without exceptions or VM
@@ -141,3 +142,5 @@ constructors, `NOP`-folded assertions, and optimized artifacts are rejected.
 Proofs establish properties of the explicit Lean semantics. Correspondence with
 the CPython runtime is a separate obligation, currently supported by source
 inspection and differential tests rather than a formal runtime refinement proof.
+The tracked [supported profile and trust boundary](SUPPORTED_PROFILE.md) details
+the accepted instructions, source fragment, proof policies, and remaining assumptions.
