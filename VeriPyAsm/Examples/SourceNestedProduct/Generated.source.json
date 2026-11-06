@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generator": "veripy_frontend",
   "artifact": {
     "schemaVersion": 1,
@@ -513,6 +513,176 @@
     "endLine": 18,
     "endColumn": 16
   },
+  "directives": [
+    {
+      "kind": "requires",
+      "text": "is_int(n) and is_int(m) and n >= 0 and m >= 0",
+      "sourceText": "# veripy: requires is_int(n) and is_int(m) and n >= 0 and m >= 0",
+      "span": {
+        "line": 1,
+        "column": 0,
+        "endLine": 1,
+        "endColumn": 64
+      },
+      "target": {
+        "kind": "function",
+        "name": "nested_product",
+        "span": {
+          "line": 3,
+          "column": 0,
+          "endLine": 18,
+          "endColumn": 16
+        }
+      }
+    },
+    {
+      "kind": "ensures",
+      "text": "result == old(n) * old(m)",
+      "sourceText": "# veripy: ensures result == old(n) * old(m)",
+      "span": {
+        "line": 2,
+        "column": 0,
+        "endLine": 2,
+        "endColumn": 43
+      },
+      "target": {
+        "kind": "function",
+        "name": "nested_product",
+        "span": {
+          "line": 3,
+          "column": 0,
+          "endLine": 18,
+          "endColumn": 16
+        }
+      }
+    },
+    {
+      "kind": "loop",
+      "text": "rows",
+      "sourceText": "# veripy: loop rows",
+      "span": {
+        "line": 6,
+        "column": 4,
+        "endLine": 6,
+        "endColumn": 23
+      },
+      "target": {
+        "kind": "loop",
+        "name": "rows",
+        "span": {
+          "line": 9,
+          "column": 4,
+          "endLine": 17,
+          "endColumn": 17
+        }
+      }
+    },
+    {
+      "kind": "invariant",
+      "text": "i >= 0 and total == (old(n) - i) * old(m)",
+      "sourceText": "# veripy: invariant i >= 0 and total == (old(n) - i) * old(m)",
+      "span": {
+        "line": 7,
+        "column": 4,
+        "endLine": 7,
+        "endColumn": 65
+      },
+      "target": {
+        "kind": "loop",
+        "name": "rows",
+        "span": {
+          "line": 9,
+          "column": 4,
+          "endLine": 17,
+          "endColumn": 17
+        }
+      }
+    },
+    {
+      "kind": "decreases",
+      "text": "i",
+      "sourceText": "# veripy: decreases i",
+      "span": {
+        "line": 8,
+        "column": 4,
+        "endLine": 8,
+        "endColumn": 25
+      },
+      "target": {
+        "kind": "loop",
+        "name": "rows",
+        "span": {
+          "line": 9,
+          "column": 4,
+          "endLine": 17,
+          "endColumn": 17
+        }
+      }
+    },
+    {
+      "kind": "loop",
+      "text": "columns",
+      "sourceText": "# veripy: loop columns",
+      "span": {
+        "line": 11,
+        "column": 8,
+        "endLine": 11,
+        "endColumn": 30
+      },
+      "target": {
+        "kind": "loop",
+        "name": "columns",
+        "span": {
+          "line": 14,
+          "column": 8,
+          "endLine": 16,
+          "endColumn": 21
+        }
+      }
+    },
+    {
+      "kind": "invariant",
+      "text": "j >= 0 and total == (old(n) - i) * old(m) + (old(m) - j)",
+      "sourceText": "# veripy: invariant j >= 0 and total == (old(n) - i) * old(m) + (old(m) - j)",
+      "span": {
+        "line": 12,
+        "column": 8,
+        "endLine": 12,
+        "endColumn": 84
+      },
+      "target": {
+        "kind": "loop",
+        "name": "columns",
+        "span": {
+          "line": 14,
+          "column": 8,
+          "endLine": 16,
+          "endColumn": 21
+        }
+      }
+    },
+    {
+      "kind": "decreases",
+      "text": "j",
+      "sourceText": "# veripy: decreases j",
+      "span": {
+        "line": 13,
+        "column": 8,
+        "endLine": 13,
+        "endColumn": 29
+      },
+      "target": {
+        "kind": "loop",
+        "name": "columns",
+        "span": {
+          "line": 14,
+          "column": 8,
+          "endLine": 16,
+          "endColumn": 21
+        }
+      }
+    }
+  ],
   "annotations": {
     "mode": "total",
     "requires": "is_int(n) and is_int(m) and (n >= 0) and (m >= 0)",

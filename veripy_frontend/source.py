@@ -24,14 +24,30 @@ class FrontendError(Exception):
 @dataclass
 class Directive:
     line: int
-    column: int
+    column: int  # UTF-8 bytes, like AST/source-map columns
     kind: str
     text: str
+    end_column: int
+    source_text: str
 
 
 def span(node):
     return dict(line=node.lineno, column=node.col_offset,
                 endLine=node.end_lineno, endColumn=node.end_col_offset)
+
+
+@dataclass
+class AttachedDirective:
+    directive: Directive
+    target: ast.FunctionDef | ast.While
+    name: str
+
+    def bundle(self):
+        d = self.directive
+        return dict(kind=d.kind, text=d.text, sourceText=d.source_text,
+                    span=dict(line=d.line, column=d.column, endLine=d.line, endColumn=d.end_column),
+                    target=dict(kind="function" if isinstance(self.target, ast.FunctionDef) else "loop",
+                                name=self.name, span=span(self.target)))
 
 
 def conjunction(nodes):
@@ -82,6 +98,7 @@ class Function:
     label: str
     missing: tuple[str, ...] = ()
     loops: tuple[Loop, ...] = ()
+    directives: tuple[AttachedDirective, ...] = ()
 
     @property
     def scoped(self):
@@ -112,10 +129,11 @@ class Function:
                       endColumn=self.loop.body[-1].end_col_offset)))
         canonical = json.dumps(artifact, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         encoding, _ = decode_source(self.raw)
-        bundle = dict(schemaVersion=1, generator="veripy_frontend", artifact=artifact, source=source,
+        bundle = dict(schemaVersion=2, generator="veripy_frontend", artifact=artifact, source=source,
                     sourceEncoding=encoding, sourceBytesBase64=base64.b64encode(self.raw).decode("ascii"),
                     artifactDigest=hashlib.sha256(canonical.encode()).hexdigest(),
                     qualifiedName=self.code.co_qualname, functionSpan=span(self.node),
+                    directives=[directive.bundle() for directive in self.directives],
                     annotations=dict(mode=self.mode, requires=ast.unparse(self.requires),
                         ensures=ast.unparse(self.ensures), invariant=ast.unparse(self.invariant),
                         decreases=ast.unparse(self.decreases) if self.decreases else None))
@@ -161,7 +179,11 @@ class Parser:
             match = re.fullmatch(r"#\s*veripy:\s*(\w+)(?:\s+(.*))?", token.string)
             if match:
                 line, col = token.start
-                self.directives[line] = Directive(line, col, match[1], match[2] or "")
+                # Token columns count characters; all exported spans count UTF-8 bytes.
+                column = len(self.lines[line - 1][:col].encode("utf-8"))
+                end_column = column + len(token.string.encode("utf-8"))
+                self.directives[line] = Directive(line, column, match[1], match[2] or "",
+                                                   end_column, token.string)
             elif re.match(r"#\s*veripy:", token.string):
                 self.error(token.start[0], "malformed veripy directive")
 
@@ -180,9 +202,7 @@ class Parser:
         for line in range(self.block_start(node), node.lineno):
             if line in self.directives:
                 directive = self.directives[line]
-                # Token columns count characters; AST columns count UTF-8 bytes.
-                column = len(self.lines[line - 1][:directive.column].encode("utf-8"))
-                if column != node.col_offset:
+                if directive.column != node.col_offset:
                     self.error(line, "annotation indentation does not match its statement")
                 if directive.kind not in allowed:
                     self.error(line, f"{directive.kind!r} cannot annotate this statement")
@@ -374,10 +394,14 @@ class Parser:
             self.error(function.lineno, "unsupported code-object metadata")
         for constant in code.co_consts:
             tagged(constant)
+        attachments = [AttachedDirective(d, function, code.co_qualname) for d in header]
+        attachments.extend(AttachedDirective(d, loop.node, loop.label)
+                           for loop, items in zip(self.loops, loop_headers) for d in items)
+        attachments.sort(key=lambda attachment: attachment.directive.line)
         first = self.loops[0]
         return Function(self.path, self.raw, function, code, self.parameters, requires, ensures,
                         first.invariant, first.decreases, mode, first.node, first.label,
-                        tuple(missing_annotations), tuple(self.loops))
+                        tuple(missing_annotations), tuple(self.loops), tuple(attachments))
 
 
 

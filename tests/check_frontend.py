@@ -130,6 +130,58 @@ end {namespace}
         with self.assertRaisesRegex(FrontendError, "misplaced or unsupported annotation 'ensures'"):
             DroppingHeaderParser("dropped.py", ANNOTATION_LOSS_SOURCE.replace("\f", " ").encode()).parse("countdown")
 
+    def test_directive_inventory_preserves_text_spans_and_targets(self):
+        source = re.sub(r"\bn\b", "entrée", ANNOTATION_LOSS_SOURCE)
+        source = source.replace("# veripy: ensures False", "# veripy: ensures False\n# veripy: ensures False")
+        source += '''
+# veripy: requires is_int(x)
+# veripy: ensures result == old(x)
+def other(x):
+    return x
+'''
+        for newline in ("\n", "\r\n", "\r"):
+            with self.subTest(newline=repr(newline)):
+                function = Parser("inventory.py", source.replace("\n", newline).encode()).parse("countdown")
+                bundle = function.bundle()
+                self.assertEqual(bundle["schemaVersion"], 2)
+                self.assertEqual(bundle["artifact"]["schemaVersion"], 1)
+                self.assertEqual(bundle["source"]["schemaVersion"], 1)
+                inventory = bundle["directives"]
+                expected = [(i, line) for i, line in enumerate(source.split("\n"), 1)
+                            if "# veripy:" in line and i <= function.node.end_lineno]
+                self.assertEqual(len(inventory), len(expected))
+                for directive, (line, original) in zip(inventory, expected):
+                    location = directive["span"]
+                    comment = original.lstrip()
+                    self.assertEqual(location["line"], line)
+                    self.assertEqual(location["endLine"], line)
+                    self.assertEqual(original.encode()[location["column"]:location["endColumn"]].decode(), comment)
+                    self.assertEqual(directive["sourceText"], comment)
+                    self.assertEqual(comment, f"# veripy: {directive['kind']} {directive['text']}")
+                    target = directive["target"]
+                    is_function = line < function.node.lineno
+                    node = function.node if is_function else function.loop
+                    self.assertEqual(target["kind"], "function" if is_function else "loop")
+                    self.assertEqual(target["name"], "countdown" if is_function else function.label)
+                    self.assertEqual(target["span"], dict(line=node.lineno, column=node.col_offset,
+                        endLine=node.end_lineno, endColumn=node.end_col_offset))
+                # Repeated predicates remain distinct, in their original source order.
+                self.assertEqual([d["text"] for d in inventory if d["kind"] == "ensures"],
+                                 ["False", "False", "result == 0"])
+                self.assertEqual(ast.dump(function.ensures),
+                                 ast.dump(ast.parse("False and False and result == 0", mode="eval").body))
+
+    def test_nested_directive_inventory_has_distinct_attachment_targets(self):
+        bundle = self.nested().bundle()
+        inventory = bundle["directives"]
+        self.assertEqual([d["target"]["name"] for d in inventory],
+                         ["nested_product"] * 2 + ["rows"] * 3 + ["columns"] * 3)
+        for directive in inventory:
+            name = directive["target"]["name"]
+            target = (bundle["functionSpan"] if name == "nested_product" else
+                      next(s["loop"]["statement"] for s in bundle["sources"] if s["loop"]["label"] == name))
+            self.assertEqual(directive["target"]["span"], target)
+
     def test_false_postcondition_cannot_produce_verified_artifact(self):
         for separator in ("\f", "\v", "\u2028", "\u2029"):
             with self.subTest(separator=repr(separator)):
@@ -473,6 +525,17 @@ end InvalidInnerMeasure
         self.assertEqual(without_build(generated), without_build(actual))
         self.assertIn("loops := [loop0, loop1]", generated)
         self.assertIn("sourceMaps.loops[1]!", generated)
+
+    def test_committed_companions_include_current_annotation_inventory(self):
+        for source, name, example in [
+            ("triangular_annotated.py", "triangular", "SourceTriangular"),
+            ("nested_product_annotated.py", "nested_product", "SourceNestedProduct"),
+        ]:
+            with self.subTest(example=example):
+                bundle = extract(Path("examples/python") / source, name).bundle()
+                stored = json.loads((ROOT / f"VeriPyAsm/Examples/{example}/Generated.source.json").read_text())
+                for field in ("schemaVersion", "directives", "annotations", "sourceBytesBase64"):
+                    self.assertEqual(stored[field], bundle[field])
 
 
 if __name__ == "__main__":
