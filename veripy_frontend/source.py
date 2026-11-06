@@ -39,15 +39,34 @@ def span(node):
 @dataclass
 class AttachedDirective:
     directive: Directive
-    target: ast.FunctionDef | ast.While
+    target: ast.stmt
     name: str
+    kind: str | None = None
+    boundary: str | None = None
 
     def bundle(self):
         d = self.directive
+        target = dict(kind=self.kind or ("function" if isinstance(self.target, ast.FunctionDef) else "loop"),
+                      name=self.name, span=span(self.target))
+        if self.boundary:
+            target["boundary"] = self.boundary
         return dict(kind=d.kind, text=d.text, sourceText=d.source_text,
                     span=dict(line=d.line, column=d.column, endLine=d.line, endColumn=d.end_column),
-                    target=dict(kind="function" if isinstance(self.target, ast.FunctionDef) else "loop",
-                                name=self.name, span=span(self.target)))
+                    target=target)
+
+
+@dataclass
+class Checkpoint:
+    node: ast.stmt
+    kind: str  # assertion, before, or after
+    label: str
+    claim: ast.expr
+    initialized: set[str]
+    directive: Directive | None = None
+
+    def bundle(self):
+        return dict(origin=dict(label=self.label, kind=self.kind, statement=span(self.node)),
+                    claim=ast.unparse(self.claim), initialized=sorted(self.initialized))
 
 
 def conjunction(nodes):
@@ -99,6 +118,7 @@ class Function:
     missing: tuple[str, ...] = ()
     loops: tuple[Loop, ...] = ()
     directives: tuple[AttachedDirective, ...] = ()
+    checkpoints: tuple[Checkpoint, ...] = ()
 
     @property
     def scoped(self):
@@ -144,6 +164,8 @@ class Function:
                 decreases=ast.unparse(loop.decreases) if loop.decreases else None,
                 initialized=sorted(loop.header_names), modified=sorted(loop.modified_names))
                 for loop in self.loops]
+        if self.checkpoints:
+            bundle["checkpoints"] = dict(schemaVersion=1, items=[c.bundle() for c in self.checkpoints])
         return bundle
 
 
@@ -169,9 +191,12 @@ class Parser:
         self.tree = ast.parse(self.text, filename=self.path)
         self.directives = {}
         self.code_lines = set()
+        self.else_tokens = []
         trivia = {tokenize.COMMENT, tokenize.NL, tokenize.NEWLINE, tokenize.INDENT,
                   tokenize.DEDENT, tokenize.ENDMARKER}
         for token in tokenize.generate_tokens(io.StringIO(self.text).readline):
+            if token.type == tokenize.NAME and token.string in ("else", "elif"):
+                self.else_tokens.append(token.start)
             if token.type not in trivia:
                 self.code_lines.update(range(token.start[0], token.end[0] + 1))
             if token.type != tokenize.COMMENT:
@@ -202,6 +227,10 @@ class Parser:
         for line in range(self.block_start(node), node.lineno):
             if line in self.directives:
                 directive = self.directives[line]
+                # Logical boundaries are attached by suite traversal, including
+                # trailing comments from a deeper suite before this statement.
+                if directive.kind == "prove":
+                    continue
                 if directive.column != node.col_offset:
                     self.error(line, "annotation indentation does not match its statement")
                 if directive.kind not in allowed:
@@ -264,9 +293,28 @@ class Parser:
         if sort != expected:
             self.error(line, f"expected {expected} expression, got {sort}")
 
-    def suite(self, statements, assigned, *, parent=None):
+    def hints(self, start, end, column, anchor, assigned, kind):
+        for line in range(start, end):
+            directive = self.directives.get(line)
+            if (directive is None or directive.kind != "prove" or
+                    directive.column != column or line in self.code_lines):
+                continue
+            if kind == "after" and isinstance(anchor, ast.Return):
+                self.error(line, "proof hint after return has no normal fallthrough")
+            match = re.fullmatch(r"([A-Za-z_][A-Za-z_0-9]*)\s*:\s*(.+)", directive.text)
+            if not match:
+                self.error(line, "prove requires an ASCII label and predicate: prove H: P")
+            predicate = Directive(line, column, "prove", match[2], directive.end_column, directive.source_text)
+            claim = self.expression(predicate, assigned)
+            self.checkpoints.append(Checkpoint(anchor, kind, match[1], claim, assigned.copy(), directive))
+
+    def suite(self, statements, assigned, *, end, parent=None, lexical=True):
         assigned = set(assigned)
-        for statement in statements:
+        for index, statement in enumerate(statements):
+            following = statements[index + 1].lineno if index + 1 < len(statements) else end
+            if lexical:
+                self.hints(self.block_start(statement), statement.lineno, statement.col_offset,
+                           statement, assigned, "before")
             if isinstance(statement, ast.Assign) and len(statement.targets) == 1 and isinstance(statement.targets[0], ast.Name):
                 self.check_expr(statement.value, assigned)
                 assigned.add(statement.targets[0].id)
@@ -275,26 +323,51 @@ class Parser:
                 self.check_expr(statement.value, assigned)
             elif isinstance(statement, ast.If):
                 self.check_expr(statement.test, assigned, expected="prop")
-                left = self.suite(statement.body, assigned, parent=parent)
-                right = self.suite(statement.orelse, assigned, parent=parent)
+                body_end = following
+                if statement.orelse:
+                    # Token identity distinguishes an else header from comments
+                    # before its first statement and from nested else clauses.
+                    body_end = next(line for line, column in self.else_tokens
+                        if statement.body[-1].end_lineno < line <= statement.orelse[0].lineno
+                        and column == statement.col_offset)
+                left = self.suite(statement.body, assigned, end=body_end, parent=parent)
+                # AST desugars elif into an If in orelse, at the parent's
+                # indentation. It has no separate lexical suite for comments;
+                # otherwise a hint after the whole if would attach twice.
+                implicit_elif = (bool(statement.orelse) and isinstance(statement.orelse[0], ast.If)
+                                 and statement.orelse[0].col_offset == statement.col_offset)
+                right = self.suite(statement.orelse, assigned, end=following,
+                                   parent=parent, lexical=not implicit_elif)
                 assigned = left & right
             elif isinstance(statement, ast.While):
                 if statement.orelse:
                     self.error(statement.lineno, "while ... else is not supported")
                 self.check_expr(statement.test, assigned, expected="prop")
-                index = len(self.loops)
+                loop_index = len(self.loops)
                 modified = {node.id for part in statement.body for node in ast.walk(part)
                             if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store)}
                 self.loops.append(Loop(statement, assigned.copy(), modified, parent))
-                self.suite(statement.body, assigned, parent=index)
+                self.suite(statement.body, assigned, end=following, parent=loop_index)
             elif isinstance(statement, ast.Return):
                 if parent is not None or statement is not self.function.body[-1]:
                     self.error(statement.lineno, "only a final function return is supported")
                 self.check_expr(statement.value, assigned)
             elif isinstance(statement, ast.Assert):
-                self.error(statement.lineno, "Python assert requires source proof checkpoints; not supported yet")
+                if statement.msg is not None:
+                    self.error(statement.lineno, "assertion messages are not supported")
+                self.check_expr(statement.test, assigned, expected="prop")
+                names = self.block(statement, {"name"})
+                if len(names) > 1:
+                    self.error(names[1].line, "duplicate name directive")
+                directive = names[0] if names else None
+                label = directive.text if directive else f"assert_{statement.lineno}"
+                self.checkpoints.append(Checkpoint(statement, "assertion", label,
+                    statement.test, assigned.copy(), directive))
             else:
                 self.error(statement.lineno, f"unsupported statement: {type(statement).__name__}")
+        if statements and lexical:
+            self.hints(statements[-1].end_lineno + 1, end, statements[0].col_offset,
+                       statements[-1], assigned, "after")
         return assigned
 
     def parse(self, name, *, inspection=False):
@@ -310,6 +383,7 @@ class Parser:
         if reserved.intersection(node.id for node in ast.walk(function) if isinstance(node, ast.Name)) or reserved.intersection(self.parameters):
             self.error(function.lineno, "function shadows a reserved logical name")
         self.loops = []
+        self.checkpoints = []
         if not any(isinstance(node, ast.While) for node in ast.walk(function)):
             self.error(function.lineno, "source frontend requires at least one while loop")
         if not isinstance(function.body[-1], ast.Return):
@@ -321,12 +395,13 @@ class Parser:
         statement_lines = [node.lineno for node in ast.walk(function) if isinstance(node, ast.stmt)]
         if len(statement_lines) != len(set(statement_lines)):
             self.error(function.lineno, "semicolon-separated statements and one-line suites are not supported")
-        final_names = self.suite(function.body, self.parameters)
+        selected_end = next((node.lineno for node in self.tree.body if node.lineno > function.end_lineno), len(self.lines) + 1)
+        final_names = self.suite(function.body, self.parameters, end=selected_end)
         header = self.block(function, {"requires", "ensures", "mode"})
         loop_headers = [self.block(loop.node, {"loop", "invariant", "decreases"}) for loop in self.loops]
         consumed = {directive.line for block in [header, *loop_headers] for directive in block}
+        consumed.update(c.directive.line for c in self.checkpoints if c.directive)
         header_start = self.block_start(function)
-        selected_end = next((node.lineno for node in self.tree.body if node.lineno > function.end_lineno), len(self.lines) + 1)
         for line, directive in self.directives.items():
             in_header = header_start <= line < function.lineno
             in_body = function.lineno <= line <= function.end_lineno
@@ -383,6 +458,14 @@ class Parser:
                 missing_annotations.append(prefix + "invariant I")
             if mode == "total" and not decreases:
                 missing_annotations.append(prefix + "decreases E")
+        self.checkpoints.sort(key=lambda c: c.node.lineno if c.kind == "assertion" else c.directive.line)
+        for checkpoint in self.checkpoints:
+            line = checkpoint.directive.line if checkpoint.directive else checkpoint.node.lineno
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", checkpoint.label):
+                self.error(line, "checkpoint label must be an ASCII identifier")
+            if checkpoint.label in labels:
+                self.error(line, f"duplicate checkpoint label {checkpoint.label!r}")
+            labels.add(checkpoint.label)
         module = compile(self.raw, self.path, "exec", dont_inherit=True, optimize=0)
         codes = [c for c in module.co_consts if isinstance(c, CodeType) and c.co_name == name and c.co_firstlineno == function.lineno]
         if not codes:
@@ -397,11 +480,15 @@ class Parser:
         attachments = [AttachedDirective(d, function, code.co_qualname) for d in header]
         attachments.extend(AttachedDirective(d, loop.node, loop.label)
                            for loop, items in zip(self.loops, loop_headers) for d in items)
+        attachments.extend(AttachedDirective(c.directive, c.node, c.label,
+                           "assertion" if c.kind == "assertion" else "proof_hint",
+                           None if c.kind == "assertion" else c.kind)
+                           for c in self.checkpoints if c.directive)
         attachments.sort(key=lambda attachment: attachment.directive.line)
         first = self.loops[0]
         return Function(self.path, self.raw, function, code, self.parameters, requires, ensures,
                         first.invariant, first.decreases, mode, first.node, first.label,
-                        tuple(missing_annotations), tuple(self.loops), tuple(attachments))
+                        tuple(missing_annotations), tuple(self.loops), tuple(attachments), tuple(self.checkpoints))
 
 
 

@@ -239,9 +239,11 @@ end FalsePost
         self.assertEqual(len(inspected.missing), 4)
 
     def test_assertions_and_hints_are_not_silently_ignored(self):
+        for statement in ("assert n >= 0", "# veripy: prove p: n >= 0"):
+            function = self.parse(SOURCE.replace("        n = n - 1", f"        n = n - 1\n        {statement}"))
+            with self.assertRaisesRegex(FrontendError, "checkpoint VC generation"):
+                emit(function, "MustNotDropCheckpoint")
         for source, diagnostic in [
-            (SOURCE.replace("        n = n - 1", "        n = n - 1\n        assert n >= 0"), "source proof checkpoints"),
-            (SOURCE.replace("        n = n - 1", "        n = n - 1\n        # veripy: prove p: n >= 0"), "unsupported annotation"),
             (SOURCE.replace("# veripy: decreases n", "# veripy: decreases n\n    # veripy: invariantz True"), "cannot annotate"),
             (SOURCE + "    # veripy: invariant True\n", "unsupported annotation"),
             (SOURCE.replace("s = 0", "s = 0  # veripy: invariant True"), "unsupported annotation"),

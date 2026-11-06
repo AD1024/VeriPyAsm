@@ -58,6 +58,8 @@ def annotation_reads(node):
 
 
 def emit(function, namespace, *, mapping_only=False):
+    if function.checkpoints and not mapping_only:
+        raise FrontendError("source checkpoints support inspect only; checkpoint VC generation is not implemented yet")
     if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*(?:\.[A-Za-z_][A-Za-z_0-9]*)*", namespace):
         raise FrontendError("namespace must be a dotted Lean identifier")
     bundle = function.bundle()
@@ -124,6 +126,25 @@ veripy_sources sourceMaps from admitted for sources
 #eval IO.println ("VERIPY_SOURCE_MAP " ++ (Lean.toJson sourceMaps).compress)
 """
         text = text[:text.index("veripy_source sourceMap from admitted for source")] + mapping
+    if function.checkpoints:
+        text = text.replace("import VeriPyAsm.Frontend.Mapping", "import VeriPyAsm.Frontend.Checkpoint")
+        origins = ["{ label := " + string(c.label) + f", kind := .{c.kind}, statement := " +
+                   span(c.bundle()["origin"]["statement"]) + " }"
+                   for c in function.checkpoints]
+        text += f'''
+def checkpointOrigins : List Frontend.CheckpointOrigin := {seq(origins)}
+veripy_checkpoints checkpointMaps from admitted for source at checkpointOrigins
+'''
+        # Keep the old loop-only report shape stable. The extended inspection
+        # report contains the exact same loop map and separate checkpoint edges.
+        mapping_name = "sourceMaps" if function.scoped else "sourceMap"
+        old_report = f'#eval IO.println ("VERIPY_SOURCE_MAP " ++ (Lean.toJson {mapping_name}).compress)'
+        text = text.replace(old_report, "")
+        text += f'''
+#eval IO.println ("VERIPY_SOURCE_MAP " ++ (Lean.Json.mkObj [
+  ("loopMapping", Lean.toJson {mapping_name}),
+  ("checkpoints", Lean.toJson checkpointMaps)]).compress)
+'''
     if mapping_only:
         return text + f"\nend {namespace}\n"
     parameters = function.parameters

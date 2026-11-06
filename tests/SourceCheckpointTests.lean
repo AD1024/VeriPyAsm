@@ -74,6 +74,19 @@ def prefixedOrigins : List CheckpointOrigin := [⟨"load", .before, assertionSpa
 veripy_checkpoints prefixedMap from prefixed for prefixedSource at prefixedOrigins
 example : prefixedMap = [⟨2, [2], [⟨0, 2⟩], [⟨2, 6⟩], [⟨0, 2⟩], []⟩] := rfl
 
+-- Conservatively refuse a region whose fused store could have swallowed the
+-- requested source boundary, even though the bytecode itself is admitted.
+def fusedArtifact : Artifact := { nonnegativeArtifact with
+  name := "fused", code := [128, 0, 94, 1, 94, 2, 114, 1, 86, 0, 35, 0]
+  argCount := 0, localNames := ["a", "b"], constants := [] }
+def fused : Admitted fusedArtifact := admit_bytecode% fusedArtifact
+def fusedSource : Source := { source with
+  functionName := "fused", localNames := ["a", "b"]
+  positions := [none] ++ List.replicate 3 (some assertionSpan) ++ List.replicate 2 (some returnSpan) }
+example : Checkpoint.infer fusedArtifact fusedSource fused.translation.code fused.stack.heights
+    ⟨"before_stores", .before, assertionSpan⟩ =
+    .error "fused stores may erase the requested source boundary" := rfl
+
 -- Publication is transactional even if the late certificate name collides.
 def collision.valid : Nat := 7
 /-- error: (kernel) constant has already been declared 'VeriPyAsm.Tests.SourceCheckpoint.collision.valid' -/

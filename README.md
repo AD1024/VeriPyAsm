@@ -126,6 +126,16 @@ It has [manual proofs](VeriPyAsm/Examples/Checkpoints/Correctness.lean) and an
 [alternate Crush provider](experiments/CheckpointCrush.lean); build the latter
 with `lake build CheckpointCrush`.
 
+Source checkpoint inspection is also available:
+
+```sh
+python3 -m veripy_frontend inspect examples/python/triangular_checkpoints.py --function triangular
+```
+
+It maps bare `assert`, optional `# veripy: name A`, and `# veripy: prove H: P`
+to checked bytecode regions and edges. Source checkpoint VC generation and
+proofs are the next step.
+
 ## Run the checks
 
 ```sh
@@ -142,7 +152,7 @@ If the interpreter has a different name or location, use
 The prototype supports a defined scalar bytecode fragment. General objects,
 heap mutation, function calls, exception handlers, and async execution remain
 future work. The source frontend currently requires at least one `while` loop;
-source assertion checkpoints and ghost hints are not yet supported. Native
+source assertion checkpoints and ghost hints currently support inspection only. Native
 bytecode assertions support bare `assert` with modeled scalar tests; message
 constructors, `NOP`-folded assertions, and optimized artifacts are rejected.
 
