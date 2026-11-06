@@ -133,6 +133,10 @@ name = "SourceMappingTests"
 srcDir = "tests"
 
 [[lean_lib]]
+name = "SourceCheckpointTests"
+srcDir = "tests"
+
+[[lean_lib]]
 name = "ScopedLoopTests"
 srcDir = "tests"
 

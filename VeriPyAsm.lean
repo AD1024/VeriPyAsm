@@ -1,6 +1,7 @@
 import VeriPyAsm.Target
 import VeriPyAsm.Bytecode
 import VeriPyAsm.Frontend.Mapping
+import VeriPyAsm.Frontend.Checkpoint
 import VeriPyAsm.Verification.Artifact
 import VeriPyAsm.Verification.VerifiedArtifact
 import VeriPyAsm.Verification.AxiomAudit

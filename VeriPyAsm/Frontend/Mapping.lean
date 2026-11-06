@@ -1,5 +1,5 @@
 import VeriPyAsm.Bytecode
-import VeriPyAsm.Verification.VC.Policy
+import VeriPyAsm.Frontend.Elaboration
 
 /-! Source positions propose annotation locations. This module checks their
 control-flow interpretation against the admitted decoder output. The certificate
@@ -118,7 +118,7 @@ def covered (code : Code) (header : Nat) : Bool := coveredMany code [header]
 private def require (condition : Bool) (message : String) : Except String Unit :=
   if condition then .ok () else .error message
 
-private def metadata (artifact : Artifact) (source : Source) : Except String Unit := do
+def checkMetadata (artifact : Artifact) (source : Source) : Except String Unit := do
   require (source.schemaVersion == 1) "unsupported source schema"
   require (!source.path.isEmpty && !source.digest.isEmpty) "missing source identity"
   require (source.functionName == artifact.name && source.localNames == artifact.localNames)
@@ -127,6 +127,9 @@ private def metadata (artifact : Artifact) (source : Source) : Except String Uni
     "source position table must contain one entry per code unit"
   require (source.positions.all fun p => p.isNone || (p.getD ⟨0, 0, 0, 0⟩).valid)
     "invalid source span"
+
+private def metadata (artifact : Artifact) (source : Source) : Except String Unit := do
+  checkMetadata artifact source
   require (!source.loop.label.isEmpty && source.loop.statement.valid &&
     source.loop.statement.contains source.loop.test && source.loop.statement.contains source.loop.body &&
     !source.loop.body.contains source.loop.statement)
@@ -253,40 +256,12 @@ def inferForest (artifact : Artifact) (sources : List Source) (code : Code)
   checkForest artifact sources code heights forest
   return forest
 
-open Meta Elab Command Verification.VC
-
-private def closed (value : Expr) : MetaM Expr := do
-  let value ← instantiateMVars value
-  if value.hasFVar || value.hasMVar then throwError "source mapping requires closed inputs"
-  match Kernel.whnf (← getEnv) (← getLCtx) value with
-  | .ok result => pure result
-  | .error error => throwError "source mapping reduction failed: {error.toMessageData (← getOptions)}"
-
-private def readNat (value : Expr) : MetaM Nat := do
-  let some n ← getNatValue? (← closed value) | throwError "expected a mapping offset"
-  return n
-
-private def readList {α : Type} (read : Expr → MetaM α) (value : Expr) : MetaM (List α) := do
-  let mut result := []
-  let mut tail := value
-  repeat
-    let value ← closed tail
-    if value.isAppOfArity ``List.nil 1 then return result.reverse
-    unless value.isAppOfArity ``List.cons 3 do throwError "expected a mapping list"
-    result := (← read value.getAppArgs[1]!) :: result
-    tail := value.getAppArgs[2]!
+open Meta Elab Command Verification.VC Elaboration
 
 private def readEdge (value : Expr) : MetaM Edge := do
   let value ← closed value
   let_expr Edge.mk source target := value | throwError "expected a mapping edge"
   return ⟨← readNat source, ← readNat target⟩
-
-private def readString (value : Expr) : MetaM String := do
-  if let some text := getStringValue? (← closed value) then return text
-  let chars ← mkAppM ``String.toList #[value]
-  let chars ← readList (fun char => do
-    return Char.ofNat (← readNat (← mkAppM ``Char.toNat #[char]))) chars
-  return String.ofList chars
 
 private def readMapping (value : Expr) : MetaM Mapping := do
   let value ← closed value
@@ -295,13 +270,6 @@ private def readMapping (value : Expr) : MetaM Mapping := do
   return ⟨← readNat header, ← readList readNat test, ← readList readNat body,
     ← readList readEdge entries, ← readList readEdge backedges,
     ← readList readEdge bodyEdges, ← readList readEdge exits⟩
-
-private def publish (name : Name) (type value : Expr) : CoreM Unit := do
-  addCheckedDeclaration (.defnDecl {
-    name, levelParams := [], type, value, hints := .abbrev, safety := .safe })
-  enableRealizationsForConst name
-  withOptions (fun opts => opts.setBool `Elab.async false) <|
-    compileDecls #[name] (logErrors := false)
 
 private def elaborateMapping (id admissionId sourceId : TSyntax `ident) (forest : Bool) : CommandElabM Unit := do
   let environment ← getEnv
