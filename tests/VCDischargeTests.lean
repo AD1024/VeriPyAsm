@@ -69,6 +69,39 @@ example : verified.report.obligations[2]!.policy = "solver_trusted" := rfl
 example : verified.report.obligations[2]!.actualBackend = none := rfl
 example : verified.report.obligations[2]!.provider = "manual" := rfl
 
+-- Final packages support compiled consumers, including execution of the
+-- admitted program. Merely checking the package's type does not test this.
+def copiedPackage : VerifiedArtifact triangularArtifact triangularContract := verified
+
+#eval show IO Unit from do
+  let observed := Semantics.run (Semantics.step copiedPackage.admission.translation.program) 100
+    { locals := [some (.int 3), none] }
+  unless observed = .halted (.returned (.int 6)
+      { pc := 60, locals := [some (.int 0), some (.int 6)] }) do
+    throw <| IO.userError "compiled verification package executed incorrectly"
+
+-- Explicitly noncomputable user assemblies remain valid proof evidence. Their
+-- packages preserve Lean's noncomputable marker rather than claiming execution.
+noncomputable def choiceAssembly (proofs : VC.Proofs) :
+    VerifiedArtifact triangularArtifact triangularContract :=
+  Classical.choice ⟨Assembly.verified proofs⟩
+
+veripy_vcs choiceGoals : VerifiedArtifact triangularArtifact triangularContract via choiceAssembly where
+  init : VC.loop6.init at 6 vc_kind "initialization"
+  preserve : VC.loop6.preserve at 6 vc_kind "preservation"
+  exit : VC.loop6.exit at 58 vc_kind "normal_exit"
+  decrease : VC.loop6.decrease at 6 vc_kind "ranking"
+
+#guard_msgs (drop info, all) in
+set_option veripy.auto false in
+veripy_verify choicePackage from choiceGoals
+
+example : Nonempty (VerifiedArtifact triangularArtifact triangularContract) := ⟨choicePackage⟩
+
+#eval show CoreM Unit from do
+  unless isNoncomputable (← getEnv) ``choicePackage do
+    throwError "noncomputable assembly lost its marker"
+
 -- The JSON is valid and contains the full report; the command can emit it too.
 #eval show IO Unit from do
   let .ok json := Json.parse verified.report.json | throw <| IO.userError "invalid report JSON"

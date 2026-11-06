@@ -1,4 +1,4 @@
-import VeriPyAsm.Examples.Triangular.Artifact
+import VeriPyAsm.Examples.Triangular.Specification
 import VeriPyAsm.Verification.FusedInstruction
 import VeriPyAsm.Verification.Loop
 
@@ -10,9 +10,6 @@ In this artifact the true branch at 14 goes directly to 20, skipping NOT_TAKEN. 
 namespace VeriPyAsm.Examples.Triangular
 
 open Semantics Verification
-
-def frame (pc : Nat) (n sum : Int) (stack : List Value := []) : Frame :=
-  { pc, locals := [some (.int n), some (.int sum)], stack }
 
 def cuts (pc : Nat) : Prop := pc = 6 ∨ pc = 58
 

@@ -47,7 +47,8 @@ def main():
         run("lake", "env", "lean", str(path))
 
     run(sys.executable, str(ROOT / "tests/check_cpython.py"))
-    print("Passed: Lean regressions, transitive axiom audit, and CPython conformance", flush=True)
+    run(sys.executable, str(ROOT / "tests/check_frontend.py"))
+    print("Passed: Lean regressions, transitive axiom audit, CPython conformance, and source frontend", flush=True)
 
 
 if __name__ == "__main__":

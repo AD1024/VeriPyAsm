@@ -3,7 +3,7 @@ import VeriPyAsm.Examples.Triangular.VC
 import VeriPyAsm.Verification.VerifiedArtifact
 import VeriPyAsm.Verification.Hoare
 
-/-! Specification and conditional total correctness of the imported artifact.
+/-! Conditional total correctness of the imported artifact and shared specification.
 The assembly depends on explicit closed VC proofs, never on a proof provider.
 Proved bytecode summaries supply safety and finite iterations; the VCs supply
 the invariant equations and ranking facts. Artifact transport retains the raw
@@ -16,24 +16,8 @@ open scoped VeriPyAsm.Verification.Hoare
 
 namespace Triangular
 
-def invariant (N : Int) (current : Frame) : Prop :=
-  ∃ n sum : Int, current = frame 6 n sum ∧ 0 ≤ n ∧
-    2 * sum + n * (n + 1) = N * (N + 1)
-
-/-- Only invariant states use this rank. Their first local is a nonnegative int;
-the default for other states carries no semantic claim. -/
-def rank (current : Frame) : Nat :=
-  match current.locals[(0 : Nat)]? with
-  | some (some (.int n)) => n.toNat
-  | _ => 0
-
 def exitInvariant (N : Int) (current : Frame) : Prop :=
   ∃ sum : Int, current = frame 58 0 sum ∧ 2 * sum = N * (N + 1)
-
-def postcondition (N : Int) : Postcondition :=
-  { returned := fun value final => ∃ result : Int,
-      value = .int result ∧ 2 * result = N * (N + 1) ∧
-      final.locals = [some (.int 0), some (.int result)] ∧ final.stack = [] }
 
 namespace Assembly
 
@@ -107,13 +91,6 @@ theorem program_total (obligations : VC.Proofs) (N : Int) (nonnegative : 0 ≤ N
 end Assembly
 
 end Triangular
-
-/-- Nonnegative exact integers are accepted. The return equation avoids any
-division convention, and the final locals record the exhausted counter and sum. -/
-def triangularContract : Contract Int where
-  pre N initial := 0 ≤ N ∧ initial = { locals := [some (.int N), none] }
-  post N _ := (Triangular.postcondition N).returned
-  raises _ _ _ _ := False
 
 namespace Triangular.Assembly
 

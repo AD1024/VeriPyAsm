@@ -95,7 +95,7 @@ private def publishReport (name : Name) (report : Report) : CoreM Unit := do
     name, levelParams := [], type := mkConst ``Report, value := toExpr report,
     hints := .abbrev, safety := .safe })
   -- Reports are ordinary data, usable by #eval as well as #veripy_report.
-  withOptions (fun opts => opts.setBool `Elab.async false) <| compileDecls #[name]
+  withOptions (fun opts => opts.setBool `Elab.async false) <| compileDecls #[name] (logErrors := false)
   addCheckedDeclaration (.defnDecl {
     name := name.appendAfter "_json", levelParams := [], type := mkConst ``String,
     value := toExpr report.json, hints := .abbrev, safety := .safe })
@@ -142,6 +142,16 @@ def runManifest (manifest : Manifest) (runName : Name) (strict : Bool)
         hints := .abbrev, safety := .safe })
       let policy := if overall == some "solver_trusted" then Policy.solver_trusted else .checked
       let axioms ← liftCoreM <| audit runName policy
+      -- A package contains executable admission data as well as proofs. Compile
+      -- it before publishing success so downstream definitions and #eval can use
+      -- it normally; compilation failures must throw into the rollback path.
+      liftCoreM do
+        enableRealizationsForConst runName
+        if isNoncomputable (← getEnv) manifest.assembly then
+          modifyEnv (addNoncomputable · runName)
+        else
+          withOptions (fun opts => opts.setBool `Elab.async false) <|
+            compileDecls #[runName] (logErrors := false)
       overall := some (toString (assurance axioms))
       finalDeclaration := some runName.toString
     let report : Report := {

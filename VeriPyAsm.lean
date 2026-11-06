@@ -1,9 +1,11 @@
 import VeriPyAsm.Target
 import VeriPyAsm.Bytecode
+import VeriPyAsm.Frontend.Mapping
 import VeriPyAsm.Verification.Artifact
 import VeriPyAsm.Verification.VerifiedArtifact
 import VeriPyAsm.Verification.AxiomAudit
 import VeriPyAsm.Verification.VC.Discharge
+import VeriPyAsm.Verification.VC.Generate
 import VeriPyAsm.Verification.Hoare
 import VeriPyAsm.Verification.Instruction
 import VeriPyAsm.Verification.FusedInstruction
@@ -22,7 +24,8 @@ The triangular example separates closed VCs, conditional assembly, and their
 proofs. Exact, axiom-audited VC registration uses `@[veripy_proof Goal]`.
 VC manifests support discovery, complete theorem handoff, JSON reports, and
 checked assembly from registered proofs; automation is an optional adapter.
-Automatic VC generation remains future work;
+Automatic weakest-precondition generation supports native contracts, cutpoint
+invariants, partial/total correctness, and Nat rankings for admitted scalar code;
 see `docs/DESIGN.md` and `docs/PROTOTYPE.md`.
 -/
 

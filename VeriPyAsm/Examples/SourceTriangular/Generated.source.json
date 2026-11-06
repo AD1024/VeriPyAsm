@@ -1,0 +1,378 @@
+{
+  "schemaVersion": 1,
+  "generator": "veripy_frontend",
+  "artifact": {
+    "schemaVersion": 1,
+    "implementation": "cpython",
+    "version": [
+      3,
+      14,
+      4
+    ],
+    "profile": "baselineSequential",
+    "build": "3.14.4 (main, Apr  7 2026, 13:13:20) [Clang 16.0.0 (clang-1600.0.26.6)]",
+    "optimize": 0,
+    "compilerFlags": 0,
+    "dontInherit": true,
+    "name": "triangular",
+    "code": [
+      128,
+      0,
+      94,
+      0,
+      112,
+      1,
+      86,
+      0,
+      94,
+      0,
+      56,
+      148,
+      0,
+      0,
+      100,
+      20,
+      0,
+      0,
+      28,
+      0,
+      87,
+      16,
+      44,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      112,
+      1,
+      86,
+      0,
+      94,
+      1,
+      44,
+      10,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      112,
+      0,
+      75,
+      26,
+      0,
+      0,
+      86,
+      1,
+      35,
+      0
+    ],
+    "constants": [
+      {
+        "tag": "int",
+        "value": "0"
+      }
+    ],
+    "argCount": 1,
+    "posOnlyArgCount": 0,
+    "kwOnlyArgCount": 0,
+    "localNames": [
+      "n",
+      "s"
+    ],
+    "names": [],
+    "freeVars": [],
+    "cellVars": [],
+    "stackSize": 2,
+    "flags": 3,
+    "exceptionTable": []
+  },
+  "source": {
+    "schemaVersion": 1,
+    "path": "examples/python/triangular_annotated.py",
+    "digest": "37cd05b72ed9ad40f201920836e20e8e7ac7e5527097ff0aed0e861ef0a9992b",
+    "functionName": "triangular",
+    "localNames": [
+      "n",
+      "s"
+    ],
+    "positions": [
+      null,
+      {
+        "line": 7,
+        "column": 8,
+        "endLine": 7,
+        "endColumn": 9
+      },
+      {
+        "line": 7,
+        "column": 4,
+        "endLine": 7,
+        "endColumn": 5
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 11
+      },
+      {
+        "line": 12,
+        "column": 14,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 13
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 8,
+        "endLine": 13,
+        "endColumn": 9
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 13
+      },
+      {
+        "line": 14,
+        "column": 16,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 8,
+        "endLine": 14,
+        "endColumn": 9
+      },
+      {
+        "line": 14,
+        "column": 8,
+        "endLine": 14,
+        "endColumn": 9
+      },
+      {
+        "line": 14,
+        "column": 8,
+        "endLine": 14,
+        "endColumn": 9
+      },
+      {
+        "line": 15,
+        "column": 11,
+        "endLine": 15,
+        "endColumn": 12
+      },
+      {
+        "line": 15,
+        "column": 4,
+        "endLine": 15,
+        "endColumn": 12
+      }
+    ],
+    "loop": {
+      "label": "sum_loop",
+      "statement": {
+        "line": 12,
+        "column": 4,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      "test": {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      "body": {
+        "line": 13,
+        "column": 8,
+        "endLine": 14,
+        "endColumn": 17
+      }
+    }
+  },
+  "sourceEncoding": "utf-8",
+  "sourceBytesBase64": "IiIiU291cmNlIGFubm90YXRpb25zIGZvciB0aGUgZmlyc3QgZnJvbnRlbmQgbWlsZXN0b25lOyBubyBydW50aW1lIGhlbHBlcnMuIiIiCgoKIyB2ZXJpcHk6IHJlcXVpcmVzIGlzX2ludChuKSBhbmQgbiA+PSAwCiMgdmVyaXB5OiBlbnN1cmVzIGlzX2ludChyZXN1bHQpIGFuZCAyKnJlc3VsdCA9PSBvbGQobikqKG9sZChuKSsxKQpkZWYgdHJpYW5ndWxhcihuKToKICAgIHMgPSAwCiAgICAjIHZlcmlweTogbG9vcCBzdW1fbG9vcAogICAgIyB2ZXJpcHk6IGludmFyaWFudCBuID49IDAKICAgICMgdmVyaXB5OiBpbnZhcmlhbnQgMipzICsgbioobisxKSA9PSBvbGQobikqKG9sZChuKSsxKQogICAgIyB2ZXJpcHk6IGRlY3JlYXNlcyBuCiAgICB3aGlsZSBuID4gMDoKICAgICAgICBzID0gcyArIG4KICAgICAgICBuID0gbiAtIDEKICAgIHJldHVybiBzCg==",
+  "artifactDigest": "ce8a46d6621e2330aea174b047553344f00e75ba5f3edd93c449fa7eff23fbce",
+  "qualifiedName": "triangular",
+  "functionSpan": {
+    "line": 6,
+    "column": 0,
+    "endLine": 15,
+    "endColumn": 12
+  },
+  "annotations": {
+    "mode": "total",
+    "requires": "is_int(n) and n >= 0",
+    "ensures": "is_int(result) and 2 * result == old(n) * (old(n) + 1)",
+    "invariant": "n >= 0 and 2 * s + n * (n + 1) == old(n) * (old(n) + 1)",
+    "decreases": "n"
+  },
+  "mapping": {
+    "backedges": [
+      {
+        "sourcePC": 54,
+        "targetPC": 6
+      }
+    ],
+    "bodyEdges": [
+      {
+        "sourcePC": 14,
+        "targetPC": 20
+      }
+    ],
+    "bodyNodes": [
+      20,
+      22,
+      34,
+      36,
+      38,
+      40,
+      52,
+      54
+    ],
+    "entryEdges": [
+      {
+        "sourcePC": 4,
+        "targetPC": 6
+      }
+    ],
+    "exitEdges": [
+      {
+        "sourcePC": 14,
+        "targetPC": 58
+      }
+    ],
+    "header": 6,
+    "testNodes": [
+      6,
+      8,
+      10,
+      14
+    ]
+  },
+  "missingAnnotations": [],
+  "status": "vcs_generated"
+}

@@ -21,6 +21,10 @@ name = "VCDischargeCrush"
 srcDir = "experiments"
 
 [[lean_lib]]
+name = "GeneratedTriangularCrush"
+srcDir = "experiments"
+
+[[lean_lib]]
 name = "BytecodeTests"
 srcDir = "tests"
 
@@ -98,6 +102,18 @@ srcDir = "tests"
 
 [[lean_lib]]
 name = "VCDischargeTests"
+srcDir = "tests"
+
+[[lean_lib]]
+name = "VCGenerationTests"
+srcDir = "tests"
+
+[[lean_lib]]
+name = "SourceMappingTests"
+srcDir = "tests"
+
+[[lean_lib]]
+name = "ScopedLoopTests"
 srcDir = "tests"
 
 [[require]]
