@@ -88,7 +88,7 @@ end {namespace}
 
     def test_assertions_and_hints_are_not_silently_ignored(self):
         for source, diagnostic in [
-            (SOURCE.replace("        n = n - 1", "        n = n - 1\n        assert n >= 0"), "assertion bytecode semantics"),
+            (SOURCE.replace("        n = n - 1", "        n = n - 1\n        assert n >= 0"), "source proof checkpoints"),
             (SOURCE.replace("        n = n - 1", "        n = n - 1\n        # veripy: prove p: n >= 0"), "unsupported annotation"),
             (SOURCE.replace("# veripy: decreases n", "# veripy: decreases n\n    # veripy: invariantz True"), "cannot annotate"),
             (SOURCE + "    # veripy: invariant True\n", "unsupported annotation"),

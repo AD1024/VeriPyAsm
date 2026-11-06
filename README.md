@@ -21,6 +21,7 @@ booleans, `None`, local variables, arithmetic, comparisons, branches, and loops.
 - **Contracts and loop proofs.** Specify preconditions, return values, final
   stacks, and permitted exceptions. Prove partial correctness or total correctness
   using instruction and block rules, loop invariants, and termination measures.
+  Bare assertion bytecode has explicit `AssertionError` semantics.
 - **Automatic verification conditions (VCs).** Generate Lean propositions from
   admitted bytecode and Lean specifications. A Python comment frontend supports
   integer contracts and sequential or nested loops, with checked source mapping.
@@ -113,6 +114,9 @@ See also the [nested-loop multiplication example](examples/python/nested_product
 and the [Crush proof of generated VCs](experiments/GeneratedTriangularCrush.lean).
 Tools that already produce bytecode artifacts can use
 [`admit_bytecode%`](VeriPyAsm/Bytecode.lean) and Lean specifications directly.
+The [native assertion examples](VeriPyAsm/Examples/Assertions/Correctness.lean)
+prove both exception-free behavior under a precondition and contracts that
+explicitly permit assertion failure.
 
 ## Run the checks
 
@@ -130,7 +134,9 @@ If the interpreter has a different name or location, use
 The prototype supports a defined scalar bytecode fragment. General objects,
 heap mutation, function calls, exception handlers, and async execution remain
 future work. The source frontend currently requires at least one `while` loop;
-Python assertions and ghost hints are not yet supported.
+source assertion checkpoints and ghost hints are not yet supported. Native
+bytecode assertions support bare `assert` with modeled scalar tests; message
+constructors, `NOP`-folded assertions, and optimized artifacts are rejected.
 
 Proofs establish properties of the explicit Lean semantics. Correspondence with
 the CPython runtime is a separate obligation, currently supported by source

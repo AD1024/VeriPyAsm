@@ -255,7 +255,7 @@ class Parser:
                     self.error(statement.lineno, "only a final function return is supported")
                 self.check_expr(statement.value, assigned)
             elif isinstance(statement, ast.Assert):
-                self.error(statement.lineno, "Python assert requires assertion bytecode semantics and proof checkpoints; not supported yet")
+                self.error(statement.lineno, "Python assert requires source proof checkpoints; not supported yet")
             else:
                 self.error(statement.lineno, f"unsupported statement: {type(statement).__name__}")
         return assigned

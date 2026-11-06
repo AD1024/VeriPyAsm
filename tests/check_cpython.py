@@ -76,10 +76,11 @@ def lean_list(values):
     return "[" + ", ".join(lean_value(v) for v in values) + "]"
 
 
-def artifact(name, function):
+def artifact(name, function, *, optimize=0):
     code = function.__code__
     return f"""def {name} : Artifact :=
   {{ build := {json.dumps(sys.version)}
+    optimize := {optimize}
     name := {json.dumps(function.__name__)}
     code := {list(code.co_code)}
     constants := {lean_list(code.co_consts)}
@@ -103,6 +104,8 @@ def expected(function, args):
         return ".raised .unboundLocalError"
     except TypeError:
         return ".raised .typeError"
+    except AssertionError:
+        return ".raised .assertionError"
     return f".returned ({lean_value(result)})"
 
 
@@ -112,6 +115,8 @@ def main():
 
     namespace = runpy.run_path(str(ROOT / "examples/python/bytecode_slice.py"))
     namespace["triangular"] = runpy.run_path(str(ROOT / "examples/python/triangular.py"))["triangular"]
+    assertions = runpy.run_path(str(ROOT / "examples/python/assertions.py"))
+    namespace.update({name: assertions[name] for name in ("nonnegative", "always_fails")})
     values = [-10**40, -7, 0, 1, 3, 10**40, True, False, None]
     fixtures = {
         "add1": [(v,) for v in values],
@@ -120,6 +125,8 @@ def main():
         "checked": [(v,) for v in values],
         "literal": [()],
         "triangular": [(v,) for v in [-3, 0, 1, 3, 6, True, False, None]],
+        "nonnegative": [(v,) for v in values],
+        "always_fails": [()],
     }
     cases = [Case(name, namespace[name], args,
                   frozenset({"LOAD_FAST_BORROW_LOAD_FAST_BORROW"}) if name == "triangular" else frozenset())
@@ -137,6 +144,28 @@ def main():
         "branch_store": "def branch_store(n):\n if n:\n  x = 5\n else:\n  x = 9\n return x\n",
     }.items():
         cases.append(compiled_case(namespace, name, source, [(v,) for v in values]))
+
+    assertion_opcodes = {"LOAD_COMMON_CONSTANT", "RAISE_VARARGS"}
+    for name, source in {
+        "assert_truthy": "def assert_truthy(n):\n assert n\n return n\n",
+        "assert_not": "def assert_not(n):\n assert not n\n return n\n",
+        "assert_unbound": "def assert_unbound(n):\n if n:\n  x=1\n assert x\n return 0\n",
+    }.items():
+        cases.append(compiled_case(namespace, name, source, [(v,) for v in values],
+                                   required=assertion_opcodes))
+    cases.extend([
+        compiled_case(namespace, "assert_and",
+                      "def assert_and(n,m):\n assert n>=0 and m>0\n return n\n",
+                      [(0, 1), (-1, None), (0, None), (1, 0), (True, True), (False, True), (None, 1)],
+                      required=assertion_opcodes),
+        compiled_case(namespace, "assert_or",
+                      "def assert_or(n,m):\n assert n>=0 or m>0\n return n\n",
+                      [(0, None), (-1, 1), (-1, 0), (-1, None), (None, 1), (True, None), (False, None)],
+                      required=assertion_opcodes),
+        compiled_case(namespace, "assert_in_loop",
+                      "def assert_in_loop(n):\n s=0\n while n>0:\n  s=s+n\n  n=n-1\n  assert n>=0\n return s\n",
+                      [(v,) for v in [-2, 0, 1, 3, 6, True, False, None]], required=assertion_opcodes),
+    ])
 
     pairs = [(3, 9), (-7, 2), (True, False), (None, 1)]
     cases.extend([
@@ -162,6 +191,7 @@ def main():
     ])
 
     lines = ["import BytecodeTests", "import VeriPyAsm.Examples.Triangular",
+             "import VeriPyAsm.Examples.Assertions.Artifact",
              "import VeriPyAsm.Verification.AxiomAudit",
              "set_option Elab.async false", "set_option stderrAsMessages false",
              "namespace VeriPyAsm.Conformance",
@@ -186,14 +216,37 @@ def main():
         if name in fixtures:
             # Compare literal fixtures with real code objects, not just executions.
             # Build strings are provenance of the original extraction, not portable IDs.
+            fixture = {"nonnegative": "Assertions.nonnegativeArtifact",
+                       "always_fails": "Assertions.alwaysFailsArtifact"}.get(name, f"{name}Artifact")
             for field in ("code", "constants", "argCount", "posOnlyArgCount", "kwOnlyArgCount",
                           "localNames", "names", "freeVars", "cellVars", "stackSize", "flags",
                           "exceptionTable"):
-                lines.append(f"example : {generated}.{field} = {name}Artifact.{field} := by decide +kernel")
+                lines.append(f"example : {generated}.{field} = {fixture}.{field} := by decide +kernel")
         for args in inputs:
             lines.append(budgeted(case, f"example : observe {generated} {lean_list(args)} = "
                          f".ok ({expected(function, args)}) := by decide +kernel"))
             count += 1
+    # These are real compiler outputs, but outside the current assertion profile.
+    # Compile them to inspect bytes; never execute a rejected artifact here.
+    rejected = [
+        compiled_case(namespace, "assert_message",
+                      "def assert_message(n):\n assert n, 1\n return n\n", [], required={"CALL"}),
+        compiled_case(namespace, "assert_folded",
+                      "def assert_folded(n):\n assert True\n return n\n", [], required={"NOP"}),
+        compiled_case(namespace, "raise_argument", "def raise_argument(n):\n raise n\n", [],
+                      required={"RAISE_VARARGS"}),
+    ]
+    for case in rejected:
+        decoded_shape(case)
+        generated = f"rejected_{case.name}"
+        lines.append(artifact(generated, case.function))
+        lines.append(f"example : (decode {generated}).isOk = false := by decide +kernel")
+    optimized = compile("def optimized(n):\n assert n\n return n\n", "<oracle>", "exec",
+                        dont_inherit=True, optimize=1)
+    function = FunctionType(next(c for c in optimized.co_consts if hasattr(c, "co_code")), {})
+    assert "RAISE_VARARGS" not in {i.opname for i in dis.get_instructions(function)}
+    lines.append(artifact("rejected_optimized", function, optimize=1))
+    lines.append("example : (decode rejected_optimized).isOk = false := by decide +kernel")
     lines.append("end VeriPyAsm.Conformance")
     lines.append("#veripy_audit VeriPyAsm.Conformance")
     with tempfile.TemporaryDirectory(prefix="veripy-conformance-") as directory:
@@ -205,7 +258,8 @@ def main():
             raise SystemExit(result.returncode)
     print(f"Passed: {count} CPython outcomes across {len(cases)} stack/ownership-admitted artifacts; "
           f"{len(fixtures)} literal fixtures matched code-object metadata; "
-          f"{instruction_count} decoded instruction spans matched dis.")
+          f"{instruction_count} decoded instruction spans matched dis; "
+          f"{len(rejected) + 1} unsupported assertion/raise forms rejected.")
 
 
 if __name__ == "__main__":
