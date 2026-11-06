@@ -21,6 +21,7 @@ inductive Fault where
   | invalidLocal (index : Nat)
   | unboundUncheckedLocal (index : Nat)
   | expectedBool
+  | expectedAssertionErrorType
   deriving Repr, DecidableEq
 
 inductive Halt where
@@ -85,6 +86,15 @@ def ret : Command := fun s =>
   match s.stack with
   | value :: rest => .halted (.returned value { s with stack := rest })
   | [] => .halted (.fault .stackUnderflow s)
+
+/-- The supported RAISE_VARARGS 1 case constructs a bare AssertionError.
+As for other exceptions, the observed frame is the instruction-entry snapshot.
+Other raise operands are outside this profile, not invented Python exceptions. -/
+def raiseAssertionError : Command := fun s =>
+  match s.stack with
+  | .assertionErrorType :: _ => .halted (.raised .assertionError s)
+  | [] => .halted (.fault .stackUnderflow s)
+  | _ => .halted (.fault .expectedAssertionErrorType s)
 
 end Command
 

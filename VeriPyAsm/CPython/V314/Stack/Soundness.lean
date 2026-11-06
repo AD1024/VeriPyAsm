@@ -23,7 +23,7 @@ private theorem denote_stack_result (i : Instruction) (s : Frame)
       simp_all only [Instruction.StackReady, Op.pops, Instruction.denote,
         Command.jump, Command.push, Command.load, Command.store,
         Command.loadPair, Command.storeLoad, Command.storePair,
-        Command.binary, Command.toBool, Command.branch, Command.ret]
+        Command.binary, Command.toBool, Command.branch, Command.ret, Command.raiseAssertionError]
     all_goals
       repeat first
         | (solve | simp_all [StackResult, Instruction.outputHeight, Op.pops,

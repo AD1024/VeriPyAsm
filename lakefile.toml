@@ -41,6 +41,10 @@ name = "AdmissionTests"
 srcDir = "tests"
 
 [[lean_lib]]
+name = "AssertionTests"
+srcDir = "tests"
+
+[[lean_lib]]
 name = "OwnershipTests"
 srcDir = "tests"
 

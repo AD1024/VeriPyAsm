@@ -119,6 +119,8 @@ private def readOwnershipError (error : Expr) : MetaM CPython.V314.Ownership.Err
           pure (.storeBorrow (← nat source) (← nat destination))
         | CPython.V314.Ownership.Violation.overwriteBorrowed index =>
           pure (.overwriteBorrowed (← nat index))
+        | CPython.V314.Ownership.Violation.raiseBorrow source =>
+          pure (.raiseBorrow (← nat source))
         | _ => throwError "unrecognized ownership violation"
       pure (.violation violation)
     | _ => throwError "unrecognized ownership-analysis error kind"

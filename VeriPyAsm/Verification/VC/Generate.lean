@@ -102,7 +102,7 @@ private def executionRules : Array Name := #[
   ``wp, ``iterationWP, ``Postcondition.Accepts, ``step, ``Instruction.denote,
   ``Semantics.Command.jump, ``Semantics.Command.push, ``Semantics.Command.load,
   ``Semantics.Command.store, ``Semantics.Command.binary, ``Semantics.Command.toBool,
-  ``branch_split, ``Semantics.Command.ret,
+  ``branch_split, ``Semantics.Command.ret, ``Semantics.Command.raiseAssertionError,
   ``Semantics.Command.loadPair, ``Semantics.Command.storeLoad, ``Semantics.Command.storePair,
   ``Semantics.binary, ``Semantics.compare, ``Value.asInt, ``Value.truthy, ``Value.pythonEq]
 

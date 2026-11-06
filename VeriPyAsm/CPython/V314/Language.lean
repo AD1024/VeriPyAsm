@@ -14,6 +14,7 @@ inductive Op where
   | resume | notTaken
   | loadConst (value : Value)
   | loadSmallInt (value : Nat)
+  | loadAssertionError
   | loadFast (index : Nat)
   | loadFastBorrow (index : Nat)
   | loadFastCheck (index : Nat)
@@ -29,6 +30,7 @@ inductive Op where
   | popJumpIfFalse (target fallthrough : Nat)
   | popJumpIfTrue (target fallthrough : Nat)
   | returnValue
+  | raiseAssertionError
   deriving Repr, DecidableEq
 
 structure Instruction where
@@ -50,7 +52,7 @@ structure Code where
 Terminal returns/exceptions have no normal successor. -/
 def Instruction.successors (i : Instruction) : List Nat :=
   match i.op with
-  | .returnValue => []
+  | .returnValue | .raiseAssertionError => []
   | .jump target => [target]
   | .popJumpIfFalse target fallthrough | .popJumpIfTrue target fallthrough =>
     [target, fallthrough]
@@ -64,6 +66,7 @@ def Instruction.denote (i : Instruction) : Command :=
   | .resume | .notTaken => Command.jump i.next
   | .loadConst value => Command.push i.next value
   | .loadSmallInt value => Command.push i.next (.int (Int.ofNat value))
+  | .loadAssertionError => Command.push i.next .assertionErrorType
   | .loadFast index | .loadFastBorrow index => Command.load false i.next index
   | .loadFastCheck index => Command.load true i.next index
   | .storeFast index => Command.store i.next index
@@ -78,6 +81,7 @@ def Instruction.denote (i : Instruction) : Command :=
   | .popJumpIfFalse target fallthrough => Command.branch fallthrough target
   | .popJumpIfTrue target fallthrough => Command.branch target fallthrough
   | .returnValue => Command.ret
+  | .raiseAssertionError => Command.raiseAssertionError
 
 def fetch : List Instruction → Nat → Option Instruction
   | [], _ => none

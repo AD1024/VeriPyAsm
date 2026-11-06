@@ -58,6 +58,7 @@ theorem branch_split (ifTrue ifFalse : Nat) (s : Frame) :
       cases value with
       | int n => rfl
       | none => rfl
+      | assertionErrorType => rfl
       | bool b => cases b <;> rfl
 
 theorem wp_execution {next : Frame → StepResult} {cuts : List Nat}

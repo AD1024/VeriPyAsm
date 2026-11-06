@@ -21,6 +21,7 @@ inductive Violation where
   | underflow
   | storeBorrow (source destination : Nat)
   | overwriteBorrowed (index : Nat)
+  | raiseBorrow (source : Nat)
   deriving Repr, DecidableEq
 
 def Violation.message : Violation → String
@@ -28,6 +29,7 @@ def Violation.message : Violation → String
   | .storeBorrow source destination =>
     s!"cannot store a borrow from local {source} into local {destination}"
   | .overwriteBorrowed index => s!"cannot overwrite local {index} while its borrow is live"
+  | .raiseBorrow source => s!"cannot raise a borrow from local {source}"
 
 /-- Check before killing the supporting local. For fused stores the remaining
 stack includes the next value to be stored, not just the final stack suffix. -/
@@ -43,7 +45,7 @@ Binary/comparison results and Boolean conversion have independent lifetimes. -/
 def transfer : Op → Stack → Except Violation Stack
   | .resume, refs | .notTaken, refs | .jump _, refs => .ok refs
   | .loadConst _, refs | .loadSmallInt _, refs | .loadFast _, refs |
-      .loadFastCheck _, refs => .ok (.owned :: refs)
+      .loadFastCheck _, refs | .loadAssertionError, refs => .ok (.owned :: refs)
   | .loadFastBorrow index, refs => .ok (.borrowed index :: refs)
   | .loadFastLoadFast _ _, refs => .ok (.owned :: .owned :: refs)
   | .loadFastBorrowLoadFastBorrow first second, refs =>
@@ -57,6 +59,8 @@ def transfer : Op → Stack → Except Violation Stack
     store second rest
   | .binary _, _ :: _ :: rest | .compare _, _ :: _ :: rest => .ok (.owned :: rest)
   | .toBool, _ :: rest => .ok (.owned :: rest)
+  | .raiseAssertionError, .owned :: rest => .ok rest
+  | .raiseAssertionError, .borrowed source :: _ => .error (.raiseBorrow source)
   | .popJumpIfFalse .., _ :: rest | .popJumpIfTrue .., _ :: rest |
       .returnValue, _ :: rest => .ok rest
   | _, _ => .error .underflow

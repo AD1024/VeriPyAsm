@@ -158,5 +158,13 @@ theorem ret (Q : Postcondition) :
   rintro s ⟨value, rest, stack, post⟩
   simpa only [Command.ret, stack, Postcondition.Accepts] using post
 
+/-- A real assertion failure must satisfy the exceptional postcondition. In
+particular, a contract with `raises := False` cannot discharge this instruction. -/
+theorem raiseAssertionError (Q : Postcondition) :
+    InstructionCorrect Command.raiseAssertionError
+      (fun s => ∃ rest, s.stack = .assertionErrorType :: rest ∧ Q.raises .assertionError s) Q := by
+  rintro s ⟨rest, stack, post⟩
+  simpa only [Command.raiseAssertionError, stack, Postcondition.Accepts] using post
+
 end InstructionCorrect
 end VeriPyAsm.Verification

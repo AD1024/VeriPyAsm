@@ -9,18 +9,19 @@ namespace VeriPyAsm.CPython.V314
 
 def Op.pops : Op → Nat
   | .storeFast _ | .storeFastLoadFast .. | .toBool | .popJumpIfFalse .. |
-      .popJumpIfTrue .. | .returnValue => 1
+      .popJumpIfTrue .. | .returnValue | .raiseAssertionError => 1
   | .binary _ | .compare _ | .storeFastStoreFast .. => 2
   | .resume | .notTaken | .loadConst _ | .loadSmallInt _ | .loadFast _ |
       .loadFastBorrow _ | .loadFastCheck _ | .loadFastLoadFast .. |
-      .loadFastBorrowLoadFastBorrow .. | .jump _ => 0
+      .loadFastBorrowLoadFastBorrow .. | .loadAssertionError | .jump _ => 0
 
 def Op.pushes : Op → Nat
   | .loadConst _ | .loadSmallInt _ | .loadFast _ | .loadFastBorrow _ |
-      .loadFastCheck _ | .storeFastLoadFast .. | .binary _ | .compare _ | .toBool => 1
+      .loadFastCheck _ | .storeFastLoadFast .. | .binary _ | .compare _ | .toBool |
+      .loadAssertionError => 1
   | .loadFastLoadFast .. | .loadFastBorrowLoadFastBorrow .. => 2
   | .resume | .notTaken | .storeFast _ | .storeFastStoreFast .. | .jump _ | .popJumpIfFalse .. |
-      .popJumpIfTrue .. | .returnValue => 0
+      .popJumpIfTrue .. | .returnValue | .raiseAssertionError => 0
 
 /-- Return consumes the entire frame's operand stack in this admission profile. -/
 def Instruction.StackReady (i : Instruction) (height : Nat) : Prop :=

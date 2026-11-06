@@ -33,6 +33,7 @@ private def checkMetadata (a : Artifact) : Except DecodeError Unit := do
   check (a.names.isEmpty && a.freeVars.isEmpty && a.cellVars.isEmpty)
     0 "names, globals, and closures are not supported"
   check a.exceptionTable.isEmpty 0 "exception handlers are not supported"
+  check (a.constants.all Value.isScalar) 0 "code-object constants must be scalar literals"
   check (!a.code.isEmpty) 0 "empty bytecode"
   check (a.code.length % 2 == 0) (a.code.length - 1) "truncated code unit"
   for (byte, offset) in a.code.zipIdx do
@@ -80,6 +81,9 @@ private def decodeOp (a : Artifact) (pc next opcode arg : Nat) :
     check (pc == 0 && arg == 0) pc "only entry RESUME 0 is supported"
     pure .resume
   | 28 => noArg; pure .notTaken
+  | 81 =>
+    check (arg == 0) pc "only LOAD_COMMON_CONSTANT 0 (AssertionError) is supported"
+    pure .loadAssertionError
   | 82 => match a.constants[arg]? with
     | some value => pure (.loadConst value)
     | none => fail pc "constant index out of bounds"
@@ -104,6 +108,9 @@ private def decodeOp (a : Artifact) (pc next opcode arg : Nat) :
   | 100 => pure (.popJumpIfFalse (next + 2 * arg) fallthrough)
   | 103 => pure (.popJumpIfTrue (next + 2 * arg) fallthrough)
   | 35 => noArg; pure .returnValue
+  | 104 =>
+    check (arg == 1) pc "only RAISE_VARARGS 1 for bare assertions is supported"
+    pure .raiseAssertionError
   | 0 => fail pc "CACHE outside an instruction's cache payload"
   | _ => fail pc s!"unsupported opcode {opcode}"
 
@@ -121,6 +128,28 @@ private def decodeInstructions (a : Artifact) :
     let tail ← decodeInstructions a fuel next (rest.drop width)
     pure ({ offset := header.start, next, opcode := header.opcode, arg := header.arg, op } :: tail)
 
+/-- Keep the exception-class marker local to the exact two-instruction failure
+path. No store, return, call, or incoming edge may bypass its supporting load.
+Both instructions retain their own step boundaries; this is a profile check,
+not a replacement of the bytecode by a successful assertion assumption.
+
+CPython v3.14.4: Lib/opcode.py (_common_constants), Python/bytecodes.c
+(LOAD_COMMON_CONSTANT and RAISE_VARARGS), Python/ceval.c (do_raise). -/
+private def checkAssertionUses (instructions : List Instruction) : Except DecodeError Unit := do
+  for instruction in instructions do
+    if instruction.op == .loadAssertionError then
+      check ((fetch instructions instruction.next).any (fun i => i.op == .raiseAssertionError))
+        instruction.offset "AssertionError load must be followed immediately by RAISE_VARARGS 1"
+    if instruction.op == .raiseAssertionError then
+      let supports := fun i : Instruction =>
+        i.op == .loadAssertionError && i.next == instruction.offset
+      check (instructions.any supports) instruction.offset
+        "RAISE_VARARGS 1 requires an immediately preceding AssertionError load"
+      for predecessor in instructions do
+        if instruction.offset ∈ predecessor.successors then
+          check (supports predecessor) predecessor.offset
+            "control flow may not bypass the AssertionError load"
+
 /-- Decode every instruction (also unreachable ones), checking all target and
 fallthrough boundaries. Prefix interiors and terminal opcodes inside prefixed
 groups are not entry points. A successful decode is not a program-safety proof. -/
@@ -132,6 +161,7 @@ def decode (artifact : Artifact) : Except DecodeError Code := do
     for target in instruction.successors do
       check ((fetch instructions target).isSome) instruction.offset
         s!"control-flow target {target} is not an instruction boundary"
+  checkAssertionUses instructions
   pure { instructions }
 
 end VeriPyAsm.CPython.V314

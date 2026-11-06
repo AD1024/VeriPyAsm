@@ -1,5 +1,7 @@
-/-! Exact scalar values for the first bytecode slice. No Python object identity,
-subclasses, allocation failure, or overloaded operations are modeled here. -/
+/-! Exact scalar values and the built-in exception-class marker needed by bare
+assertions. The marker denotes the AssertionError class, not an exception instance.
+No general object identity, subclasses, allocation failure, or overloaded operations
+are modeled here. Artifact admission restricts the marker to a load/raise pair. -/
 
 namespace VeriPyAsm.Semantics
 
@@ -7,11 +9,13 @@ inductive Value where
   | int (value : Int)
   | bool (value : Bool)
   | none
+  | assertionErrorType
   deriving Repr, DecidableEq
 
 inductive PythonException where
   | typeError
   | unboundLocalError
+  | assertionError
   deriving Repr, DecidableEq
 
 inductive BinaryOp where
@@ -22,16 +26,23 @@ inductive CompareOp where
   | lt | le | eq | ne | gt | ge
   deriving Repr, DecidableEq
 
+/-- Code-object literals remain scalars. The class marker can only be loaded
+through the supported LOAD_COMMON_CONSTANT instruction. -/
+def Value.isScalar : Value → Bool
+  | .assertionErrorType => false
+  | _ => true
+
 /-- Booleans participate in arithmetic as 0 and 1, but retain their value tag. -/
 def Value.asInt : Value → Option Int
   | .int n => some n
   | .bool b => some (if b then 1 else 0)
-  | .none => Option.none
+  | .none | .assertionErrorType => Option.none
 
 def Value.truthy : Value → Bool
   | .int n => n != 0
   | .bool b => b
   | .none => false
+  | .assertionErrorType => true
 
 /-- Python equality differs from equality of the tagged Lean representation. -/
 def Value.pythonEq (left right : Value) : Bool :=
@@ -39,6 +50,7 @@ def Value.pythonEq (left right : Value) : Bool :=
   | some a, some b => a == b
   | _, _ => match left, right with
     | .none, .none => true
+    | .assertionErrorType, .assertionErrorType => true
     | _, _ => false
 
 def binary (op : BinaryOp) (left right : Value) : Except PythonException Value :=
