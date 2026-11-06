@@ -83,6 +83,16 @@ theorem. Graph traversal and simplification choose obligations but cannot certif
 correctness without their proofs. Scoped loops use local invariant/ranking rules;
 their obligations are currently grouped into `VC.entry` and `VC.execution`.
 
+Native [checkpoint rules](VeriPyAsm/Verification/VC/Checkpoint.lean) compose finite
+segments around a separately proved logical claim. The incoming context must
+establish the claim before the suffix may use it. Segment bounds add, facts refer
+to the frame where they were proved, and a nonempty iteration retains its first
+instruction and original ranking obligation. Checkpoints add no VM instruction
+or independent ranking decrease. Partial/total block rules are also available.
+The [native example](VeriPyAsm/Examples/Checkpoints/VC.lean) uses an explicit
+manifest with a checked arithmetic normalization equality; checkpoint discovery,
+automatic manifest generation, and Python source mapping are still pending.
+
 Manual `@[veripy_proof VC.name]` registration checks the complete theorem type
 against the named VC using a kernel-checked equality by `rfl`. Registration and
 discharge audit transitive dependencies, including the theorem statement.
@@ -141,6 +151,7 @@ with the reference dispatcher; it is not a refinement proof of the CPython C
 implementation. Runtime correspondence and source/specification fidelity remain
 external obligations. Differential tests supply evidence, not universal proofs.
 
-Next steps include source proof checkpoints, separate named obligations for each
+Next steps include source proof checkpoints using the native composition rules,
+automatic checkpoint VC generation, separate named obligations for each
 scoped loop, and marker-confinement lemmas toward runtime refinement. These are
 extensions to the present guarantee, not premises supplied by the current tests.

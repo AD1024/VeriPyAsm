@@ -22,6 +22,8 @@ booleans, `None`, local variables, arithmetic, comparisons, branches, and loops.
   stacks, and permitted exceptions. Prove partial correctness or total correctness
   using instruction and block rules, loop invariants, and termination measures.
   Bare assertion bytecode has explicit `AssertionError` semantics.
+  Native logical checkpoint rules separate an incoming claim from the suffix
+  that uses it, while preserving finite execution and loop progress.
 - **Automatic verification conditions (VCs).** Generate Lean propositions from
   admitted bytecode and Lean specifications. A Python comment frontend supports
   integer contracts and sequential or nested loops, with checked source mapping.
@@ -118,6 +120,11 @@ Tools that already produce bytecode artifacts can use
 The [native assertion examples](VeriPyAsm/Examples/Assertions/Correctness.lean)
 prove both exception-free behavior under a precondition and contracts that
 explicitly permit assertion failure.
+The [native checkpoint example](VeriPyAsm/Examples/Checkpoints/VC.lean) separates
+runtime-assertion, logical-hint, and return obligations in an explicit manifest.
+It has [manual proofs](VeriPyAsm/Examples/Checkpoints/Correctness.lean) and an
+[alternate Crush provider](experiments/CheckpointCrush.lean); build the latter
+with `lake build CheckpointCrush`.
 
 ## Run the checks
 

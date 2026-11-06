@@ -40,6 +40,20 @@ def iterationWP (next : Frame → StepResult) (cuts : List Nat)
   | .next current => wp next cuts post fuel current
   | .halted outcome => post.Accepts (.halted outcome)
 
+/-- Use a certified transition without reducing a concrete dispatcher inside
+the recursive WP. This keeps symbolic segment proofs small and predictable. -/
+theorem wp_of_next {next : Frame → StepResult} {cuts : List Nat} {post : Postcondition}
+    {fuel : Nat} {initial current : Frame} (outside : cuts.contains initial.pc = false)
+    (transition : next initial = .next current) (after : wp next cuts post fuel current) :
+    wp next cuts post (fuel + 1) initial := by
+  simpa only [wp, outside, Bool.false_eq_true, ↓reduceIte, transition] using after
+
+theorem wp_of_halt {next : Frame → StepResult} {cuts : List Nat} {post : Postcondition}
+    {fuel : Nat} {initial : Frame} {outcome : Halt} (outside : cuts.contains initial.pc = false)
+    (transition : next initial = .halted outcome) (allowed : post.Accepts (.halted outcome)) :
+    wp next cuts post (fuel + 1) initial := by
+  simpa only [wp, outside, Bool.false_eq_true, ↓reduceIte, transition] using allowed
+
 /-- Expose the branch outside the frame before symbolic dispatch. Both targets
 then retain literal PCs, instead of expanding lookup at an unknown `if` label. -/
 theorem branch_split (ifTrue ifFalse : Nat) (s : Frame) :
