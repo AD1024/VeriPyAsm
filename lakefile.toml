@@ -81,6 +81,10 @@ name = "BlockTests"
 srcDir = "tests"
 
 [[lean_lib]]
+name = "CheckpointTests"
+srcDir = "tests"
+
+[[lean_lib]]
 name = "InstructionTests"
 srcDir = "tests"
 
