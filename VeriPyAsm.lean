@@ -8,6 +8,7 @@ import VeriPyAsm.Verification.AxiomAudit
 import VeriPyAsm.Verification.VC.Discharge
 import VeriPyAsm.Verification.VC.Generate
 import VeriPyAsm.Verification.VC.Checkpoint
+import VeriPyAsm.Verification.VC.EdgeCheckpoint
 import VeriPyAsm.Verification.Hoare
 import VeriPyAsm.Verification.Instruction
 import VeriPyAsm.Verification.FusedInstruction
