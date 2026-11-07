@@ -90,8 +90,12 @@ to the frame where they were proved, and a nonempty iteration retains its first
 instruction and original ranking obligation. Checkpoints add no VM instruction
 or independent ranking decrease. Partial/total block rules are also available.
 The [native example](VeriPyAsm/Examples/Checkpoints/VC.lean) uses an explicit
-manifest with a checked arithmetic normalization equality. Source checkpoint
-mapping is available for inspection; automatic checkpoint manifests remain pending.
+manifest with a checked arithmetic normalization equality. Automatic
+[`CheckpointSpecification`](VeriPyAsm/Verification/VC/EdgeCheckpoint.lean)
+generation adds one VC per named checkpoint alongside ordinary entry/loop VCs.
+The main execution view assumes claims on their exact edges. Each selected view
+must establish its own claim before using it. The assembly combines every view
+to recover the original WP with identical fuel and ranking obligations.
 
 Manual `@[veripy_proof VC.name]` registration checks the complete theorem type
 against the named VC using a kernel-checked equality by `rfl`. Registration and
@@ -127,7 +131,7 @@ measures. Type guards, postconditions, and loop invariants must be explicit when
 generating VCs. Source contracts currently forbid all exceptions. `for`, `break`,
 and `continue` are not yet supported.
 
-`inspect` accepts bare Python `assert`, an optional `name A` immediately before
+The frontend accepts bare Python `assert`, an optional `name A` immediately before
 it, and `prove H: P` at a statement boundary. Hints attach before the next
 statement in the same suite, or to normal exits of its last statement. Labels
 are unique across loops, assertions, and hints. Expressions must use names
@@ -145,9 +149,15 @@ following fused stores are conservatively rejected. Prefixes and caches are
 never independent boundaries. Constant-false assertions can have no passing
 exit; folded `assert True` is rejected by admission or checkpoint mapping.
 
-These certificates establish structural mappings only. `generate` rejects any
-source containing checkpoints until their VCs and conditional assembly are
-implemented; inspection neither assumes nor proves their claims.
+These certificates establish structural mappings only; inspection neither assumes
+nor proves claims. `generate` supports checkpoints with the unscoped single-loop
+specification (all locals initialized at its header). Scoped/nested checkpoint
+generation remains rejected. Runtime-assertion VCs prove actual bytecode evaluation
+reaches a passing exit, excluding raises, faults, and fuel exhaustion. Logical
+hints are predicates over current local slots and immutable entry ghosts. Their
+separate VCs are mandatory even when a false hint makes a downstream VC vacuous.
+Checkpoint assumptions retain their original frame values across later writes.
+Neither checkpoint kind resets execution fuel or counts as loop progress.
 
 Directive attachment follows [Python physical lines](https://docs.python.org/3.14/reference/lexical_analysis.html#physical-lines)
 (LF, CRLF, or CR), with
@@ -159,8 +169,9 @@ the companion bundle.
 Companion bundle schema **2** adds `directives`: an ordered inventory for the
 selected function, preserving each parsed kind/expression, original comment text,
 source span, and attachment target (function, loop, assertion, or proof hint and
-its statement span). Checkpoint inspections add a `checkpoints` section with its
-own schema version 1, origins, claim text, and initialized local names; mapping
+its statement span). Checkpoints add a `checkpoints` section with its
+own schema version 1, origins, claim text, and initialized local names; generation
+also adds a `vcGoal` linking each checkpoint to its exact Lean obligation. Mapping
 output includes separate loop and checkpoint records. Lines are one-based;
 columns are zero-based UTF-8 byte offsets, with
 exclusive ends, matching Python AST/source-map coordinates. Repeated clauses
@@ -176,7 +187,7 @@ with the reference dispatcher; it is not a refinement proof of the CPython C
 implementation. Runtime correspondence and source/specification fidelity remain
 external obligations. Differential tests supply evidence, not universal proofs.
 
-Next steps include automatic checkpoint VC generation using the native composition
-rules, source proof reports, separate named obligations for each
+Next steps include checkpoint VCs for scoped/nested loops, richer source proof
+reports with per-edge dependencies, separate named obligations for each
 scoped loop, and marker-confinement lemmas toward runtime refinement. These are
 extensions to the present guarantee, not premises supplied by the current tests.

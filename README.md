@@ -27,6 +27,8 @@ booleans, `None`, local variables, arithmetic, comparisons, branches, and loops.
 - **Automatic verification conditions (VCs).** Generate Lean propositions from
   admitted bytecode and Lean specifications. A Python comment frontend supports
   integer contracts and sequential or nested loops, with checked source mapping.
+  Single-loop specifications can also generate separate obligations for runtime
+  assertions and `# veripy: prove` hints, each required by the final assembly.
 - **Crush automation and manual proofs.** Discharge VCs with
   [lean-crush](https://github.com/AD1024/lean-crush), or register a theorem with
   `@[veripy_proof VC.name]`. Registration checks exact statement matching through
@@ -126,15 +128,24 @@ It has [manual proofs](VeriPyAsm/Examples/Checkpoints/Correctness.lean) and an
 [alternate Crush provider](experiments/CheckpointCrush.lean); build the latter
 with `lake build CheckpointCrush`.
 
-Source checkpoint inspection is also available:
+The [source checkpoint example](examples/python/triangular_checkpoints.py) adds
+a named runtime assertion and a logical conservation hint to the triangular loop:
 
 ```sh
 python3 -m veripy_frontend inspect examples/python/triangular_checkpoints.py --function triangular
+python3 -m veripy_frontend generate examples/python/triangular_checkpoints.py \
+  --function triangular --namespace VeriPyAsm.Examples.SourceCheckpoints \
+  --output VeriPyAsm/Examples/SourceCheckpoints/Generated.lean
+lake build VeriPyAsm.Examples.SourceCheckpoints.Proofs SourceCheckpointCrush
 ```
 
 It maps bare `assert`, optional `# veripy: name A`, and `# veripy: prove H: P`
-to checked bytecode regions and edges. Source checkpoint VC generation and
-proofs are the next step.
+to checked bytecode regions and edges. Its five VCs cover entry, initialization,
+loop preservation/termination, the runtime assertion, and the logical hint.
+The companion JSON links checkpoint labels and source spans to their Lean goals.
+[Manual](VeriPyAsm/Examples/SourceCheckpoints/Proofs.lean) and
+[Crush](experiments/SourceCheckpointCrush.lean) providers verify the same generated
+specification. Generation alone does not establish a checkpoint claim.
 
 ## Run the checks
 
@@ -151,8 +162,9 @@ If the interpreter has a different name or location, use
 
 The prototype supports a defined scalar bytecode fragment. General objects,
 heap mutation, function calls, exception handlers, and async execution remain
-future work. The source frontend currently requires at least one `while` loop;
-source assertion checkpoints and ghost hints currently support inspection only. Native
+future work. The source frontend requires at least one `while` loop. Checkpoint
+generation supports a single loop with all locals initialized at its header;
+scoped/nested checkpoints support inspection only. Native
 bytecode assertions support bare `assert` with modeled scalar tests; message
 constructors, `NOP`-folded assertions, and optimized artifacts are rejected.
 
