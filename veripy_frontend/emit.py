@@ -58,8 +58,8 @@ def annotation_reads(node):
 
 
 def emit(function, namespace, *, mapping_only=False):
-    if function.checkpoints and not mapping_only:
-        raise FrontendError("source checkpoints support inspect only; checkpoint VC generation is not implemented yet")
+    if function.checkpoints and function.scoped and not mapping_only:
+        raise FrontendError("checkpoint VC generation for scoped loops is not implemented yet; inspect remains available")
     if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*(?:\.[A-Za-z_][A-Za-z_0-9]*)*", namespace):
         raise FrontendError("namespace must be a dotted Lean identifier")
     bundle = function.bundle()
@@ -202,12 +202,55 @@ def specification : VC.Specification ({ghost}) where
     if rank is not None:
         text += "  ranking := some (fun old _ => rank old)\n"
     rules = "contract, invariant, sourceMap" + (", rank" if rank is not None else "")
+    target = "specification"
+    if function.checkpoints:
+        text += checkpoint_specification(function, ghost, old)
+        rules += ", specification, checkpointMaps, " + ", ".join(f"checkpoint{i}" for i in range(len(function.checkpoints)))
+        target = "checkpointSpecification"
     text += f'''
-veripy_generate generated from admitted for specification unfolding [{rules}]
+veripy_generate generated from admitted for {target} unfolding [{rules}]
 
 end {namespace}
 '''
     return text
+
+
+def checkpoint_specification(function, ghost, old):
+    """Hints are frame predicates; assertions use the actual bytecode WP.
+
+    Both enter the same checked assembly. Mapping certificates locate edges but
+    never establish a predicate or provide a loop invariant/ranking themselves.
+    """
+    declarations = []
+    locals_ = list(function.code.co_varnames)
+    for i, checkpoint in enumerate(function.checkpoints):
+        kind = "runtime_assertion" if checkpoint.kind == "assertion" else "logical_checkpoint"
+        if checkpoint.kind == "assertion":
+            # Acyclic assertion regions contain at most this many code units.
+            # The bound is only a normalization aid: WP exhaustion is False.
+            claim = f'''claim next _ _ current := VC.Checkpoint.assertionPass next
+    (checkpointMaps[{i}].exitEdges.map Frontend.Edge.targetPC)
+    {len(function.code.co_code) // 2} current'''
+        else:
+            reads = [name for name in locals_ if name in annotation_reads(checkpoint.claim)]
+            current = {name: f"v{j}" for j, name in enumerate(reads)}
+            facts = [f"current.locals[{locals_.index(name)}]? = some (some (.int {current[name]}))" for name in reads]
+            facts.append(expression(checkpoint.claim, current, old))
+            exists = f"∃ {' '.join(current.values())} : Int,\n    " if reads else ""
+            claim = "claim _ old _ current := " + exists + " ∧ ".join(facts)
+        declarations.append(f'''
+def checkpoint{i} : VC.EdgeCheckpoint ({ghost}) where
+  label := {string(checkpoint.label)}
+  kind := {string(kind)}
+  edges := checkpointMaps[{i}].boundaryEdges.map (fun e => (e.sourcePC, e.targetPC))
+  {claim}
+''')
+    declarations.append(f'''
+def checkpointSpecification : VC.CheckpointSpecification ({ghost}) where
+  base := specification
+  checkpoints := {seq(f'checkpoint{i}' for i in range(len(function.checkpoints)))}
+''')
+    return "".join(declarations)
 
 
 def scoped_specification(function, ghost, old, current):

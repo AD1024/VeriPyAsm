@@ -1,4 +1,4 @@
-"""Checkpoint inspection example; source checkpoint VC generation is pending."""
+"""Generated loop VCs with a runtime assertion and a separate logical hint."""
 
 
 # veripy: requires is_int(n) and n >= 0

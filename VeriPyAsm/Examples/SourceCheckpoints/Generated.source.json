@@ -1,0 +1,738 @@
+{
+  "schemaVersion": 2,
+  "generator": "veripy_frontend",
+  "artifact": {
+    "schemaVersion": 1,
+    "implementation": "cpython",
+    "version": [
+      3,
+      14,
+      4
+    ],
+    "profile": "baselineSequential",
+    "build": "3.14.4 (main, Apr  7 2026, 13:13:20) [Clang 16.0.0 (clang-1600.0.26.6)]",
+    "optimize": 0,
+    "compilerFlags": 0,
+    "dontInherit": true,
+    "name": "triangular",
+    "code": [
+      128,
+      0,
+      94,
+      0,
+      112,
+      1,
+      86,
+      0,
+      94,
+      0,
+      56,
+      148,
+      0,
+      0,
+      100,
+      29,
+      0,
+      0,
+      28,
+      0,
+      87,
+      16,
+      44,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      112,
+      1,
+      86,
+      0,
+      94,
+      1,
+      44,
+      10,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      112,
+      0,
+      86,
+      0,
+      94,
+      0,
+      56,
+      188,
+      0,
+      0,
+      100,
+      3,
+      0,
+      0,
+      28,
+      0,
+      75,
+      33,
+      0,
+      0,
+      81,
+      0,
+      104,
+      1,
+      86,
+      1,
+      35,
+      0
+    ],
+    "constants": [
+      {
+        "tag": "int",
+        "value": "0"
+      }
+    ],
+    "argCount": 1,
+    "posOnlyArgCount": 0,
+    "kwOnlyArgCount": 0,
+    "localNames": [
+      "n",
+      "s"
+    ],
+    "names": [],
+    "freeVars": [],
+    "cellVars": [],
+    "stackSize": 2,
+    "flags": 3,
+    "exceptionTable": []
+  },
+  "source": {
+    "schemaVersion": 1,
+    "path": "examples/python/triangular_checkpoints.py",
+    "digest": "30257bfb400cc706525e5849d20a7f51437f77c392a7014ef3b1507f14f1fc41",
+    "functionName": "triangular",
+    "localNames": [
+      "n",
+      "s"
+    ],
+    "positions": [
+      null,
+      {
+        "line": 7,
+        "column": 8,
+        "endLine": 7,
+        "endColumn": 9
+      },
+      {
+        "line": 7,
+        "column": 4,
+        "endLine": 7,
+        "endColumn": 5
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 11
+      },
+      {
+        "line": 12,
+        "column": 14,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 13
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 12,
+        "endLine": 13,
+        "endColumn": 17
+      },
+      {
+        "line": 13,
+        "column": 8,
+        "endLine": 13,
+        "endColumn": 9
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 13
+      },
+      {
+        "line": 14,
+        "column": 16,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      {
+        "line": 14,
+        "column": 8,
+        "endLine": 14,
+        "endColumn": 9
+      },
+      {
+        "line": 16,
+        "column": 15,
+        "endLine": 16,
+        "endColumn": 16
+      },
+      {
+        "line": 16,
+        "column": 20,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 16,
+        "column": 15,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 16,
+        "column": 15,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 16,
+        "column": 15,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 16,
+        "column": 15,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 16,
+        "column": 15,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 16,
+        "column": 15,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 16,
+        "column": 15,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 16,
+        "column": 8,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 16,
+        "column": 15,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      {
+        "line": 18,
+        "column": 11,
+        "endLine": 18,
+        "endColumn": 12
+      },
+      {
+        "line": 18,
+        "column": 4,
+        "endLine": 18,
+        "endColumn": 12
+      }
+    ],
+    "loop": {
+      "label": "sum_loop",
+      "statement": {
+        "line": 12,
+        "column": 4,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      "test": {
+        "line": 12,
+        "column": 10,
+        "endLine": 12,
+        "endColumn": 15
+      },
+      "body": {
+        "line": 13,
+        "column": 8,
+        "endLine": 16,
+        "endColumn": 21
+      }
+    }
+  },
+  "sourceEncoding": "utf-8",
+  "sourceBytesBase64": "IiIiR2VuZXJhdGVkIGxvb3AgVkNzIHdpdGggYSBydW50aW1lIGFzc2VydGlvbiBhbmQgYSBzZXBhcmF0ZSBsb2dpY2FsIGhpbnQuIiIiCgoKIyB2ZXJpcHk6IHJlcXVpcmVzIGlzX2ludChuKSBhbmQgbiA+PSAwCiMgdmVyaXB5OiBlbnN1cmVzIGlzX2ludChyZXN1bHQpIGFuZCAyKnJlc3VsdCA9PSBvbGQobikqKG9sZChuKSsxKQpkZWYgdHJpYW5ndWxhcihuKToKICAgIHMgPSAwCiAgICAjIHZlcmlweTogbG9vcCBzdW1fbG9vcAogICAgIyB2ZXJpcHk6IGludmFyaWFudCBuID49IDAKICAgICMgdmVyaXB5OiBpbnZhcmlhbnQgMipzICsgbioobisxKSA9PSBvbGQobikqKG9sZChuKSsxKQogICAgIyB2ZXJpcHk6IGRlY3JlYXNlcyBuCiAgICB3aGlsZSBuID4gMDoKICAgICAgICBzID0gcyArIG4KICAgICAgICBuID0gbiAtIDEKICAgICAgICAjIHZlcmlweTogbmFtZSByZW1haW5pbmdfbm9ubmVnYXRpdmUKICAgICAgICBhc3NlcnQgbiA+PSAwCiAgICAgICAgIyB2ZXJpcHk6IHByb3ZlIGNvbnNlcnZlZDogMipzICsgbioobisxKSA9PSBvbGQobikqKG9sZChuKSsxKQogICAgcmV0dXJuIHMK",
+  "artifactDigest": "acb7be181bba4c12597ac4222a53e909ace9d433b0fb3efad14efbde78bc214f",
+  "qualifiedName": "triangular",
+  "functionSpan": {
+    "line": 6,
+    "column": 0,
+    "endLine": 18,
+    "endColumn": 12
+  },
+  "directives": [
+    {
+      "kind": "requires",
+      "text": "is_int(n) and n >= 0",
+      "sourceText": "# veripy: requires is_int(n) and n >= 0",
+      "span": {
+        "line": 4,
+        "column": 0,
+        "endLine": 4,
+        "endColumn": 39
+      },
+      "target": {
+        "kind": "function",
+        "name": "triangular",
+        "span": {
+          "line": 6,
+          "column": 0,
+          "endLine": 18,
+          "endColumn": 12
+        }
+      }
+    },
+    {
+      "kind": "ensures",
+      "text": "is_int(result) and 2*result == old(n)*(old(n)+1)",
+      "sourceText": "# veripy: ensures is_int(result) and 2*result == old(n)*(old(n)+1)",
+      "span": {
+        "line": 5,
+        "column": 0,
+        "endLine": 5,
+        "endColumn": 66
+      },
+      "target": {
+        "kind": "function",
+        "name": "triangular",
+        "span": {
+          "line": 6,
+          "column": 0,
+          "endLine": 18,
+          "endColumn": 12
+        }
+      }
+    },
+    {
+      "kind": "loop",
+      "text": "sum_loop",
+      "sourceText": "# veripy: loop sum_loop",
+      "span": {
+        "line": 8,
+        "column": 4,
+        "endLine": 8,
+        "endColumn": 27
+      },
+      "target": {
+        "kind": "loop",
+        "name": "sum_loop",
+        "span": {
+          "line": 12,
+          "column": 4,
+          "endLine": 16,
+          "endColumn": 21
+        }
+      }
+    },
+    {
+      "kind": "invariant",
+      "text": "n >= 0",
+      "sourceText": "# veripy: invariant n >= 0",
+      "span": {
+        "line": 9,
+        "column": 4,
+        "endLine": 9,
+        "endColumn": 30
+      },
+      "target": {
+        "kind": "loop",
+        "name": "sum_loop",
+        "span": {
+          "line": 12,
+          "column": 4,
+          "endLine": 16,
+          "endColumn": 21
+        }
+      }
+    },
+    {
+      "kind": "invariant",
+      "text": "2*s + n*(n+1) == old(n)*(old(n)+1)",
+      "sourceText": "# veripy: invariant 2*s + n*(n+1) == old(n)*(old(n)+1)",
+      "span": {
+        "line": 10,
+        "column": 4,
+        "endLine": 10,
+        "endColumn": 58
+      },
+      "target": {
+        "kind": "loop",
+        "name": "sum_loop",
+        "span": {
+          "line": 12,
+          "column": 4,
+          "endLine": 16,
+          "endColumn": 21
+        }
+      }
+    },
+    {
+      "kind": "decreases",
+      "text": "n",
+      "sourceText": "# veripy: decreases n",
+      "span": {
+        "line": 11,
+        "column": 4,
+        "endLine": 11,
+        "endColumn": 25
+      },
+      "target": {
+        "kind": "loop",
+        "name": "sum_loop",
+        "span": {
+          "line": 12,
+          "column": 4,
+          "endLine": 16,
+          "endColumn": 21
+        }
+      }
+    },
+    {
+      "kind": "name",
+      "text": "remaining_nonnegative",
+      "sourceText": "# veripy: name remaining_nonnegative",
+      "span": {
+        "line": 15,
+        "column": 8,
+        "endLine": 15,
+        "endColumn": 44
+      },
+      "target": {
+        "kind": "assertion",
+        "name": "remaining_nonnegative",
+        "span": {
+          "line": 16,
+          "column": 8,
+          "endLine": 16,
+          "endColumn": 21
+        }
+      }
+    },
+    {
+      "kind": "prove",
+      "text": "conserved: 2*s + n*(n+1) == old(n)*(old(n)+1)",
+      "sourceText": "# veripy: prove conserved: 2*s + n*(n+1) == old(n)*(old(n)+1)",
+      "span": {
+        "line": 17,
+        "column": 8,
+        "endLine": 17,
+        "endColumn": 69
+      },
+      "target": {
+        "kind": "proof_hint",
+        "name": "conserved",
+        "span": {
+          "line": 16,
+          "column": 8,
+          "endLine": 16,
+          "endColumn": 21
+        },
+        "boundary": "after"
+      }
+    }
+  ],
+  "annotations": {
+    "mode": "total",
+    "requires": "is_int(n) and n >= 0",
+    "ensures": "is_int(result) and 2 * result == old(n) * (old(n) + 1)",
+    "invariant": "n >= 0 and 2 * s + n * (n + 1) == old(n) * (old(n) + 1)",
+    "decreases": "n"
+  },
+  "checkpoints": {
+    "schemaVersion": 1,
+    "items": [
+      {
+        "origin": {
+          "label": "remaining_nonnegative",
+          "kind": "assertion",
+          "statement": {
+            "line": 16,
+            "column": 8,
+            "endLine": 16,
+            "endColumn": 21
+          }
+        },
+        "claim": "n >= 0",
+        "initialized": [
+          "n",
+          "s"
+        ],
+        "vcGoal": "VeriPyAsm.Examples.SourceCheckpoints.generated.VC.checkpoint_remaining_nonnegative"
+      },
+      {
+        "origin": {
+          "label": "conserved",
+          "kind": "after",
+          "statement": {
+            "line": 16,
+            "column": 8,
+            "endLine": 16,
+            "endColumn": 21
+          }
+        },
+        "claim": "2 * s + n * (n + 1) == old(n) * (old(n) + 1)",
+        "initialized": [
+          "n",
+          "s"
+        ],
+        "vcGoal": "VeriPyAsm.Examples.SourceCheckpoints.generated.VC.checkpoint_conserved"
+      }
+    ]
+  },
+  "mapping": {
+    "checkpoints": [
+      {
+        "boundaryEdges": [
+          {
+            "sourcePC": 52,
+            "targetPC": 54
+          }
+        ],
+        "entry": 54,
+        "entryEdges": [
+          {
+            "sourcePC": 52,
+            "targetPC": 54
+          }
+        ],
+        "exitEdges": [
+          {
+            "sourcePC": 68,
+            "targetPC": 6
+          }
+        ],
+        "failureNodes": [
+          74
+        ],
+        "nodes": [
+          54,
+          56,
+          58,
+          62,
+          72,
+          68,
+          74
+        ]
+      },
+      {
+        "boundaryEdges": [
+          {
+            "sourcePC": 68,
+            "targetPC": 6
+          }
+        ],
+        "entry": 54,
+        "entryEdges": [
+          {
+            "sourcePC": 52,
+            "targetPC": 54
+          }
+        ],
+        "exitEdges": [
+          {
+            "sourcePC": 68,
+            "targetPC": 6
+          }
+        ],
+        "failureNodes": [
+          74
+        ],
+        "nodes": [
+          54,
+          56,
+          58,
+          62,
+          72,
+          68,
+          74
+        ]
+      }
+    ],
+    "loopMapping": {
+      "backedges": [
+        {
+          "sourcePC": 68,
+          "targetPC": 6
+        }
+      ],
+      "bodyEdges": [
+        {
+          "sourcePC": 14,
+          "targetPC": 20
+        }
+      ],
+      "bodyNodes": [
+        20,
+        22,
+        34,
+        36,
+        38,
+        40,
+        52,
+        54,
+        56,
+        58,
+        62,
+        72,
+        68,
+        74
+      ],
+      "entryEdges": [
+        {
+          "sourcePC": 4,
+          "targetPC": 6
+        }
+      ],
+      "exitEdges": [
+        {
+          "sourcePC": 14,
+          "targetPC": 76
+        }
+      ],
+      "header": 6,
+      "testNodes": [
+        6,
+        8,
+        10,
+        14
+      ]
+    }
+  },
+  "missingAnnotations": [],
+  "status": "vcs_generated"
+}

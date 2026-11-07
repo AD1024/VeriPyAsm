@@ -1,4 +1,4 @@
-"""Checkpoint attachment, checked edge mapping, and fail-closed generation."""
+"""Checkpoint attachment, checked edge mapping, and generated proof obligations."""
 
 import ast
 import base64
@@ -115,6 +115,8 @@ end CheckpointSource
         source = source.replace("        i = i - 1", "        # veripy: prove inner_exit: j == 0\n        i = i - 1\n        # veripy: prove outer_done: i >= 0")
         function = self.parse(source, "nested_product")
         self.assertEqual([c.kind for c in function.checkpoints], ["after", "before", "after"])
+        with self.assertRaisesRegex(FrontendError, "checkpoint VC generation for scoped loops"):
+            emit(function, "ScopedCheckpoints")
         mapping = self.mapping(function)
         loops = mapping["loopMapping"]["loops"]
         inner, before, outer = mapping["checkpoints"]
@@ -214,15 +216,57 @@ end CheckpointSource
         function = self.parse(SOURCE.replace("prove conserved: 2*s + n*(n+1) == old(n)*(old(n)+1)", "prove conserved: False"))
         self.assertEqual(ast.unparse(function.checkpoints[-1].claim), "False")
         self.mapping(function)
-        with self.assertRaisesRegex(FrontendError, "checkpoint VC generation"):
-            emit(function, "FalseHint")
+        run_lean("import VeriPyAsm.Verification.VC.Discharge\n" + emit(function, "FalseHint") + '''
+namespace FalseHint
+theorem rejected : ¬ generated.VC.checkpoint_conserved := by
+  intro valid
+  have impossible := valid 1 (by decide) _ rfl 1 0 rfl
+    (by decide) (by decide) (by decide)
+  omega
+@[veripy_proof generated.VC.entry]
+theorem entry : generated.VC.entry := by
+  intro n _
+  exact ⟨[.int n], rfl, rfl⟩
+@[veripy_proof generated.VC.init]
+theorem init : generated.VC.init := True.intro
+@[veripy_proof generated.VC.cut6]
+theorem downstream : generated.VC.cut6 := by
+  intro n _ current _ counter sum _ nonnegative equation
+  grind
+@[veripy_proof generated.VC.checkpoint_remaining_nonnegative]
+theorem runtimeAssertion : generated.VC.checkpoint_remaining_nonnegative := by
+  intro n _ current _ counter sum _ nonnegative equation positive
+  omega
+#guard_msgs (drop info, all) in
+set_option veripy.auto false in
+veripy_discover pending from generated
+example : pending.report.complete = false := rfl
+example : pending.report.obligations[2]!.status = "proved" := rfl
+example : pending.report.obligations[4]!.status = "pending" := rfl
+/-- error: verification incomplete: 1 unresolved VC(s); no VerifiedArtifact exported -/
+#guard_msgs (drop info, all) in
+set_option veripy.auto false in
+veripy_verify noArtifact from generated
+#veripy_audit FalseHint
+end FalseHint
+''')
         # A terminal false assertion has a checked failure region and no
         # passing exits. Mapping it does not assume its condition is true.
-        source = (ROOT / "examples/python/triangular_annotated.py").read_text().replace("    return s", "    assert False\n    return s")
+        source = (ROOT / "examples/python/triangular_annotated.py").read_text().replace(
+            "    return s", "    # veripy: name fails\n    assert False\n    return s")
         function = self.parse(source)
         assertion = self.mapping(function)["checkpoints"][0]
         self.assertEqual(assertion["exitEdges"], [])
         self.assertEqual(len(assertion["failureNodes"]), 1)
+        run_lean("import VeriPyAsm.Verification.VC.Discharge\n" + emit(function, "FalseAssertion") + '''
+namespace FalseAssertion
+theorem rejected : ¬ generated.VC.checkpoint_fails := by
+  intro valid
+  have impossible := valid 0 (by decide) _ rfl 0 0 rfl (by decide) (by decide)
+  omega
+#veripy_audit FalseAssertion
+end FalseAssertion
+''')
 
     def test_cli_inspection_and_generation_preserve_previous_outputs(self):
         result = subprocess.run([sys.executable, "-m", "veripy_frontend", "inspect", str(EXAMPLE),
@@ -240,9 +284,36 @@ end CheckpointSource
                                      "--function", "triangular", "--output", str(output)],
                                     cwd=ROOT, text=True, capture_output=True, timeout=180)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("checkpoint VC generation", result.stderr)
+            self.assertIn("refusing to overwrite a user-owned file", result.stderr)
             self.assertEqual(output.read_text(), "-- existing module\n")
             self.assertEqual(companion.read_text(), "existing companion\n")
+
+    def test_generated_source_bundle_links_exact_checkpoint_goals(self):
+        with tempfile.TemporaryDirectory(prefix="veripy-checkpoint-generate-") as directory:
+            output = Path(directory) / "Generated.lean"
+            result = subprocess.run([sys.executable, "-m", "veripy_frontend", "generate", str(EXAMPLE),
+                                     "--function", "triangular", "--namespace", "CheckedSource",
+                                     "--output", str(output), "--json"],
+                                    cwd=ROOT, text=True, capture_output=True, timeout=180)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            bundle = json.loads(result.stdout)
+            self.assertEqual(bundle, json.loads(output.with_suffix(".source.json").read_text()))
+            self.assertEqual(bundle["status"], "vcs_generated")
+            self.assertEqual([c["vcGoal"] for c in bundle["checkpoints"]["items"]], [
+                "CheckedSource.generated.VC.checkpoint_remaining_nonnegative",
+                "CheckedSource.generated.VC.checkpoint_conserved"])
+            self.assertIn("for checkpointSpecification unfolding", output.read_text())
+
+    def test_committed_example_matches_source(self):
+        function = Parser("examples/python/triangular_checkpoints.py", EXAMPLE.read_bytes()).parse("triangular")
+        generated = emit(function, "VeriPyAsm.Examples.SourceCheckpoints")
+        directory = ROOT / "VeriPyAsm/Examples/SourceCheckpoints"
+        without_build = lambda text: re.sub(r'^  build := .*$', '', text, flags=re.M)
+        self.assertEqual(without_build(generated), without_build((directory / "Generated.lean").read_text()))
+        stored = json.loads((directory / "Generated.source.json").read_text())
+        self.assertEqual(stored["directives"], function.bundle()["directives"])
+        self.assertEqual(stored["artifactDigest"], function.bundle()["artifactDigest"])
+        self.assertEqual(stored["sourceBytesBase64"], function.bundle()["sourceBytesBase64"])
 
 
 if __name__ == "__main__":

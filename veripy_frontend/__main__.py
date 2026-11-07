@@ -80,6 +80,9 @@ def main(argv=None):
         bundle["missingAnnotations"] = list(function.missing)
         bundle["status"] = "mapping_checked" if args.command == "inspect" else "vcs_generated"
         if args.command == "generate":
+            if function.checkpoints:
+                for checkpoint in bundle["checkpoints"]["items"]:
+                    checkpoint["vcGoal"] = args.namespace + ".generated.VC.checkpoint_" + checkpoint["origin"]["label"]
             write_generated(args.output, text, bundle)
         if args.json:
             print(json.dumps(bundle, ensure_ascii=False, indent=2))
@@ -96,7 +99,11 @@ def main(argv=None):
                     location = ", ".join(f"{e['sourcePC']} -> {e['targetPC']}" for e in mapped["boundaryEdges"])
                     kind = "assertion entry" if checkpoint.kind == "assertion" else "hint boundary"
                     print(f"{function.path}:{line}: {checkpoint.label}: checked {kind} on {location}")
-                print("  Checkpoint mappings are structural; their claims have not been proved.")
+                if args.command == "inspect":
+                    print("  Checkpoint mappings are structural; their claims have not been proved.")
+                else:
+                    for checkpoint in bundle["checkpoints"]["items"]:
+                        print(f"  obligation: {checkpoint['vcGoal']}")
             print("  locals: " + ", ".join(f"{name}={i}" for i, name in enumerate(function.code.co_varnames)))
             for missing in function.missing:
                 print(f"  missing: # veripy: {missing}")
