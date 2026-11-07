@@ -116,6 +116,60 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
     (simpTheorems := #[theorems]) (congrTheorems := ← getSimpCongrTheorems)
   let methods ← Simp.mkDefaultMethods
   let pre : Simp.Simproc := fun expression => do
+    -- Checkpoint predicates are data until an actual edge applies them to a
+    -- concrete frame. Simplifying their generic function bodies can expand
+    -- assertion WPs and change dependent Fin-indexed lists at every step.
+    if expression.isAppOf ``EdgeCheckpoint.mk then
+      return .done { expr := expression }
+    if expression.isAppOfArity ``Checkpoint.assertionPass 4 then
+      -- Reduce the exit list before unfolding the WP. Otherwise simp can
+      -- explore both sides of an unresolved cut test and expand later loops.
+      let args := expression.getAppArgs
+      if !args[1]!.hasFVar && !args[1]!.hasMVar then
+        let exits ← withTransparency .all <| reduce args[1]!
+        if exits != args[1]! then
+          return .visit { expr := mkAppN expression.getAppFn (args.set! 1 exits) }
+    if expression.isAppOfArity ``Checkpoint.edgeChecks 10 then
+      -- Select concrete edges before traversing checkpoint predicates. Each
+      -- structural reduction is definitional; predicate simplification supplies
+      -- a congruence proof. The published normalization equality checks both.
+      let args := expression.getAppArgs
+      let beforePC ← getNatValue? (← whnf (← mkAppM ``Frame.pc #[args[6]!]))
+      let currentPC ← getNatValue? (← whnf (← mkAppM ``Frame.pc #[args[7]!]))
+      if let (some beforePC, some currentPC) := (beforePC, currentPC) then
+        let indices ← withTransparency .all <| whnf args[9]!
+        if indices.isAppOfArity ``List.nil 1 then
+          return .visit { expr := args[8]! }
+        if indices.isAppOfArity ``List.cons 3 then
+          let index := indices.getAppArgs[1]!
+          let tail := mkAppN expression.getAppFn (args.set! 9 indices.getAppArgs[2]!)
+          let checkpoint ← mkAppM ``List.get #[args[2]!, index]
+          let edges ← mkAppM ``EdgeCheckpoint.edges #[checkpoint]
+          let edge ← mkAppM ``Prod.mk #[mkNatLit beforePC, mkNatLit currentPC]
+          let applies ← withTransparency .all <| whnf (← mkAppM ``List.contains #[edges, edge])
+          if applies.isConstOf ``Bool.false then return .visit { expr := tail }
+          if applies.isConstOf ``Bool.true then
+            let value ← withTransparency .all <| whnf checkpoint
+            let_expr EdgeCheckpoint.mk _ _ _ _ predicate := value
+              | throwError "checkpoint did not reduce to a constructor"
+            let claim := (mkAppN predicate #[args[1]!, args[3]!, args[4]!, args[7]!]).headBeta
+            let reduced ← Simp.simp claim
+            let selected ← withTransparency .all <| whnf args[5]!
+            let replaceClaim (own : Bool) : SimpM Simp.Step := do
+              let function ← withLocalDeclD `claim (mkSort .zero) fun value => do
+                let continuation ← mkArrow value tail
+                mkLambdaFVars #[value] (if own then mkAnd value continuation else continuation)
+              return .visit {
+                expr := (mkApp function reduced.expr).headBeta
+                proof? := some (← mkCongrArg function (← reduced.getProof)) }
+            if selected.isAppOfArity ``Option.none 1 then
+              return ← replaceClaim false
+            if selected.isAppOfArity ``Option.some 2 then
+              let selectedValue ← withTransparency .all <| whnf (← mkAppM ``Fin.val #[selected.getAppArgs[1]!])
+              let indexValue ← withTransparency .all <| whnf (← mkAppM ``Fin.val #[index])
+              if let (some a, some b) := (← getNatValue? selectedValue, ← getNatValue? indexValue) then
+                return ← replaceClaim (a == b)
+            return .visit { expr := ← mkAppM ``Checkpoint.guard #[args[5]!, index, claim, tail] }
     -- Keep a loop postcondition opaque until a projection applies it to an
     -- actual outcome. Simplifying its generic continuation expands unused
     -- frame/tag cases and can obscure a false ranking obligation.
@@ -146,10 +200,11 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
     if expression.isAppOf ``wp || expression.isAppOf ``regionWP ||
         expression.isAppOf ``iterationRegionWP || expression.isAppOf ``loopSummary ||
         expression.isAppOf ``Checkpoint.wp || expression.isAppOf ``Checkpoint.iterationWP ||
-        expression.isAppOf ``Checkpoint.edgeChecks then
+        expression.isAppOf ``Checkpoint.edgeChecks || expression.isAppOf ``Checkpoint.assertionPass then
       let isCheckpoint := expression.isAppOf ``Checkpoint.wp || expression.isAppOf ``Checkpoint.iterationWP ||
         expression.isAppOf ``Checkpoint.edgeChecks
-      let arity := if isCheckpoint then 10 else if expression.isAppOf ``wp then 5
+      let arity := if isCheckpoint then 10 else if expression.isAppOf ``Checkpoint.assertionPass then 4
+        else if expression.isAppOf ``wp then 5
         else if expression.isAppOf ``loopSummary then 11 else 7
       unless expression.getAppNumArgs == arity do return .done { expr := expression }
       let frameIndex := if expression.isAppOf ``Checkpoint.edgeChecks then 7 else arity - 1
