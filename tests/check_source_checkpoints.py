@@ -311,9 +311,13 @@ end FalseAssertion
         without_build = lambda text: re.sub(r'^  build := .*$', '', text, flags=re.M)
         self.assertEqual(without_build(generated), without_build((directory / "Generated.lean").read_text()))
         stored = json.loads((directory / "Generated.source.json").read_text())
-        self.assertEqual(stored["directives"], function.bundle()["directives"])
-        self.assertEqual(stored["artifactDigest"], function.bundle()["artifactDigest"])
-        self.assertEqual(stored["sourceBytesBase64"], function.bundle()["sourceBytesBase64"])
+        fresh = function.bundle()
+        self.assertEqual(stored["directives"], fresh["directives"])
+        # Build provenance (and hence the artifact digest) varies by platform.
+        for key in fresh["artifact"]:
+            if key != "build":
+                self.assertEqual(stored["artifact"][key], fresh["artifact"][key], key)
+        self.assertEqual(stored["sourceBytesBase64"], fresh["sourceBytesBase64"])
 
 
 if __name__ == "__main__":
