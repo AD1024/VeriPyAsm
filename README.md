@@ -147,6 +147,19 @@ The companion JSON links checkpoint labels and source spans to their Lean goals.
 [Crush](experiments/SourceCheckpointCrush.lean) providers verify the same generated
 specification. Generation alone does not establish a checkpoint claim.
 
+Checkpoints also compose through scoped and nested loops. The
+[nested multiplication example](examples/python/nested_product_checkpoints.py)
+resets its inner counter on each outer iteration and checks facts both inside
+and after the inner loop. Its seven mandatory VCs cover entry, execution with
+both loop measures, and five named checkpoints:
+
+```sh
+lake build VeriPyAsm.Examples.SourceNestedCheckpoints.Proofs SourceNestedCheckpointCrush
+```
+
+Loop exits retain downstream checkpoint obligations. A hint refers to the frame
+where it was proved; it does not become an invariant of a summarized loop.
+
 ## Run the checks
 
 ```sh
@@ -163,8 +176,8 @@ If the interpreter has a different name or location, use
 The prototype supports a defined scalar bytecode fragment. General objects,
 heap mutation, function calls, exception handlers, and async execution remain
 future work. The source frontend requires at least one `while` loop. Checkpoint
-generation supports a single loop with all locals initialized at its header;
-scoped/nested checkpoints support inspection only. Native
+generation supports single, sequential, and nested loops, including scoped
+locals that are initialized inside a loop. Native
 bytecode assertions support bare `assert` with modeled scalar tests; message
 constructors, `NOP`-folded assertions, and optimized artifacts are rejected.
 

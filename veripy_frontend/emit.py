@@ -58,8 +58,6 @@ def annotation_reads(node):
 
 
 def emit(function, namespace, *, mapping_only=False):
-    if function.checkpoints and function.scoped and not mapping_only:
-        raise FrontendError("checkpoint VC generation for scoped loops is not implemented yet; inspect remains available")
     if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*(?:\.[A-Za-z_][A-Za-z_0-9]*)*", namespace):
         raise FrontendError("namespace must be a dotted Lean identifier")
     bundle = function.bundle()
@@ -246,7 +244,7 @@ def checkpoint{i} : VC.EdgeCheckpoint ({ghost}) where
   {claim}
 ''')
     declarations.append(f'''
-def checkpointSpecification : VC.CheckpointSpecification ({ghost}) where
+def checkpointSpecification : VC.{'ScopedCheckpointSpecification' if function.scoped else 'CheckpointSpecification'} ({ghost}) where
   base := specification
   checkpoints := {seq(f'checkpoint{i}' for i in range(len(function.checkpoints)))}
 ''')
@@ -307,7 +305,14 @@ def specification : VC.ScopedSpecification ({ghost}) where
   contract := contract
   mode := .{'totalCorrectness' if function.mode == 'total' else 'partialCorrectness'}
   loops := {seq(f'loop{i}' for i in range(len(function.loops)))}
-
-veripy_generate generated from admitted for specification unfolding [{', '.join(rules)}]
+"""
+    target = "specification"
+    if function.checkpoints:
+        text += checkpoint_specification(function, ghost, old)
+        rules.extend(["specification", "checkpointMaps",
+                      *(f"checkpoint{i}" for i in range(len(function.checkpoints)))])
+        target = "checkpointSpecification"
+    text += f"""
+veripy_generate generated from admitted for {target} unfolding [{', '.join(rules)}]
 """
     return text

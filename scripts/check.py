@@ -49,6 +49,7 @@ def main():
     run(sys.executable, str(ROOT / "tests/check_cpython.py"))
     run(sys.executable, str(ROOT / "tests/check_frontend.py"))
     run(sys.executable, str(ROOT / "tests/check_source_checkpoints.py"))
+    run(sys.executable, str(ROOT / "tests/check_scoped_checkpoints.py"))
     print("Passed: Lean regressions, transitive axiom audit, CPython conformance, and source frontend", flush=True)
 
 

@@ -115,8 +115,7 @@ end CheckpointSource
         source = source.replace("        i = i - 1", "        # veripy: prove inner_exit: j == 0\n        i = i - 1\n        # veripy: prove outer_done: i >= 0")
         function = self.parse(source, "nested_product")
         self.assertEqual([c.kind for c in function.checkpoints], ["after", "before", "after"])
-        with self.assertRaisesRegex(FrontendError, "checkpoint VC generation for scoped loops"):
-            emit(function, "ScopedCheckpoints")
+        self.assertIn("VC.ScopedCheckpointSpecification", emit(function, "ScopedCheckpoints"))
         mapping = self.mapping(function)
         loops = mapping["loopMapping"]["loops"]
         inner, before, outer = mapping["checkpoints"]

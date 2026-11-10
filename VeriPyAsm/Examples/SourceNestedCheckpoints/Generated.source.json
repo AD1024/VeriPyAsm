@@ -1,0 +1,2125 @@
+{
+  "schemaVersion": 2,
+  "generator": "veripy_frontend",
+  "artifact": {
+    "schemaVersion": 1,
+    "implementation": "cpython",
+    "version": [
+      3,
+      14,
+      4
+    ],
+    "profile": "baselineSequential",
+    "build": "3.14.4 (main, Apr  7 2026, 13:13:20) [Clang 16.0.0 (clang-1600.0.26.6)]",
+    "optimize": 0,
+    "compilerFlags": 0,
+    "dontInherit": true,
+    "name": "nested_product",
+    "code": [
+      128,
+      0,
+      84,
+      0,
+      112,
+      2,
+      94,
+      0,
+      112,
+      3,
+      86,
+      2,
+      94,
+      0,
+      56,
+      148,
+      0,
+      0,
+      100,
+      50,
+      0,
+      0,
+      28,
+      0,
+      84,
+      1,
+      112,
+      4,
+      86,
+      4,
+      94,
+      0,
+      56,
+      148,
+      0,
+      0,
+      100,
+      30,
+      0,
+      0,
+      28,
+      0,
+      86,
+      3,
+      94,
+      1,
+      44,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      112,
+      3,
+      86,
+      4,
+      94,
+      1,
+      44,
+      10,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      112,
+      4,
+      86,
+      4,
+      94,
+      0,
+      56,
+      188,
+      0,
+      0,
+      100,
+      3,
+      0,
+      0,
+      28,
+      0,
+      75,
+      34,
+      0,
+      0,
+      81,
+      0,
+      104,
+      1,
+      86,
+      2,
+      94,
+      1,
+      44,
+      10,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      112,
+      2,
+      75,
+      56,
+      0,
+      0,
+      86,
+      3,
+      35,
+      0
+    ],
+    "constants": [
+      {
+        "tag": "int",
+        "value": "0"
+      }
+    ],
+    "argCount": 2,
+    "posOnlyArgCount": 0,
+    "kwOnlyArgCount": 0,
+    "localNames": [
+      "n",
+      "m",
+      "i",
+      "total",
+      "j"
+    ],
+    "names": [],
+    "freeVars": [],
+    "cellVars": [],
+    "stackSize": 2,
+    "flags": 3,
+    "exceptionTable": []
+  },
+  "source": {
+    "schemaVersion": 1,
+    "path": "examples/python/nested_product_checkpoints.py",
+    "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+    "functionName": "nested_product",
+    "localNames": [
+      "n",
+      "m",
+      "i",
+      "total",
+      "j"
+    ],
+    "positions": [
+      null,
+      {
+        "line": 6,
+        "column": 8,
+        "endLine": 6,
+        "endColumn": 9
+      },
+      {
+        "line": 6,
+        "column": 4,
+        "endLine": 6,
+        "endColumn": 5
+      },
+      {
+        "line": 7,
+        "column": 12,
+        "endLine": 7,
+        "endColumn": 13
+      },
+      {
+        "line": 7,
+        "column": 4,
+        "endLine": 7,
+        "endColumn": 9
+      },
+      {
+        "line": 11,
+        "column": 10,
+        "endLine": 11,
+        "endColumn": 11
+      },
+      {
+        "line": 11,
+        "column": 14,
+        "endLine": 11,
+        "endColumn": 15
+      },
+      {
+        "line": 11,
+        "column": 10,
+        "endLine": 11,
+        "endColumn": 15
+      },
+      {
+        "line": 11,
+        "column": 10,
+        "endLine": 11,
+        "endColumn": 15
+      },
+      {
+        "line": 11,
+        "column": 10,
+        "endLine": 11,
+        "endColumn": 15
+      },
+      {
+        "line": 11,
+        "column": 10,
+        "endLine": 11,
+        "endColumn": 15
+      },
+      {
+        "line": 11,
+        "column": 10,
+        "endLine": 11,
+        "endColumn": 15
+      },
+      {
+        "line": 12,
+        "column": 12,
+        "endLine": 12,
+        "endColumn": 13
+      },
+      {
+        "line": 12,
+        "column": 8,
+        "endLine": 12,
+        "endColumn": 9
+      },
+      {
+        "line": 17,
+        "column": 14,
+        "endLine": 17,
+        "endColumn": 15
+      },
+      {
+        "line": 17,
+        "column": 18,
+        "endLine": 17,
+        "endColumn": 19
+      },
+      {
+        "line": 17,
+        "column": 14,
+        "endLine": 17,
+        "endColumn": 19
+      },
+      {
+        "line": 17,
+        "column": 14,
+        "endLine": 17,
+        "endColumn": 19
+      },
+      {
+        "line": 17,
+        "column": 14,
+        "endLine": 17,
+        "endColumn": 19
+      },
+      {
+        "line": 17,
+        "column": 14,
+        "endLine": 17,
+        "endColumn": 19
+      },
+      {
+        "line": 17,
+        "column": 14,
+        "endLine": 17,
+        "endColumn": 19
+      },
+      {
+        "line": 18,
+        "column": 20,
+        "endLine": 18,
+        "endColumn": 25
+      },
+      {
+        "line": 18,
+        "column": 28,
+        "endLine": 18,
+        "endColumn": 29
+      },
+      {
+        "line": 18,
+        "column": 20,
+        "endLine": 18,
+        "endColumn": 29
+      },
+      {
+        "line": 18,
+        "column": 20,
+        "endLine": 18,
+        "endColumn": 29
+      },
+      {
+        "line": 18,
+        "column": 20,
+        "endLine": 18,
+        "endColumn": 29
+      },
+      {
+        "line": 18,
+        "column": 20,
+        "endLine": 18,
+        "endColumn": 29
+      },
+      {
+        "line": 18,
+        "column": 20,
+        "endLine": 18,
+        "endColumn": 29
+      },
+      {
+        "line": 18,
+        "column": 20,
+        "endLine": 18,
+        "endColumn": 29
+      },
+      {
+        "line": 18,
+        "column": 12,
+        "endLine": 18,
+        "endColumn": 17
+      },
+      {
+        "line": 19,
+        "column": 16,
+        "endLine": 19,
+        "endColumn": 17
+      },
+      {
+        "line": 19,
+        "column": 20,
+        "endLine": 19,
+        "endColumn": 21
+      },
+      {
+        "line": 19,
+        "column": 16,
+        "endLine": 19,
+        "endColumn": 21
+      },
+      {
+        "line": 19,
+        "column": 16,
+        "endLine": 19,
+        "endColumn": 21
+      },
+      {
+        "line": 19,
+        "column": 16,
+        "endLine": 19,
+        "endColumn": 21
+      },
+      {
+        "line": 19,
+        "column": 16,
+        "endLine": 19,
+        "endColumn": 21
+      },
+      {
+        "line": 19,
+        "column": 16,
+        "endLine": 19,
+        "endColumn": 21
+      },
+      {
+        "line": 19,
+        "column": 16,
+        "endLine": 19,
+        "endColumn": 21
+      },
+      {
+        "line": 19,
+        "column": 12,
+        "endLine": 19,
+        "endColumn": 13
+      },
+      {
+        "line": 21,
+        "column": 19,
+        "endLine": 21,
+        "endColumn": 20
+      },
+      {
+        "line": 21,
+        "column": 24,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 21,
+        "column": 19,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 21,
+        "column": 19,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 21,
+        "column": 19,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 21,
+        "column": 19,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 21,
+        "column": 19,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 21,
+        "column": 19,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 21,
+        "column": 19,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 21,
+        "column": 12,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 21,
+        "column": 19,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      {
+        "line": 23,
+        "column": 12,
+        "endLine": 23,
+        "endColumn": 13
+      },
+      {
+        "line": 23,
+        "column": 16,
+        "endLine": 23,
+        "endColumn": 17
+      },
+      {
+        "line": 23,
+        "column": 12,
+        "endLine": 23,
+        "endColumn": 17
+      },
+      {
+        "line": 23,
+        "column": 12,
+        "endLine": 23,
+        "endColumn": 17
+      },
+      {
+        "line": 23,
+        "column": 12,
+        "endLine": 23,
+        "endColumn": 17
+      },
+      {
+        "line": 23,
+        "column": 12,
+        "endLine": 23,
+        "endColumn": 17
+      },
+      {
+        "line": 23,
+        "column": 12,
+        "endLine": 23,
+        "endColumn": 17
+      },
+      {
+        "line": 23,
+        "column": 12,
+        "endLine": 23,
+        "endColumn": 17
+      },
+      {
+        "line": 23,
+        "column": 8,
+        "endLine": 23,
+        "endColumn": 9
+      },
+      {
+        "line": 23,
+        "column": 8,
+        "endLine": 23,
+        "endColumn": 9
+      },
+      {
+        "line": 23,
+        "column": 8,
+        "endLine": 23,
+        "endColumn": 9
+      },
+      {
+        "line": 26,
+        "column": 11,
+        "endLine": 26,
+        "endColumn": 16
+      },
+      {
+        "line": 26,
+        "column": 4,
+        "endLine": 26,
+        "endColumn": 16
+      }
+    ],
+    "loop": {
+      "label": "rows",
+      "statement": {
+        "line": 11,
+        "column": 4,
+        "endLine": 23,
+        "endColumn": 17
+      },
+      "test": {
+        "line": 11,
+        "column": 10,
+        "endLine": 11,
+        "endColumn": 15
+      },
+      "body": {
+        "line": 12,
+        "column": 8,
+        "endLine": 23,
+        "endColumn": 17
+      }
+    }
+  },
+  "sourceEncoding": "utf-8",
+  "sourceBytesBase64": "IiIiTmVzdGVkIGxvb3BzIHdpdGggY2hlY2twb2ludHMsIGxvY2FsIG1lYXN1cmVzLCBhbmQgYW4gaW5uZXItY291bnRlciByZXNldC4iIiIKCiMgdmVyaXB5OiByZXF1aXJlcyBpc19pbnQobikgYW5kIGlzX2ludChtKSBhbmQgbiA+PSAwIGFuZCBtID49IDAKIyB2ZXJpcHk6IGVuc3VyZXMgcmVzdWx0ID09IG9sZChuKSAqIG9sZChtKQpkZWYgbmVzdGVkX3Byb2R1Y3QobiwgbSk6CiAgICBpID0gbgogICAgdG90YWwgPSAwCiAgICAjIHZlcmlweTogbG9vcCByb3dzCiAgICAjIHZlcmlweTogaW52YXJpYW50IGkgPj0gMCBhbmQgdG90YWwgPT0gKG9sZChuKSAtIGkpICogb2xkKG0pCiAgICAjIHZlcmlweTogZGVjcmVhc2VzIGkKICAgIHdoaWxlIGkgPiAwOgogICAgICAgIGogPSBtCiAgICAgICAgIyB2ZXJpcHk6IHByb3ZlIGlubmVyX2luaXRpYWxpemVkOiBqID09IG9sZChtKQogICAgICAgICMgdmVyaXB5OiBsb29wIGNvbHVtbnMKICAgICAgICAjIHZlcmlweTogaW52YXJpYW50IGogPj0gMCBhbmQgdG90YWwgPT0gKG9sZChuKSAtIGkpICogb2xkKG0pICsgKG9sZChtKSAtIGopCiAgICAgICAgIyB2ZXJpcHk6IGRlY3JlYXNlcyBqCiAgICAgICAgd2hpbGUgaiA+IDA6CiAgICAgICAgICAgIHRvdGFsID0gdG90YWwgKyAxCiAgICAgICAgICAgIGogPSBqIC0gMQogICAgICAgICAgICAjIHZlcmlweTogbmFtZSByZW1haW5pbmdfbm9ubmVnYXRpdmUKICAgICAgICAgICAgYXNzZXJ0IGogPj0gMAogICAgICAgICAgICAjIHZlcmlweTogcHJvdmUgaW5uZXJfY29uc2VydmVkOiB0b3RhbCA9PSAob2xkKG4pIC0gaSkgKiBvbGQobSkgKyAob2xkKG0pIC0gaikKICAgICAgICBpID0gaSAtIDEKICAgICAgICAjIHZlcmlweTogcHJvdmUgb3V0ZXJfY29uc2VydmVkOiB0b3RhbCA9PSAob2xkKG4pIC0gaSkgKiBvbGQobSkKICAgICMgdmVyaXB5OiBwcm92ZSBwcm9kdWN0OiB0b3RhbCA9PSBvbGQobikgKiBvbGQobSkKICAgIHJldHVybiB0b3RhbAo=",
+  "artifactDigest": "f01360f803f78455493417ce759a25babd8c9f18e71d9f943eef8cbd63b8ab05",
+  "qualifiedName": "nested_product",
+  "functionSpan": {
+    "line": 5,
+    "column": 0,
+    "endLine": 26,
+    "endColumn": 16
+  },
+  "directives": [
+    {
+      "kind": "requires",
+      "text": "is_int(n) and is_int(m) and n >= 0 and m >= 0",
+      "sourceText": "# veripy: requires is_int(n) and is_int(m) and n >= 0 and m >= 0",
+      "span": {
+        "line": 3,
+        "column": 0,
+        "endLine": 3,
+        "endColumn": 64
+      },
+      "target": {
+        "kind": "function",
+        "name": "nested_product",
+        "span": {
+          "line": 5,
+          "column": 0,
+          "endLine": 26,
+          "endColumn": 16
+        }
+      }
+    },
+    {
+      "kind": "ensures",
+      "text": "result == old(n) * old(m)",
+      "sourceText": "# veripy: ensures result == old(n) * old(m)",
+      "span": {
+        "line": 4,
+        "column": 0,
+        "endLine": 4,
+        "endColumn": 43
+      },
+      "target": {
+        "kind": "function",
+        "name": "nested_product",
+        "span": {
+          "line": 5,
+          "column": 0,
+          "endLine": 26,
+          "endColumn": 16
+        }
+      }
+    },
+    {
+      "kind": "loop",
+      "text": "rows",
+      "sourceText": "# veripy: loop rows",
+      "span": {
+        "line": 8,
+        "column": 4,
+        "endLine": 8,
+        "endColumn": 23
+      },
+      "target": {
+        "kind": "loop",
+        "name": "rows",
+        "span": {
+          "line": 11,
+          "column": 4,
+          "endLine": 23,
+          "endColumn": 17
+        }
+      }
+    },
+    {
+      "kind": "invariant",
+      "text": "i >= 0 and total == (old(n) - i) * old(m)",
+      "sourceText": "# veripy: invariant i >= 0 and total == (old(n) - i) * old(m)",
+      "span": {
+        "line": 9,
+        "column": 4,
+        "endLine": 9,
+        "endColumn": 65
+      },
+      "target": {
+        "kind": "loop",
+        "name": "rows",
+        "span": {
+          "line": 11,
+          "column": 4,
+          "endLine": 23,
+          "endColumn": 17
+        }
+      }
+    },
+    {
+      "kind": "decreases",
+      "text": "i",
+      "sourceText": "# veripy: decreases i",
+      "span": {
+        "line": 10,
+        "column": 4,
+        "endLine": 10,
+        "endColumn": 25
+      },
+      "target": {
+        "kind": "loop",
+        "name": "rows",
+        "span": {
+          "line": 11,
+          "column": 4,
+          "endLine": 23,
+          "endColumn": 17
+        }
+      }
+    },
+    {
+      "kind": "prove",
+      "text": "inner_initialized: j == old(m)",
+      "sourceText": "# veripy: prove inner_initialized: j == old(m)",
+      "span": {
+        "line": 13,
+        "column": 8,
+        "endLine": 13,
+        "endColumn": 54
+      },
+      "target": {
+        "kind": "proof_hint",
+        "name": "inner_initialized",
+        "span": {
+          "line": 17,
+          "column": 8,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        "boundary": "before"
+      }
+    },
+    {
+      "kind": "loop",
+      "text": "columns",
+      "sourceText": "# veripy: loop columns",
+      "span": {
+        "line": 14,
+        "column": 8,
+        "endLine": 14,
+        "endColumn": 30
+      },
+      "target": {
+        "kind": "loop",
+        "name": "columns",
+        "span": {
+          "line": 17,
+          "column": 8,
+          "endLine": 21,
+          "endColumn": 25
+        }
+      }
+    },
+    {
+      "kind": "invariant",
+      "text": "j >= 0 and total == (old(n) - i) * old(m) + (old(m) - j)",
+      "sourceText": "# veripy: invariant j >= 0 and total == (old(n) - i) * old(m) + (old(m) - j)",
+      "span": {
+        "line": 15,
+        "column": 8,
+        "endLine": 15,
+        "endColumn": 84
+      },
+      "target": {
+        "kind": "loop",
+        "name": "columns",
+        "span": {
+          "line": 17,
+          "column": 8,
+          "endLine": 21,
+          "endColumn": 25
+        }
+      }
+    },
+    {
+      "kind": "decreases",
+      "text": "j",
+      "sourceText": "# veripy: decreases j",
+      "span": {
+        "line": 16,
+        "column": 8,
+        "endLine": 16,
+        "endColumn": 29
+      },
+      "target": {
+        "kind": "loop",
+        "name": "columns",
+        "span": {
+          "line": 17,
+          "column": 8,
+          "endLine": 21,
+          "endColumn": 25
+        }
+      }
+    },
+    {
+      "kind": "name",
+      "text": "remaining_nonnegative",
+      "sourceText": "# veripy: name remaining_nonnegative",
+      "span": {
+        "line": 20,
+        "column": 12,
+        "endLine": 20,
+        "endColumn": 48
+      },
+      "target": {
+        "kind": "assertion",
+        "name": "remaining_nonnegative",
+        "span": {
+          "line": 21,
+          "column": 12,
+          "endLine": 21,
+          "endColumn": 25
+        }
+      }
+    },
+    {
+      "kind": "prove",
+      "text": "inner_conserved: total == (old(n) - i) * old(m) + (old(m) - j)",
+      "sourceText": "# veripy: prove inner_conserved: total == (old(n) - i) * old(m) + (old(m) - j)",
+      "span": {
+        "line": 22,
+        "column": 12,
+        "endLine": 22,
+        "endColumn": 90
+      },
+      "target": {
+        "kind": "proof_hint",
+        "name": "inner_conserved",
+        "span": {
+          "line": 21,
+          "column": 12,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        "boundary": "after"
+      }
+    },
+    {
+      "kind": "prove",
+      "text": "outer_conserved: total == (old(n) - i) * old(m)",
+      "sourceText": "# veripy: prove outer_conserved: total == (old(n) - i) * old(m)",
+      "span": {
+        "line": 24,
+        "column": 8,
+        "endLine": 24,
+        "endColumn": 71
+      },
+      "target": {
+        "kind": "proof_hint",
+        "name": "outer_conserved",
+        "span": {
+          "line": 23,
+          "column": 8,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        "boundary": "after"
+      }
+    },
+    {
+      "kind": "prove",
+      "text": "product: total == old(n) * old(m)",
+      "sourceText": "# veripy: prove product: total == old(n) * old(m)",
+      "span": {
+        "line": 25,
+        "column": 4,
+        "endLine": 25,
+        "endColumn": 53
+      },
+      "target": {
+        "kind": "proof_hint",
+        "name": "product",
+        "span": {
+          "line": 26,
+          "column": 4,
+          "endLine": 26,
+          "endColumn": 16
+        },
+        "boundary": "before"
+      }
+    }
+  ],
+  "annotations": {
+    "mode": "total",
+    "requires": "is_int(n) and is_int(m) and (n >= 0) and (m >= 0)",
+    "ensures": "result == old(n) * old(m)",
+    "invariant": "i >= 0 and total == (old(n) - i) * old(m)",
+    "decreases": "i",
+    "loops": [
+      {
+        "label": "rows",
+        "parent": null,
+        "invariant": "i >= 0 and total == (old(n) - i) * old(m)",
+        "decreases": "i",
+        "initialized": [
+          "i",
+          "m",
+          "n",
+          "total"
+        ],
+        "modified": [
+          "i",
+          "j",
+          "total"
+        ]
+      },
+      {
+        "label": "columns",
+        "parent": 0,
+        "invariant": "j >= 0 and total == (old(n) - i) * old(m) + (old(m) - j)",
+        "decreases": "j",
+        "initialized": [
+          "i",
+          "j",
+          "m",
+          "n",
+          "total"
+        ],
+        "modified": [
+          "j",
+          "total"
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "schemaVersion": 1,
+      "path": "examples/python/nested_product_checkpoints.py",
+      "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+      "functionName": "nested_product",
+      "localNames": [
+        "n",
+        "m",
+        "i",
+        "total",
+        "j"
+      ],
+      "positions": [
+        null,
+        {
+          "line": 6,
+          "column": 8,
+          "endLine": 6,
+          "endColumn": 9
+        },
+        {
+          "line": 6,
+          "column": 4,
+          "endLine": 6,
+          "endColumn": 5
+        },
+        {
+          "line": 7,
+          "column": 12,
+          "endLine": 7,
+          "endColumn": 13
+        },
+        {
+          "line": 7,
+          "column": 4,
+          "endLine": 7,
+          "endColumn": 9
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 11
+        },
+        {
+          "line": 11,
+          "column": 14,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 12,
+          "column": 12,
+          "endLine": 12,
+          "endColumn": 13
+        },
+        {
+          "line": 12,
+          "column": 8,
+          "endLine": 12,
+          "endColumn": 9
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 15
+        },
+        {
+          "line": 17,
+          "column": 18,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 25
+        },
+        {
+          "line": 18,
+          "column": 28,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 12,
+          "endLine": 18,
+          "endColumn": 17
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 17
+        },
+        {
+          "line": 19,
+          "column": 20,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 12,
+          "endLine": 19,
+          "endColumn": 13
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 20
+        },
+        {
+          "line": 21,
+          "column": 24,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 12,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 13
+        },
+        {
+          "line": 23,
+          "column": 16,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 8,
+          "endLine": 23,
+          "endColumn": 9
+        },
+        {
+          "line": 23,
+          "column": 8,
+          "endLine": 23,
+          "endColumn": 9
+        },
+        {
+          "line": 23,
+          "column": 8,
+          "endLine": 23,
+          "endColumn": 9
+        },
+        {
+          "line": 26,
+          "column": 11,
+          "endLine": 26,
+          "endColumn": 16
+        },
+        {
+          "line": 26,
+          "column": 4,
+          "endLine": 26,
+          "endColumn": 16
+        }
+      ],
+      "loop": {
+        "label": "rows",
+        "statement": {
+          "line": 11,
+          "column": 4,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        "test": {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        "body": {
+          "line": 12,
+          "column": 8,
+          "endLine": 23,
+          "endColumn": 17
+        }
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "path": "examples/python/nested_product_checkpoints.py",
+      "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+      "functionName": "nested_product",
+      "localNames": [
+        "n",
+        "m",
+        "i",
+        "total",
+        "j"
+      ],
+      "positions": [
+        null,
+        {
+          "line": 6,
+          "column": 8,
+          "endLine": 6,
+          "endColumn": 9
+        },
+        {
+          "line": 6,
+          "column": 4,
+          "endLine": 6,
+          "endColumn": 5
+        },
+        {
+          "line": 7,
+          "column": 12,
+          "endLine": 7,
+          "endColumn": 13
+        },
+        {
+          "line": 7,
+          "column": 4,
+          "endLine": 7,
+          "endColumn": 9
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 11
+        },
+        {
+          "line": 11,
+          "column": 14,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 11,
+          "column": 10,
+          "endLine": 11,
+          "endColumn": 15
+        },
+        {
+          "line": 12,
+          "column": 12,
+          "endLine": 12,
+          "endColumn": 13
+        },
+        {
+          "line": 12,
+          "column": 8,
+          "endLine": 12,
+          "endColumn": 9
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 15
+        },
+        {
+          "line": 17,
+          "column": 18,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 25
+        },
+        {
+          "line": 18,
+          "column": 28,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 20,
+          "endLine": 18,
+          "endColumn": 29
+        },
+        {
+          "line": 18,
+          "column": 12,
+          "endLine": 18,
+          "endColumn": 17
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 17
+        },
+        {
+          "line": 19,
+          "column": 20,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 16,
+          "endLine": 19,
+          "endColumn": 21
+        },
+        {
+          "line": 19,
+          "column": 12,
+          "endLine": 19,
+          "endColumn": 13
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 20
+        },
+        {
+          "line": 21,
+          "column": 24,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 12,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 21,
+          "column": 19,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 13
+        },
+        {
+          "line": 23,
+          "column": 16,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 12,
+          "endLine": 23,
+          "endColumn": 17
+        },
+        {
+          "line": 23,
+          "column": 8,
+          "endLine": 23,
+          "endColumn": 9
+        },
+        {
+          "line": 23,
+          "column": 8,
+          "endLine": 23,
+          "endColumn": 9
+        },
+        {
+          "line": 23,
+          "column": 8,
+          "endLine": 23,
+          "endColumn": 9
+        },
+        {
+          "line": 26,
+          "column": 11,
+          "endLine": 26,
+          "endColumn": 16
+        },
+        {
+          "line": 26,
+          "column": 4,
+          "endLine": 26,
+          "endColumn": 16
+        }
+      ],
+      "loop": {
+        "label": "columns",
+        "statement": {
+          "line": 17,
+          "column": 8,
+          "endLine": 21,
+          "endColumn": 25
+        },
+        "test": {
+          "line": 17,
+          "column": 14,
+          "endLine": 17,
+          "endColumn": 19
+        },
+        "body": {
+          "line": 18,
+          "column": 12,
+          "endLine": 21,
+          "endColumn": 25
+        }
+      }
+    }
+  ],
+  "checkpoints": {
+    "schemaVersion": 1,
+    "items": [
+      {
+        "origin": {
+          "label": "inner_initialized",
+          "kind": "before",
+          "statement": {
+            "line": 17,
+            "column": 8,
+            "endLine": 21,
+            "endColumn": 25
+          }
+        },
+        "claim": "j == old(m)",
+        "initialized": [
+          "i",
+          "j",
+          "m",
+          "n",
+          "total"
+        ],
+        "vcGoal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_inner_initialized"
+      },
+      {
+        "origin": {
+          "label": "remaining_nonnegative",
+          "kind": "assertion",
+          "statement": {
+            "line": 21,
+            "column": 12,
+            "endLine": 21,
+            "endColumn": 25
+          }
+        },
+        "claim": "j >= 0",
+        "initialized": [
+          "i",
+          "j",
+          "m",
+          "n",
+          "total"
+        ],
+        "vcGoal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_remaining_nonnegative"
+      },
+      {
+        "origin": {
+          "label": "inner_conserved",
+          "kind": "after",
+          "statement": {
+            "line": 21,
+            "column": 12,
+            "endLine": 21,
+            "endColumn": 25
+          }
+        },
+        "claim": "total == (old(n) - i) * old(m) + (old(m) - j)",
+        "initialized": [
+          "i",
+          "j",
+          "m",
+          "n",
+          "total"
+        ],
+        "vcGoal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_inner_conserved"
+      },
+      {
+        "origin": {
+          "label": "outer_conserved",
+          "kind": "after",
+          "statement": {
+            "line": 23,
+            "column": 8,
+            "endLine": 23,
+            "endColumn": 17
+          }
+        },
+        "claim": "total == (old(n) - i) * old(m)",
+        "initialized": [
+          "i",
+          "j",
+          "m",
+          "n",
+          "total"
+        ],
+        "vcGoal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_outer_conserved"
+      },
+      {
+        "origin": {
+          "label": "product",
+          "kind": "before",
+          "statement": {
+            "line": 26,
+            "column": 4,
+            "endLine": 26,
+            "endColumn": 16
+          }
+        },
+        "claim": "total == old(n) * old(m)",
+        "initialized": [
+          "i",
+          "m",
+          "n",
+          "total"
+        ],
+        "vcGoal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_product"
+      }
+    ]
+  },
+  "mapping": {
+    "checkpoints": [
+      {
+        "boundaryEdges": [
+          {
+            "sourcePC": 26,
+            "targetPC": 28
+          }
+        ],
+        "entry": 28,
+        "entryEdges": [
+          {
+            "sourcePC": 26,
+            "targetPC": 28
+          }
+        ],
+        "exitEdges": [
+          {
+            "sourcePC": 36,
+            "targetPC": 100
+          }
+        ],
+        "failureNodes": [
+          98
+        ],
+        "nodes": [
+          28,
+          30,
+          32,
+          36,
+          42,
+          44,
+          46,
+          58,
+          60,
+          62,
+          64,
+          76,
+          78,
+          80,
+          82,
+          86,
+          96,
+          92,
+          98
+        ]
+      },
+      {
+        "boundaryEdges": [
+          {
+            "sourcePC": 76,
+            "targetPC": 78
+          }
+        ],
+        "entry": 78,
+        "entryEdges": [
+          {
+            "sourcePC": 76,
+            "targetPC": 78
+          }
+        ],
+        "exitEdges": [
+          {
+            "sourcePC": 92,
+            "targetPC": 28
+          }
+        ],
+        "failureNodes": [
+          98
+        ],
+        "nodes": [
+          78,
+          80,
+          82,
+          86,
+          96,
+          92,
+          98
+        ]
+      },
+      {
+        "boundaryEdges": [
+          {
+            "sourcePC": 92,
+            "targetPC": 28
+          }
+        ],
+        "entry": 78,
+        "entryEdges": [
+          {
+            "sourcePC": 76,
+            "targetPC": 78
+          }
+        ],
+        "exitEdges": [
+          {
+            "sourcePC": 92,
+            "targetPC": 28
+          }
+        ],
+        "failureNodes": [
+          98
+        ],
+        "nodes": [
+          78,
+          80,
+          82,
+          86,
+          96,
+          92,
+          98
+        ]
+      },
+      {
+        "boundaryEdges": [
+          {
+            "sourcePC": 118,
+            "targetPC": 10
+          }
+        ],
+        "entry": 100,
+        "entryEdges": [
+          {
+            "sourcePC": 36,
+            "targetPC": 100
+          }
+        ],
+        "exitEdges": [
+          {
+            "sourcePC": 118,
+            "targetPC": 10
+          }
+        ],
+        "failureNodes": [],
+        "nodes": [
+          100,
+          102,
+          104,
+          116,
+          118
+        ]
+      },
+      {
+        "boundaryEdges": [
+          {
+            "sourcePC": 18,
+            "targetPC": 122
+          }
+        ],
+        "entry": 122,
+        "entryEdges": [
+          {
+            "sourcePC": 18,
+            "targetPC": 122
+          }
+        ],
+        "exitEdges": [],
+        "failureNodes": [],
+        "nodes": [
+          122,
+          124
+        ]
+      }
+    ],
+    "loopMapping": {
+      "loops": [
+        {
+          "backedges": [
+            {
+              "sourcePC": 118,
+              "targetPC": 10
+            }
+          ],
+          "bodyEdges": [
+            {
+              "sourcePC": 18,
+              "targetPC": 24
+            }
+          ],
+          "bodyNodes": [
+            24,
+            26,
+            28,
+            30,
+            32,
+            36,
+            100,
+            42,
+            102,
+            44,
+            104,
+            46,
+            116,
+            58,
+            118,
+            60,
+            62,
+            64,
+            76,
+            78,
+            80,
+            82,
+            86,
+            96,
+            92,
+            98
+          ],
+          "entryEdges": [
+            {
+              "sourcePC": 8,
+              "targetPC": 10
+            }
+          ],
+          "exitEdges": [
+            {
+              "sourcePC": 18,
+              "targetPC": 122
+            }
+          ],
+          "header": 10,
+          "testNodes": [
+            10,
+            12,
+            14,
+            18
+          ]
+        },
+        {
+          "backedges": [
+            {
+              "sourcePC": 92,
+              "targetPC": 28
+            }
+          ],
+          "bodyEdges": [
+            {
+              "sourcePC": 36,
+              "targetPC": 42
+            }
+          ],
+          "bodyNodes": [
+            42,
+            44,
+            46,
+            58,
+            60,
+            62,
+            64,
+            76,
+            78,
+            80,
+            82,
+            86,
+            96,
+            92,
+            98
+          ],
+          "entryEdges": [
+            {
+              "sourcePC": 26,
+              "targetPC": 28
+            }
+          ],
+          "exitEdges": [
+            {
+              "sourcePC": 36,
+              "targetPC": 100
+            }
+          ],
+          "header": 28,
+          "testNodes": [
+            28,
+            30,
+            32,
+            36
+          ]
+        }
+      ],
+      "parents": [
+        null,
+        0
+      ]
+    }
+  },
+  "missingAnnotations": [],
+  "status": "vcs_generated"
+}

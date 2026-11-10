@@ -96,6 +96,11 @@ generation adds one VC per named checkpoint alongside ordinary entry/loop VCs.
 The main execution view assumes claims on their exact edges. Each selected view
 must establish its own claim before using it. The assembly combines every view
 to recover the original WP with identical fuel and ranking obligations.
+[`ScopedCheckpointSpecification`](VeriPyAsm/Verification/VC/ScopedCheckpoint.lean)
+extends this assembly through loop summaries. Every selected view retains the
+exit continuation, so checkpoints after an inner loop remain mandatory. Loop
+entry snapshots, invariant assumptions, and local measures match the scoped
+specification without checkpoints.
 
 Manual `@[veripy_proof VC.name]` registration checks the complete theorem type
 against the named VC using a kernel-checked equality by `rfl`. Registration and
@@ -150,14 +155,17 @@ never independent boundaries. Constant-false assertions can have no passing
 exit; folded `assert True` is rejected by admission or checkpoint mapping.
 
 These certificates establish structural mappings only; inspection neither assumes
-nor proves claims. `generate` supports checkpoints with the unscoped single-loop
-specification (all locals initialized at its header). Scoped/nested checkpoint
-generation remains rejected. Runtime-assertion VCs prove actual bytecode evaluation
+nor proves claims. `generate` supports checkpoints with both unscoped and scoped
+specifications, including sequential and nested loops. Runtime-assertion VCs prove actual bytecode evaluation
 reaches a passing exit, excluding raises, faults, and fuel exhaustion. Logical
 hints are predicates over current local slots and immutable entry ghosts. Their
 separate VCs are mandatory even when a false hint makes a downstream VC vacuous.
 Checkpoint assumptions retain their original frame values across later writes.
 Neither checkpoint kind resets execution fuel or counts as loop progress.
+Scoped generation emits entry compatibility, one combined execution VC, and one
+mandatory VC per checkpoint. The execution VC retains every loop's invariant and
+ranking requirements. A checkpoint fact is not implicitly added to an invariant
+or reinterpreted against a later frame.
 
 Directive attachment follows [Python physical lines](https://docs.python.org/3.14/reference/lexical_analysis.html#physical-lines)
 (LF, CRLF, or CR), with
@@ -187,7 +195,7 @@ with the reference dispatcher; it is not a refinement proof of the CPython C
 implementation. Runtime correspondence and source/specification fidelity remain
 external obligations. Differential tests supply evidence, not universal proofs.
 
-Next steps include checkpoint VCs for scoped/nested loops, richer source proof
-reports with per-edge dependencies, separate named obligations for each
+Next steps include richer source proof reports with per-edge dependencies,
+separate named obligations for each
 scoped loop, and marker-confinement lemmas toward runtime refinement. These are
 extensions to the present guarantee, not premises supplied by the current tests.

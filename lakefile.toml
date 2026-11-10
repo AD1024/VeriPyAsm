@@ -33,6 +33,10 @@ name = "SourceCheckpointCrush"
 srcDir = "experiments"
 
 [[lean_lib]]
+name = "SourceNestedCheckpointCrush"
+srcDir = "experiments"
+
+[[lean_lib]]
 name = "BytecodeTests"
 srcDir = "tests"
 
