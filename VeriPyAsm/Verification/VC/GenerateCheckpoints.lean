@@ -1,7 +1,7 @@
 import VeriPyAsm.Verification.VC.Generation
 
 /-! Checkpoint-specific declaration planning. The graph validates labels/edges
-for diagnostics; `CheckpointSpecification.verified` carries the soundness proof. -/
+for diagnostics; the scalar/scoped checkpoint assemblies carry the soundness proof. -/
 
 namespace VeriPyAsm.Verification.VC.Generation
 open Lean Meta Semantics
@@ -13,8 +13,9 @@ private def readString (value : Expr) : MetaM String := do
     return Char.ofNat (← readNat (← mkAppM ``Char.toNat #[char])))
 
 def checkpointGoals (name : Name) (next spec : Expr) (fuel : Nat)
-    (graph : Array (Nat × Array Nat)) : MetaM (Array Expr × Array Obligation) := do
-  let checks ← mkAppM ``CheckpointSpecification.checkpoints #[spec]
+    (graph : Array (Nat × Array Nat)) (isScoped : Bool := false) : MetaM (Array Expr × Array Obligation) := do
+  let checks ← mkAppM (if isScoped then ``ScopedCheckpointSpecification.checkpoints
+    else ``CheckpointSpecification.checkpoints) #[spec]
   let values ← readList checks
   let indices ← readList (← mkAppM ``List.finRange #[mkNatLit values.size])
   let mut labels : Array String := #[]
@@ -34,7 +35,8 @@ def checkpointGoals (name : Name) (next spec : Expr) (fuel : Nat)
       unless graph.any (fun (pc, successors) => pc == source && successors.contains target) do
         throwError "checkpoint {label} uses a nonexistent decoded edge {source} -> {target}"
     let field := Name.mkSimple s!"checkpoint_{label}"
-    goals := goals.push (← mkAppM ``CheckpointSpecification.SelectedVC #[next, spec, mkNatLit fuel, index])
+    goals := goals.push (← mkAppM (if isScoped then ``ScopedCheckpointSpecification.SelectedVC
+      else ``CheckpointSpecification.SelectedVC) #[next, spec, mkNatLit fuel, index])
     obligations := obligations.push { field, goal := name ++ `VC ++ field, offset := edges[0]!.2, kind }
   return (goals, obligations)
 

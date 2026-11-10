@@ -59,6 +59,19 @@ def edgeChecks (next : Frame → StepResult) (checks : List (EdgeCheckpoint Ghos
       guard selected index (checks[index].claim next ghost initial current) tail
     else tail
 
+theorem edgeChecks_nil (next : Frame → StepResult) (checks : List (EdgeCheckpoint Ghost))
+    (ghost : Ghost) (initial : Frame) (selected : Option (Fin checks.length))
+    (before current : Frame) (after : Prop) :
+    edgeChecks next checks ghost initial selected before current after [] = after := rfl
+
+theorem edgeChecks_skip (next : Frame → StepResult) (checks : List (EdgeCheckpoint Ghost))
+    (ghost : Ghost) (initial : Frame) (selected : Option (Fin checks.length))
+    (before current : Frame) (after : Prop) (index : Fin checks.length) (rest : List (Fin checks.length))
+    (absent : checks[index].edges.contains (before.pc, current.pc) = false) :
+    edgeChecks next checks ghost initial selected before current after (index :: rest) =
+      edgeChecks next checks ghost initial selected before current after rest := by
+  simp only [edgeChecks, absent, Bool.false_eq_true, ↓reduceIte]
+
 theorem edgeChecks_all {next : Frame → StepResult} {checks : List (EdgeCheckpoint Ghost)}
     {ghost : Ghost} {initial before current : Frame} {after : Option (Fin checks.length) → Prop}
     {indices : List (Fin checks.length)}

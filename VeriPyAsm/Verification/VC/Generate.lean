@@ -38,11 +38,14 @@ syntax (name := generateCommand) "veripy_generate " ident " from " ident " for "
       let_expr Admitted artifact := admissionType
         | throwErrorAt admissionId "VC generation requires an Admitted artifact (stack and ownership certificates)"
       let specType ← whnf (← inferType spec)
-      let isScoped := specType.isAppOfArity ``ScopedSpecification 1
-      let hasCheckpoints := specType.isAppOfArity ``CheckpointSpecification 1
+      let scopedCheckpoints := specType.isAppOfArity ``ScopedCheckpointSpecification 1
+      let isScoped := scopedCheckpoints || specType.isAppOfArity ``ScopedSpecification 1
+      let hasCheckpoints := scopedCheckpoints || specType.isAppOfArity ``CheckpointSpecification 1
       unless isScoped || hasCheckpoints || specType.isAppOfArity ``Specification 1 do
-        throwErrorAt specId "VC generation requires a VC.Specification, VC.ScopedSpecification, or VC.CheckpointSpecification"
-      let baseSpec ← if hasCheckpoints then mkAppM ``CheckpointSpecification.base #[spec] else pure spec
+        throwErrorAt specId "VC generation requires a VC.Specification, VC.ScopedSpecification, VC.CheckpointSpecification, or VC.ScopedCheckpointSpecification"
+      let baseSpec ← if hasCheckpoints then
+          mkAppM (if isScoped then ``ScopedCheckpointSpecification.base else ``CheckpointSpecification.base) #[spec]
+        else pure spec
       let structural ← mkAppM ``Admitted.toStackAdmitted #[admission]
       let translation ← mkAppM ``StackAdmitted.translation #[structural]
       let code ← mkAppM ``Embedding.Translation.code #[translation]
@@ -55,7 +58,7 @@ syntax (name := generateCommand) "veripy_generate " ident " from " ident " for "
         throwError "VC generation requires a concrete correctness mode"
       if total && !cuts.isEmpty then
         if isScoped then
-          let loops ← readList (← mkAppM ``ScopedSpecification.loops #[spec])
+          let loops ← readList (← mkAppM ``ScopedSpecification.loops #[baseSpec])
           for loop in loops do
             let ranking ← closedWhnf (← mkAppM ``ScopedLoop.ranking #[loop])
             unless ranking.isAppOfArity ``Option.some 2 do
@@ -90,13 +93,15 @@ syntax (name := generateCommand) "veripy_generate " ident " from " ident " for "
         lookups := lookups.push lookupName
       let next := mkApp (mkConst ``step) program
       let selected ← if hasCheckpoints then do
-          let checks ← mkAppM ``CheckpointSpecification.checkpoints #[spec]
+          let checks ← mkAppM (if isScoped then ``ScopedCheckpointSpecification.checkpoints
+            else ``CheckpointSpecification.checkpoints) #[spec]
           let length ← mkAppM ``List.length #[checks]
           pure (mkApp (mkConst ``Option.none [.zero]) (mkApp (mkConst ``Fin) length))
         else pure (mkConst ``Unit.unit)
       let mut goals := #[
         (← mkAppM (if isScoped then ``ScopedSpecification.EntryVC else ``Specification.EntryVC) #[artifact, baseSpec]),
-        (← if hasCheckpoints then mkAppM ``CheckpointSpecification.InitVC #[next, spec, mkNatLit fuel, selected]
+        (← if hasCheckpoints then mkAppM (if isScoped then ``ScopedCheckpointSpecification.ExecutionVC
+            else ``CheckpointSpecification.InitVC) #[next, spec, mkNatLit fuel, selected]
           else mkAppM (if isScoped then ``ScopedSpecification.ExecutionVC else ``Specification.InitVC) #[next, spec, mkNatLit fuel])]
       let mut obligations : Array Obligation := #[
         { field := `entry, goal := name ++ `VC.entry, offset := 0, kind := "entry_compatibility" },
@@ -112,7 +117,7 @@ syntax (name := generateCommand) "veripy_generate " ident " from " ident " for "
           field, goal := name ++ `VC ++ field, offset := pc,
           kind := if total then "preservation_and_ranking" else "preservation" }
       if hasCheckpoints then
-        let (extraGoals, extraObligations) ← checkpointGoals name next spec fuel graph
+        let (extraGoals, extraObligations) ← checkpointGoals name next spec fuel graph isScoped
         goals := goals ++ extraGoals
         obligations := obligations ++ extraObligations
       for goal in goals, obligation in obligations do
@@ -154,7 +159,8 @@ syntax (name := generateCommand) "veripy_generate " ident " from " ident " for "
             let mut checks := mkConst ``True.intro
             for proof in (rawProofs.extract (2 + bodyCount) rawProofs.size).toList.reverse do
               checks ← mkAppM ``And.intro #[proof, checks]
-            mkAppM ``CheckpointSpecification.verified (arguments ++ #[bodies, checks])
+            mkAppM (if isScoped then ``ScopedCheckpointSpecification.verified else ``CheckpointSpecification.verified)
+              (arguments ++ (if isScoped then #[checks] else #[bodies, checks]))
           else do
             mkAppM (if isScoped then ``ScopedSpecification.verified else ``Specification.verified)
               (if isScoped then arguments else arguments.push bodies)

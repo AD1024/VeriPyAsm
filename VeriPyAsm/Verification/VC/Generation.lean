@@ -1,5 +1,4 @@
-import VeriPyAsm.Verification.VC.Scoped
-import VeriPyAsm.Verification.VC.EdgeCheckpoint
+import VeriPyAsm.Verification.VC.ScopedCheckpoint
 import VeriPyAsm.Verification.VC.Manifest
 
 /-! Shared proof-producing normalization and graph diagnostics for VC generators.
@@ -86,17 +85,19 @@ def publishDef (name : Name) (type value : Expr) : CoreM Unit := do
     compileDecls #[name] (logErrors := false)
 
 def shapeRules : Array Name := #[
+  ``ScopedCheckpointSpecification.ExecutionVC, ``ScopedCheckpointSpecification.SelectedVC,
   ``CheckpointSpecification.InitVC, ``CheckpointSpecification.BodyVC,
   ``CheckpointSpecification.BodiesVC, ``CheckpointSpecification.SelectedVC,
   ``ScopedSpecification.EntryVC, ``ScopedSpecification.ExecutionVC,
   ``ScopedSpecification.post, ``ScopedSpecification.headers, ``ScopedLoop.atHeader,
-  ``ScopedLoop.rank, ``ScopedLoop.bodyPost,
+  ``ScopedLoop.rank, ``ScopedLoop.bodyPost, ``Checkpoint.bodyPost,
   ``Specification.EntryVC, ``Specification.InitVC, ``Specification.BodyVC,
   ``Specification.entryPost, ``Specification.bodyPost, ``Specification.post,
   ``Specification.atCut, ``Specification.rank, ``EntryFrame,
   ``and_imp, ``or_imp, ``exists_imp, ``and_assoc]
 
 def executionRules : Array Name := #[
+  ``Checkpoint.regionWP, ``Checkpoint.iterationRegionWP, ``Checkpoint.loopSummary,
   ``Checkpoint.wp, ``Checkpoint.iterationWP, ``Checkpoint.edgeChecks,
   ``Checkpoint.guard, ``Checkpoint.terminal, ``Checkpoint.assertionPass, ``List.finRange_succ,
   ``regionWP, ``iterationRegionWP, ``loopSummary, ``findLoop,
@@ -107,19 +108,51 @@ def executionRules : Array Name := #[
   ``Semantics.Command.loadPair, ``Semantics.Command.storeLoad, ``Semantics.Command.storePair,
   ``Semantics.binary, ``Semantics.compare, ``Value.asInt, ``Value.truthy, ``Value.pythonEq]
 
+/-- The frame is the last argument, except for edge checks (argument seven).
+Partial applications stay opaque until an actual frame supplies a known PC. -/
+private def executionArity? (expression : Expr) : Option Nat :=
+  match expression.getAppFn with
+  | .const name _ => match name with
+    | ``wp => some 5
+    | ``regionWP | ``iterationRegionWP => some 7
+    | ``loopSummary => some 11
+    | ``Checkpoint.wp | ``Checkpoint.iterationWP | ``Checkpoint.edgeChecks => some 10
+    | ``Checkpoint.regionWP | ``Checkpoint.iterationRegionWP => some 12
+    | ``Checkpoint.loopSummary => some 13
+    | ``Checkpoint.assertionPass => some 4
+    | ``step => some 2
+    | _ => none
+  | _ => none
+
 def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
   let mut theorems ← getSimpTheorems
+  let mut checkpointNames : Array Name := #[]
   for rule in rules do
+    if (← whnf (← getConstInfo rule).type).isAppOf ``EdgeCheckpoint then
+      checkpointNames := checkpointNames.push rule
     theorems ← if (← getConstInfo rule).isTheorem then theorems.addConst rule
       else theorems.addDeclToUnfold rule
-  let context ← Simp.mkContext (config := { maxSteps := 1000000, contextual := true })
+  -- Retain lookup/equation proofs instead of asking kernel conversion to
+  -- re-execute the decoded dispatcher inside nested continuations.
+  let context ← Simp.mkContext (config := { maxSteps := 1000000, contextual := true, implicitDefEqProofs := false })
     (simpTheorems := #[theorems]) (congrTheorems := ← getSimpCongrTheorems)
   let methods ← Simp.mkDefaultMethods
+  let dpre : Simp.DSimproc := fun expression => do
+    -- Dependent arguments (notably Fin-indexed checkpoint lists) use dsimp,
+    -- which does not call the ordinary simp pre-hook. Preserve the same
+    -- execution boundary there, too: only the frame-aware pre-hook may run WP.
+    if expression.isAppOf ``EdgeCheckpoint.mk ||
+        expression.getAppFn.constName?.any checkpointNames.contains ||
+        expression.isAppOf ``ScopedLoop.bodyPost || expression.isAppOf ``Checkpoint.bodyPost ||
+        (executionArity? expression).isSome then
+      return .done expression
+    methods.dpre expression
   let pre : Simp.Simproc := fun expression => do
     -- Checkpoint predicates are data until an actual edge applies them to a
     -- concrete frame. Simplifying their generic function bodies can expand
     -- assertion WPs and change dependent Fin-indexed lists at every step.
-    if expression.isAppOf ``EdgeCheckpoint.mk then
+    if expression.isAppOf ``EdgeCheckpoint.mk ||
+        expression.getAppFn.constName?.any checkpointNames.contains then
       return .done { expr := expression }
     if expression.isAppOfArity ``Checkpoint.assertionPass 4 then
       -- Reduce the exit list before unfolding the WP. Otherwise simp can
@@ -131,15 +164,18 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
           return .visit { expr := mkAppN expression.getAppFn (args.set! 1 exits) }
     if expression.isAppOfArity ``Checkpoint.edgeChecks 10 then
       -- Select concrete edges before traversing checkpoint predicates. Each
-      -- structural reduction is definitional; predicate simplification supplies
-      -- a congruence proof. The published normalization equality checks both.
+      -- structural reduction has an explicit equality: omitting skip proofs
+      -- can make kernel conversion unfold the following WP instead. Predicate
+      -- simplification supplies a congruence proof for an active checkpoint.
       let args := expression.getAppArgs
       let beforePC ← getNatValue? (← whnf (← mkAppM ``Frame.pc #[args[6]!]))
       let currentPC ← getNatValue? (← whnf (← mkAppM ``Frame.pc #[args[7]!]))
       if let (some beforePC, some currentPC) := (beforePC, currentPC) then
         let indices ← withTransparency .all <| whnf args[9]!
         if indices.isAppOfArity ``List.nil 1 then
-          return .visit { expr := args[8]! }
+          return .visit {
+            expr := args[8]!
+            proof? := some (← mkAppM ``Checkpoint.edgeChecks_nil (args.extract 1 9)) }
         if indices.isAppOfArity ``List.cons 3 then
           let index := indices.getAppArgs[1]!
           let tail := mkAppN expression.getAppFn (args.set! 9 indices.getAppArgs[2]!)
@@ -147,7 +183,11 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
           let edges ← mkAppM ``EdgeCheckpoint.edges #[checkpoint]
           let edge ← mkAppM ``Prod.mk #[mkNatLit beforePC, mkNatLit currentPC]
           let applies ← withTransparency .all <| whnf (← mkAppM ``List.contains #[edges, edge])
-          if applies.isConstOf ``Bool.false then return .visit { expr := tail }
+          if applies.isConstOf ``Bool.false then
+            return .visit {
+              expr := tail
+              proof? := some (← mkAppM ``Checkpoint.edgeChecks_skip
+                ((args.extract 1 9) ++ #[index, indices.getAppArgs[2]!, ← mkEqRefl applies])) }
           if applies.isConstOf ``Bool.true then
             let value ← withTransparency .all <| whnf checkpoint
             let_expr EdgeCheckpoint.mk _ _ _ _ predicate := value
@@ -173,7 +213,7 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
     -- Keep a loop postcondition opaque until a projection applies it to an
     -- actual outcome. Simplifying its generic continuation expands unused
     -- frame/tag cases and can obscure a false ranking obligation.
-    if expression.isAppOf ``ScopedLoop.bodyPost then
+    if expression.isAppOf ``ScopedLoop.bodyPost || expression.isAppOf ``Checkpoint.bodyPost then
       return .done { expr := expression }
     let projection? :=
       if expression.isAppOfArity ``Postcondition.continues 2 then
@@ -187,7 +227,7 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
         | .app (.app (.proj ``Postcondition index post) value) frame => some (post, index, #[value, frame])
         | _ => none
     if let some (post, index, arguments) := projection? then
-      if post.isAppOf ``ScopedLoop.bodyPost then
+      if post.isAppOf ``ScopedLoop.bodyPost || post.isAppOf ``Checkpoint.bodyPost then
         let pc ← mkAppM ``Frame.pc #[arguments.back!]
         if (← getNatValue? (← whnf pc)).isSome then
           -- Reduce only the record projection. Reducing the whole application
@@ -197,15 +237,7 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
             return .visit { expr := mkAppN record.getAppArgs[index]! arguments }
     -- Do not unroll a continuation under an unknown matcher-bound frame.
     -- Once the branch is selected, the concrete PC permits the next segment step.
-    if expression.isAppOf ``wp || expression.isAppOf ``regionWP ||
-        expression.isAppOf ``iterationRegionWP || expression.isAppOf ``loopSummary ||
-        expression.isAppOf ``Checkpoint.wp || expression.isAppOf ``Checkpoint.iterationWP ||
-        expression.isAppOf ``Checkpoint.edgeChecks || expression.isAppOf ``Checkpoint.assertionPass then
-      let isCheckpoint := expression.isAppOf ``Checkpoint.wp || expression.isAppOf ``Checkpoint.iterationWP ||
-        expression.isAppOf ``Checkpoint.edgeChecks
-      let arity := if isCheckpoint then 10 else if expression.isAppOf ``Checkpoint.assertionPass then 4
-        else if expression.isAppOf ``wp then 5
-        else if expression.isAppOf ``loopSummary then 11 else 7
+    if let some arity := executionArity? expression then
       unless expression.getAppNumArgs == arity do return .done { expr := expression }
       let frameIndex := if expression.isAppOf ``Checkpoint.edgeChecks then 7 else arity - 1
       let frame := expression.getAppArgs[frameIndex]!
@@ -221,34 +253,44 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
           return .visit { expr := (mkApp function reduced.expr).headBeta, proof? := some proof }
         return .done { expr := expression }
       if rules.contains expression.getAppFn.constName! then
-        if let some unfolded ← unfoldDefinition? expression then
-          return .visit { expr := unfolded }
-    methods.pre expression
-  let post : Simp.Simproc := fun expression => do
-    -- Distribute through a matcher only. A global apply_ite simp rule also
-    -- distributes through ite itself, repeatedly swapping nested conditions.
-    let .const matcherName _ := expression.getAppFn | return ← methods.post expression
+        let unfolding : Option Simp.Result ← if let some theoremName ← getUnfoldEqnFor? expression.getAppFn.constName! then
+            Simp.tryTheorem? expression { origin := .decl theoremName, proof := mkConst theoremName, rfl := false }
+          else pure none
+        let unfolding : Option Simp.Result ← if unfolding.isSome then pure unfolding else do
+          pure ((← unfoldDefinition? expression (ignoreTransparency := true)).map fun expr => ({ expr } : Simp.Result))
+        if let some unfolding := unfolding then return .visit unfolding
+    -- Reduce the scrutinee before visiting generic matcher branches. In
+    -- particular, an if-valued step must select its concrete frames before
+    -- simplifying the unused halted continuation of a loop summary.
+    let .const matcherName _ := expression.getAppFn | return ← methods.pre expression
     if let some matcher ← getMatcherInfo? matcherName then
       -- Only nondependent, single-scrutinee proposition matches need this
       -- distribution. Other user matches remain ordinary residual Lean terms.
       unless matcher.numDiscrs == 1 && matcher.discrInfos.all (·.hName?.isNone) &&
-          (← isProp expression) do return ← methods.post expression
+          (← isProp expression) do return ← methods.pre expression
       let args := expression.getAppArgs
       for index in [matcher.getFirstDiscrPos : matcher.getFirstDiscrPos + matcher.numDiscrs] do
         if index ≥ args.size then continue
         let arg := args[index]!
+        let reduced ← Simp.simp arg
+        if reduced.expr != arg then
+          let function ← withLocalDeclD `scrutinee (← inferType arg) fun value =>
+            mkLambdaFVars #[value] (mkAppN expression.getAppFn (args.set! index value))
+          return .visit {
+            expr := mkAppN expression.getAppFn (args.set! index reduced.expr)
+            proof? := some (← mkCongrArg function (← reduced.getProof)) }
         if arg.isAppOfArity ``ite 5 then
           let iteArgs := arg.getAppArgs
           let function ← withLocalDeclD `branch iteArgs[0]! fun branch =>
             mkLambdaFVars #[branch] (mkAppN expression.getAppFn (args.set! index branch))
           let .forallE _ _ resultType _ ← inferType function
-            | return ← methods.post expression
-          if resultType.hasLooseBVars then return ← methods.post expression
+            | return ← methods.pre expression
+          if resultType.hasLooseBVars then return ← methods.pre expression
           let proof ← mkAppM ``apply_ite #[function, iteArgs[1]!, iteArgs[3]!, iteArgs[4]!]
           let type ← inferType proof
           return .visit { expr := type.getAppArgs[2]!, proof? := some proof }
-    methods.post expression
-  return (← Simp.main expression context (methods := { methods with pre, post })).1
+    methods.pre expression
+  return (← Simp.main expression context (methods := { methods with pre, dpre })).1
 
 def publishGoal (name : Name) (raw : Expr) (rules lookups : Array Name) : MetaM Unit := do
   -- Eliminate frame equalities and existential shape annotations before

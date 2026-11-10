@@ -109,6 +109,10 @@ name = "ScopedCheckpointTests"
 srcDir = "tests"
 
 [[lean_lib]]
+name = "GeneratedScopedCheckpointTests"
+srcDir = "tests"
+
+[[lean_lib]]
 name = "InstructionTests"
 srcDir = "tests"
 
