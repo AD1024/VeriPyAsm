@@ -132,11 +132,14 @@ def bodyPost {checks : List (EdgeCheckpoint Ghost)}
     (selected : Option (Fin checks.length)) (loop : ScopedLoop Ghost)
     (mode : CorrectnessMode) (ghost : Ghost) (initial entry old : Frame)
     (exits : List Nat) (post : Postcondition) : Postcondition :=
-  { post with continues := fun current =>
-      if exits.contains current.pc then post.continues current
-      else terminal selected (loop.atHeader ghost initial entry current ∧ (match mode with
+  { continues := fun current =>
+      if exits.contains current.pc then requirement loop.header .exit (post.continues current)
+      else terminal selected (requirement loop.header .preservation (loop.atHeader ghost initial entry current) ∧ (match mode with
         | .partialCorrectness => True
-        | .totalCorrectness => loop.rank ghost initial current < loop.rank ghost initial old)) }
+        | .totalCorrectness => requirement loop.header .ranking
+            (loop.rank ghost initial current < loop.rank ghost initial old)))
+    returned := fun value final => requirement loop.header .exit (post.returned value final)
+    raises := fun exception final => requirement loop.header .exit (post.raises exception final) }
 
 theorem bodyPost_merge (checks : List (EdgeCheckpoint Ghost)) (loop : ScopedLoop Ghost)
     (mode : CorrectnessMode) (ghost : Ghost) (initial entry old : Frame) (exits : List Nat)
@@ -147,12 +150,12 @@ theorem bodyPost_merge (checks : List (EdgeCheckpoint Ghost)) (loop : ScopedLoop
   constructor
   · intro current valid
     by_cases atExit : exits.contains current.pc = true
-    · simpa only [ScopedLoop.bodyPost, atExit, ↓reduceIte] using
+    · simpa only [ScopedLoop.bodyPost, requirement, atExit, ↓reduceIte] using
         merge.continues current (fun selected => by
-          simpa only [bodyPost, atExit, ↓reduceIte] using valid selected)
+          simpa only [bodyPost, requirement, atExit, ↓reduceIte] using valid selected)
     · have main := valid none
       cases mode <;>
-        simpa only [bodyPost, ScopedLoop.bodyPost, atExit, Bool.false_eq_true, ↓reduceIte, terminal] using main
+        simpa only [bodyPost, ScopedLoop.bodyPost, requirement, atExit, Bool.false_eq_true, ↓reduceIte, terminal] using main
   · intro outcome allowed
     cases outcome with
     | returned value final => exact merge.halted (.returned value final) allowed
@@ -168,7 +171,8 @@ def loopSummary (next : Frame → StepResult) (checks : List (EdgeCheckpoint Gho
     | none => terminal selected False
     | some loop =>
       let exits := cuts ++ loop.exits
-      terminal selected (¬ exits.contains loop.header = true ∧ loop.atHeader ghost initial entry entry) ∧
+      terminal selected (requirement loop.header .initialization
+        (¬ exits.contains loop.header = true ∧ loop.atHeader ghost initial entry entry)) ∧
       ∀ current, loop.atHeader ghost initial entry current →
         iterationRegionWP next checks ghost initial selected (loops.map ScopedLoop.header)
           (loopSummary next checks loops mode ghost initial selected fuel depth) (loop.header :: exits)

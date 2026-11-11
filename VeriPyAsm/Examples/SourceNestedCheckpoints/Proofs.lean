@@ -39,9 +39,9 @@ theorem artifact_total : Verification.ArtifactTotalCorrect artifact contract :=
 
 example : verified.report.complete = true := rfl
 example : verified.report.assurance = some "checked" := rfl
-example : verified.report.obligations.size = 7 := rfl
-example : verified.report.obligations[3]!.kind = "runtime_assertion" := rfl
-example : verified.report.obligations[5]!.provider = "manual" := rfl
+example : verified.report.obligations.size = 15 := rfl
+example : verified.report.obligations[11]!.kind = "runtime_assertion" := rfl
+example : verified.report.obligations[13]!.provider = "manual" := rfl
 
 #veripy_audit VeriPyAsm.Examples.SourceNestedCheckpoints
 end VeriPyAsm.Examples.SourceNestedCheckpoints

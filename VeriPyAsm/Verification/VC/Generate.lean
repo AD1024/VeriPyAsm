@@ -1,4 +1,5 @@
 import VeriPyAsm.Verification.VC.GenerateCheckpoints
+import VeriPyAsm.Verification.VC.Split
 
 /-! Proof-producing VC generation for admitted scalar bytecode. The graph walk
 is a diagnostic/size analysis, not a trusted soundness oracle. Every generated
@@ -27,7 +28,7 @@ syntax (name := generateCommand) "veripy_generate " ident " from " ident " for "
     let mut rules := #[specName]
     for unfoldId in unfoldIds.map (·.getElems) |>.getD #[] do
       rules := rules.push (← liftCoreM <| realizeGlobalConstNoOverloadWithInfo unfoldId)
-    let (resultType, obligations, fuel, spec, admission, isScoped, hasCheckpoints, bodyCount) ← liftTermElabM do
+    let (resultType, obligations, fuel, spec, admission, isScoped, hasCheckpoints, bodyCount, scopedCount) ← liftTermElabM do
       let admission := mkConst admissionName
       let spec := mkConst specName
       for input in #[admissionName, specName] do
@@ -121,10 +122,16 @@ syntax (name := generateCommand) "veripy_generate " ident " from " ident " for "
         goals := goals ++ extraGoals
         obligations := obligations ++ extraObligations
       for goal in goals, obligation in obligations do
-        publishGoal obligation.goal goal rules lookups
+        publishGoal obligation.goal goal rules lookups (isScoped && obligation.field == `execution)
+      let mut scopedCount := 0
+      if isScoped then
+        let (parts, _) ← scopedParts name (name ++ `VC.execution) cuts total
+        scopedCount := parts.size
+        obligations := #[obligations[0]!] ++ parts ++ obligations.extract 2 obligations.size
       let contract ← mkAppM (if isScoped then ``ScopedSpecification.contract else ``Specification.contract) #[baseSpec]
       let resultType ← mkAppM ``VerifiedArtifact #[artifact, contract, mode]
-      return (resultType, obligations, fuel, spec, admission, isScoped, hasCheckpoints, if isScoped then 0 else cuts.size)
+      return (resultType, obligations, fuel, spec, admission, isScoped, hasCheckpoints,
+        if isScoped then 0 else cuts.size, scopedCount)
     let bundleName := name ++ `Proofs
     if (← getEnv).contains bundleName then
       throwError "declaration already exists: {bundleName}"
@@ -153,11 +160,17 @@ syntax (name := generateCommand) "veripy_generate " ident " from " ident " for "
         let mut bodies := mkConst ``True.intro
         for proof in (rawProofs.extract 2 (2 + bodyCount)).toList.reverse do
           bodies ← mkAppM ``And.intro #[proof, bodies]
+        let execution ← if isScoped then do
+            let parts := (obligations.extract 1 (1 + scopedCount)).map fun obligation =>
+              mkApp (mkConst (bundleName ++ obligation.field)) proofs
+            mkAppM ``Eq.mpr #[mkConst (name ++ `VC.execution.normalization),
+              mkAppN (mkConst (name ++ `execution_of_parts)) parts]
+          else pure rawProofs[1]!
         let arguments := #[admission, spec, mkNatLit fuel, mkConst (name ++ `program),
-            mkConst (name ++ `representation), rawProofs[0]!, rawProofs[1]!]
+            mkConst (name ++ `representation), rawProofs[0]!, execution]
         let assembled ← if hasCheckpoints then do
             let mut checks := mkConst ``True.intro
-            for proof in (rawProofs.extract (2 + bodyCount) rawProofs.size).toList.reverse do
+            for proof in (rawProofs.extract (if isScoped then 1 + scopedCount else 2 + bodyCount) rawProofs.size).toList.reverse do
               checks ← mkAppM ``And.intro #[proof, checks]
             mkAppM (if isScoped then ``ScopedCheckpointSpecification.verified else ``CheckpointSpecification.verified)
               (arguments ++ (if isScoped then #[checks] else #[bodies, checks]))

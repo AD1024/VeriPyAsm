@@ -1,4 +1,5 @@
 import VeriPyAsm.Verification.VC.WeakestPrecondition
+import VeriPyAsm.Verification.VC.Requirement
 
 /-! Compositional weakest preconditions for nested loops. A loop is summarized
 through its own invariant and ranking; its body may use summaries of inner
@@ -152,11 +153,14 @@ def ScopedLoop.rank {Ghost : Type} (loop : ScopedLoop Ghost) (ghost : Ghost)
 
 def ScopedLoop.bodyPost {Ghost : Type} (loop : ScopedLoop Ghost) (mode : CorrectnessMode)
     (ghost : Ghost) (initial entry old : Frame) (exits : List Nat) (post : Postcondition) : Postcondition :=
-  { post with continues := fun current =>
-      if exits.contains current.pc then post.continues current
-      else (loop.atHeader ghost initial entry current ∧ (match mode with
+  { continues := fun current =>
+      if exits.contains current.pc then requirement loop.header .exit (post.continues current)
+      else (requirement loop.header .preservation (loop.atHeader ghost initial entry current) ∧ (match mode with
         | .partialCorrectness => True
-        | .totalCorrectness => loop.rank ghost initial current < loop.rank ghost initial old)) }
+        | .totalCorrectness => requirement loop.header .ranking
+            (loop.rank ghost initial current < loop.rank ghost initial old)))
+    returned := fun value final => requirement loop.header .exit (post.returned value final)
+    raises := fun exception final => requirement loop.header .exit (post.raises exception final) }
 
 def loopSummary {Ghost : Type} (next : Frame → StepResult) (loops : List (ScopedLoop Ghost))
     (mode : CorrectnessMode) (ghost : Ghost) (initial : Frame) (fuel : Nat) : Nat → Summary
@@ -166,7 +170,8 @@ def loopSummary {Ghost : Type} (next : Frame → StepResult) (loops : List (Scop
     | none => False
     | some loop =>
       let exits := cuts ++ loop.exits
-      ¬ exits.contains loop.header = true ∧ loop.atHeader ghost initial entry entry ∧
+      requirement loop.header .initialization (¬ exits.contains loop.header = true) ∧
+      requirement loop.header .initialization (loop.atHeader ghost initial entry entry) ∧
       ∀ current, loop.atHeader ghost initial entry current →
         iterationRegionWP next (loops.map ScopedLoop.header)
           (loopSummary next loops mode ghost initial fuel depth) (loop.header :: exits)
@@ -199,9 +204,9 @@ theorem loopSummary_partial {Ghost : Type} (next : Frame → StepResult)
         cases result with
         | next frame =>
           by_cases atExit : (cuts ++ loop.exits).contains frame.pc = true
-          · exact Or.inl ⟨atExit, by simpa only [Postcondition.Accepts, ScopedLoop.bodyPost,
+          · exact Or.inl ⟨atExit, by simpa only [Postcondition.Accepts, ScopedLoop.bodyPost, requirement,
               atExit, ↓reduceIte] using allowed⟩
-          · simp only [Postcondition.Accepts, ScopedLoop.bodyPost,
+          · simp only [Postcondition.Accepts, ScopedLoop.bodyPost, requirement,
               atExit, Bool.false_eq_true, ↓reduceIte] at allowed
             exact Or.inr allowed.1
         | halted outcome => cases outcome <;> exact allowed
@@ -234,9 +239,9 @@ theorem loopSummary_total {Ghost : Type} (next : Frame → StepResult)
             cases result with
             | next frame =>
               by_cases atExit : (cuts ++ loop.exits).contains frame.pc = true
-              · exact Or.inl ⟨atExit, by simpa only [Postcondition.Accepts, ScopedLoop.bodyPost,
+              · exact Or.inl ⟨atExit, by simpa only [Postcondition.Accepts, ScopedLoop.bodyPost, requirement,
                   atExit, ↓reduceIte] using allowed⟩
-              · exact Or.inr (by simpa only [Postcondition.Accepts, ScopedLoop.bodyPost,
+              · exact Or.inr (by simpa only [Postcondition.Accepts, ScopedLoop.bodyPost, requirement,
                   atExit, Bool.false_eq_true, ↓reduceIte] using allowed)
             | halted outcome => cases outcome <;> exact allowed)
       simpa only [loopExits, found, Option.map_some, Option.getD_some] using

@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 from veripy_frontend.__main__ import run_lean, write_generated
 from veripy_frontend.emit import emit
+from frontend_proofs import scoped_providers
 from veripy_frontend.source import FrontendError, Parser, extract
 
 
@@ -59,10 +60,7 @@ theorem entry : generated.VC.entry := by
   intro {' '.join(names)}
   intros
   exact ⟨{arguments}, rfl, rfl⟩
-@[veripy_proof generated.VC.execution]
-theorem execution : generated.VC.execution := by
-  unfold generated.VC.execution
-  grind
+{scoped_providers()}
 set_option veripy.auto false in
 veripy_verify verified from generated
 example : verified.report.complete = true := rfl
@@ -446,12 +444,13 @@ def countdown(n):
         for n in range(5):
             self.assertEqual(runtime(n), 0)
 
-    def test_invalid_inner_measure_keeps_execution_pending(self):
+    def test_invalid_inner_measure_is_localized_and_blocks_assembly(self):
         for measure in ("-1", "0"):
             with self.subTest(measure=measure):
                 function = self.nested(NESTED.replace("decreases j", f"decreases {measure}"))
                 text = emit(function, "InvalidInnerMeasure").replace("import VeriPyAsm.Frontend.Mapping",
                     "import VeriPyAsm.Verification.VC.Discharge\nimport VeriPyAsm.Frontend.Mapping")
+                failing = "loop_28_init" if measure == "-1" else "loop_28_ranking"
                 text += """
 namespace InvalidInnerMeasure
 open VeriPyAsm.Semantics
@@ -459,27 +458,35 @@ open VeriPyAsm.Semantics
 theorem entry : generated.VC.entry := by
   intro n m _ _ _ _
   exact ⟨[.int n, .int m], rfl, rfl⟩
-example : ¬ generated.VC.execution := by
+""" + scoped_providers(exclude=(failing,))
+                text += f"""
+example : ¬ generated.VC.{failing} := by
   intro valid
   have outer := valid 1 1
-    { locals := [some (.int 1), some (.int 1), none, none, none] }
+    {{ locals := [some (.int 1), some (.int 1), none, none, none] }}
     (by decide) (by decide) rfl
   have inner := outer
-    { pc := map0.header, locals := [some (.int 1), some (.int 1), some (.int 1), some (.int 0), none] }
-    rfl 1 1 1 0 none rfl (by decide) (by decide) rfl rfl
+    {{ pc := map0.header, locals := [some (.int 1), some (.int 1), some (.int 1), some (.int 0), none] }}
+    rfl 1 1 1 0 none rfl (by decide) (by decide) rfl rfl {"(by decide)" if measure == "0" else ""}
 """
                 if measure == "0":
                     text += """
-  dsimp at inner
   have impossible := inner
     { pc := map1.header, locals := [some (.int 1), some (.int 1), some (.int 1), some (.int 0), some (.int 1)] }
     rfl 1 1 1 0 1 rfl (by decide) (by decide) rfl rfl rfl
 """
-                text += """
+                text += f"""
   omega
+#guard_msgs (drop info, all) in
 set_option veripy.auto false in
 veripy_discover pending from generated
 example : pending.report.complete = false := rfl
+example : (pending.report.obligations.filter (·.status == "pending")).map (·.goal) =
+    #["InvalidInnerMeasure.generated.VC.{failing}"] := by decide +kernel
+/-- error: verification incomplete: 1 unresolved VC(s); no VerifiedArtifact exported -/
+#guard_msgs (drop info, all) in
+set_option veripy.auto false in
+veripy_verify rejected from generated
 #veripy_audit InvalidInnerMeasure
 end InvalidInnerMeasure
 """

@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from veripy_frontend.__main__ import run_lean
 from veripy_frontend.emit import emit
+from frontend_proofs import scoped_providers
 from veripy_frontend.source import Parser
 
 EXAMPLE = ROOT / "examples/python/nested_product_checkpoints.py"
@@ -54,7 +55,8 @@ def providers(function, entry, exclude=()):
 theorem entry : generated.VC.entry := by
   {entry}
 '''
-    for field in ["execution", *("checkpoint_" + c.label for c in function.checkpoints)]:
+    result += scoped_providers(exclude)
+    for field in ["checkpoint_" + c.label for c in function.checkpoints]:
         if field in exclude:
             continue
         result += f'''
@@ -167,7 +169,7 @@ set_option veripy.auto false in
 veripy_discover pending from generated
 example : pending.report.complete = false := rfl
 example : pending.report.obligations[1]!.status = "proved" := rfl
-example : pending.report.obligations[2]!.status = "pending" := rfl
+example : pending.report.obligations[10]!.status = "pending" := rfl
 /-- error: verification incomplete: 1 unresolved VC(s); no VerifiedArtifact exported -/
 #guard_msgs (drop info, all) in
 set_option veripy.auto false in

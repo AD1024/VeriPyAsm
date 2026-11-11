@@ -31,8 +31,8 @@ veripy_generate generated from Assertions.nonnegative for specification unfoldin
 theorem entry : generated.VC.entry := by
   intro n _
   exact ⟨[.int n], rfl, rfl⟩
-@[veripy_proof generated.VC.execution]
-theorem execution : generated.VC.execution := True.intro
+@[veripy_proof generated.VC.safety]
+theorem execution : generated.VC.safety := True.intro
 @[veripy_proof generated.VC.checkpoint_assertion]
 theorem assertionProof : generated.VC.checkpoint_assertion := True.intro
 @[veripy_proof generated.VC.checkpoint_hint]
@@ -42,7 +42,7 @@ set_option veripy.auto false in
 veripy_verify verified from generated
 example : verified.report.complete = true := rfl
 example : verified.report.assurance = some "checked" := rfl
-example : verified.report.obligations[1]!.kind = "scoped_execution" := rfl
+example : verified.report.obligations[1]!.kind = "execution_safety" := rfl
 
 namespace FalseHint
 def falseHint : VC.EdgeCheckpoint Int := { hint with claim := fun _ _ _ _ => False }
@@ -51,8 +51,8 @@ veripy_generate generated from Assertions.nonnegative for spec unfolding [base, 
 
 @[veripy_proof generated.VC.entry]
 theorem entry : generated.VC.entry := GeneratedScopedCheckpoint.entry
-@[veripy_proof generated.VC.execution]
-theorem downstream : generated.VC.execution := True.intro
+@[veripy_proof generated.VC.safety]
+theorem downstream : generated.VC.safety := True.intro
 @[veripy_proof generated.VC.checkpoint_assertion]
 theorem assertionProof : generated.VC.checkpoint_assertion := True.intro
 theorem unprovable : ¬ generated.VC.checkpoint_hint := by

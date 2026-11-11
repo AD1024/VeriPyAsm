@@ -34,7 +34,7 @@ private def view (edge : Nat × Nat) (claim : Prop)
 attribute [local simp] view summary next outer inner post hint List.finRange_succ
   Checkpoint.regionWP Checkpoint.iterationRegionWP Checkpoint.loopSummary
   Checkpoint.bodyPost Checkpoint.edgeChecks Checkpoint.guard Checkpoint.terminal
-  findLoop ScopedLoop.atHeader ScopedLoop.rank Postcondition.Accepts
+  requirement findLoop ScopedLoop.atHeader ScopedLoop.rank Postcondition.Accepts
 
 -- The selected view must follow the continuation after a summary.
 -- The main view can assume a pending false claim, but its own VC refutes it.

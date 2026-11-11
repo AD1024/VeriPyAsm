@@ -124,7 +124,7 @@ private def executionArity? (expression : Expr) : Option Nat :=
     | _ => none
   | _ => none
 
-def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
+def simplify (expression : Expr) (rules : Array Name) (retainRequirements : Bool := false) : MetaM Simp.Result := do
   let mut theorems ← getSimpTheorems
   let mut checkpointNames : Array Name := #[]
   for rule in rules do
@@ -141,13 +141,24 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
     -- Dependent arguments (notably Fin-indexed checkpoint lists) use dsimp,
     -- which does not call the ordinary simp pre-hook. Preserve the same
     -- execution boundary there, too: only the frame-aware pre-hook may run WP.
-    if expression.isAppOf ``EdgeCheckpoint.mk ||
+    if expression.isAppOf ``requirement || expression.isAppOf ``EdgeCheckpoint.mk ||
         expression.getAppFn.constName?.any checkpointNames.contains ||
         expression.isAppOf ``ScopedLoop.bodyPost || expression.isAppOf ``Checkpoint.bodyPost ||
         (executionArity? expression).isSome then
       return .done expression
     methods.dpre expression
   let pre : Simp.Simproc := fun expression => do
+    if expression.isAppOfArity ``requirement 3 then
+      let args := expression.getAppArgs
+      if !retainRequirements then return .visit { expr := args[2]! }
+      let header ← Simp.simp args[0]!
+      let claim ← Simp.simp args[2]!
+      let function := mkApp2 (mkConst ``requirement) header.expr args[1]!
+      let changeHeader ← withLocalDeclD `header (mkConst ``Nat) fun value =>
+        mkLambdaFVars #[value] (mkApp2 (mkConst ``requirement) value args[1]!)
+      return .done {
+        expr := mkApp function claim.expr,
+        proof? := some (← mkCongr (← mkCongrArg changeHeader (← header.getProof)) (← claim.getProof)) }
     -- Checkpoint predicates are data until an actual edge applies them to a
     -- concrete frame. Simplifying their generic function bodies can expand
     -- assertion WPs and change dependent Fin-indexed lists at every step.
@@ -292,12 +303,13 @@ def simplify (expression : Expr) (rules : Array Name) : MetaM Simp.Result := do
     methods.pre expression
   return (← Simp.main expression context (methods := { methods with pre, dpre })).1
 
-def publishGoal (name : Name) (raw : Expr) (rules lookups : Array Name) : MetaM Unit := do
+def publishGoal (name : Name) (raw : Expr) (rules lookups : Array Name)
+    (retainRequirements : Bool := false) : MetaM Unit := do
   -- Eliminate frame equalities and existential shape annotations before
   -- unfolding symbolic execution; this avoids expanding unknown stack shapes.
-  let shaped ← simplify raw (shapeRules ++ rules)
+  let shaped ← simplify raw (shapeRules ++ rules) retainRequirements
   trace[veripy.generate] "{name} after frame normalization:\n{shaped.expr}"
-  let reduced ← simplify shaped.expr (shapeRules ++ executionRules ++ rules ++ lookups)
+  let reduced ← simplify shaped.expr (shapeRules ++ executionRules ++ rules ++ lookups) retainRequirements
   let normalized ← instantiateMVars reduced.expr
   if normalized.hasMVar || normalized.hasFVar || normalized.hasSorry then
     throwError "VC normalization left unresolved variables or sorry"

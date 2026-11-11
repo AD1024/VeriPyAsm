@@ -37,6 +37,10 @@ name = "SourceNestedCheckpointCrush"
 srcDir = "experiments"
 
 [[lean_lib]]
+name = "ScopedLoopCrush"
+srcDir = "experiments"
+
+[[lean_lib]]
 name = "BytecodeTests"
 srcDir = "tests"
 
@@ -162,6 +166,10 @@ srcDir = "tests"
 
 [[lean_lib]]
 name = "ScopedLoopTests"
+srcDir = "tests"
+
+[[lean_lib]]
+name = "VCSplitTests"
 srcDir = "tests"
 
 [[require]]

@@ -12,9 +12,9 @@ theorem artifact_total : Verification.ArtifactTotalCorrect artifact contract :=
 
 example : verified.report.complete = true := rfl
 example : verified.report.assurance = some "checked" := rfl
-example : verified.report.obligations[3]!.provider = "crush" := rfl
-example : verified.report.obligations[5]!.provider = "crush" := rfl
-example : verified.report.obligations[5]!.actualBackend = some "cvc5" := rfl
+example : verified.report.obligations[11]!.provider = "crush" := rfl
+example : verified.report.obligations[13]!.provider = "crush" := rfl
+example : verified.report.obligations[13]!.actualBackend = some "cvc5" := rfl
 
 #eval show Lean.CoreM Unit from do
   for name in [`VeriPyAsm.Examples.SourceNestedCheckpoints.runtimeAssertion,

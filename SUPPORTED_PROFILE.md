@@ -81,7 +81,10 @@ omit admission and are not final verification packages.
 propositions, kernel-checked normalization equalities, and a conditional assembly
 theorem. Graph traversal and simplification choose obligations but cannot certify
 correctness without their proofs. Scoped loops use local invariant/ranking rules;
-their obligations are currently grouped into `VC.entry` and `VC.execution`.
+their obligations are `VC.entry`, residual `VC.safety`, and named
+`VC.loop_<header>_{init,preservation,ranking,exit}` propositions. Partial mode
+omits ranking. A kernel-checked reconstruction combines all parts into the
+original scoped execution VC; no part assumes another part has been proved.
 
 Native [checkpoint rules](VeriPyAsm/Verification/VC/Checkpoint.lean) compose finite
 segments around a separately proved logical claim. The incoming context must
@@ -162,9 +165,9 @@ hints are predicates over current local slots and immutable entry ghosts. Their
 separate VCs are mandatory even when a false hint makes a downstream VC vacuous.
 Checkpoint assumptions retain their original frame values across later writes.
 Neither checkpoint kind resets execution fuel or counts as loop progress.
-Scoped generation emits entry compatibility, one combined execution VC, and one
-mandatory VC per checkpoint. The execution VC retains every loop's invariant and
-ranking requirements. A checkpoint fact is not implicitly added to an invariant
+Scoped generation emits entry compatibility, separately named loop requirements,
+and one mandatory VC per checkpoint. The conditional assembly retains every
+loop's invariant and ranking requirements. A checkpoint fact is not implicitly added to an invariant
 or reinterpreted against a later frame.
 
 Directive attachment follows [Python physical lines](https://docs.python.org/3.14/reference/lexical_analysis.html#physical-lines)
