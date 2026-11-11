@@ -167,14 +167,6 @@ VC. The [mixed Crush/manual example](experiments/ScopedLoopCrush.lean), built wi
 `lake build ScopedLoopCrush`, uses Crush for invariants and exits and exact manual
 proofs for the integer-to-natural ranking conversions.
 
-Reports use schema version 2. Each includes the exact theorem, its outer
-quantified context, source locations when supplied, and a conservative inventory
-of checkpoint claims available to each proof view. That inventory is not a
-minimal dependency graph. Manually authored manifests label uncomputed dependency
-information as `unspecified`. The companion JSON's `verificationConditions` links
-every generated VC to its source span. Source associations are diagnostic;
-the correctness theorem remains about the admitted bytecode artifact.
-
 ## Run the checks
 
 ```sh
@@ -195,9 +187,3 @@ generation supports single, sequential, and nested loops, including scoped
 locals that are initialized inside a loop. Native
 bytecode assertions support bare `assert` with modeled scalar tests; message
 constructors, `NOP`-folded assertions, and optimized artifacts are rejected.
-
-Proofs establish properties of the explicit Lean semantics. Correspondence with
-the CPython runtime is a separate obligation, currently supported by source
-inspection and differential tests rather than a formal runtime refinement proof.
-The tracked [supported profile and trust boundary](SUPPORTED_PROFILE.md) details
-the accepted instructions, source fragment, proof policies, and remaining assumptions.

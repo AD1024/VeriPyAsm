@@ -21,12 +21,13 @@ private def dischargeOne (runName : Name) (obligation : Obligation) (config : Co
   let theoremName := runName ++ `vc ++ obligation.field
   -- References retain diagnostic events if a later stage throws. Pure mutable
   -- locals inside `try` would roll back their updates on the exception path.
+  let rendering ← renderGoal obligation.goal
   let reportRef ← IO.mkRef ({
     goal := obligation.goal.toString, offset := obligation.offset, kind := obligation.kind,
-    source := obligation.source, context := ← goalContext obligation.goal,
+    source := obligation.source, context := rendering.context, statementForm := rendering.form,
     dependencies := obligation.dependencies.map Name.toString,
     dependencyScope := obligation.dependencyScope,
-    statement := ← goalStatement obligation.goal, status := "pending", policy := toString config.policy,
+    statement := rendering.statement, status := "pending", policy := toString config.policy,
     configuredBackend := config.backend, timeoutSeconds := config.timeout } : ObligationReport)
   let stageRef ← IO.mkRef "registration_rejected"
   try
