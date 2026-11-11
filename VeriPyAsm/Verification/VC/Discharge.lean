@@ -25,6 +25,7 @@ private def dischargeOne (runName : Name) (obligation : Obligation) (config : Co
     goal := obligation.goal.toString, offset := obligation.offset, kind := obligation.kind,
     source := obligation.source, context := ← goalContext obligation.goal,
     dependencies := obligation.dependencies.map Name.toString,
+    dependencyScope := obligation.dependencyScope,
     statement := ← goalStatement obligation.goal, status := "pending", policy := toString config.policy,
     configuredBackend := config.backend, timeoutSeconds := config.timeout } : ObligationReport)
   let stageRef ← IO.mkRef "registration_rejected"

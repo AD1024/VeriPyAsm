@@ -170,7 +170,8 @@ proofs for the integer-to-natural ranking conversions.
 Reports use schema version 2. Each includes the exact theorem, its outer
 quantified context, source locations when supplied, and a conservative inventory
 of checkpoint claims available to each proof view. That inventory is not a
-minimal dependency graph. The companion JSON's `verificationConditions` links
+minimal dependency graph. Manually authored manifests label uncomputed dependency
+information as `unspecified`. The companion JSON's `verificationConditions` links
 every generated VC to its source span. Source associations are diagnostic;
 the correctness theorem remains about the admitted bytecode artifact.
 

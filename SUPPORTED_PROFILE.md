@@ -181,6 +181,7 @@ VC report schema 2 includes optional file/digest/span/label metadata, the exact
 outer quantified context (distinguishing variables from assumptions), and
 checkpoint dependency names. Dependencies are a conservative inventory of claims
 available to a proof view, not a minimal proof graph or permission to skip a VC.
+Manually authored manifests mark this inventory as `unspecified` unless supplied.
 `veripy_vc_sources` attaches diagnostic metadata without changing any proposition
 or assembly. Metadata is not source authentication or a compiler-correctness proof.
 Reports still provide complete manual handoffs, exact `rfl` matching, observed

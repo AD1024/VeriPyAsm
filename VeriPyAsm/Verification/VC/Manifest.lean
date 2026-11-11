@@ -33,6 +33,7 @@ structure Obligation where
   /-- A conservative inventory of checkpoint claims available to this proof
   view. It is not a minimal proof dependency set or a scheduling DAG. -/
   dependencies : Array Name := #[]
+  dependencyScope : String := "unspecified"
   deriving Inhabited
 
 structure Manifest where

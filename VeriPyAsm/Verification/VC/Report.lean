@@ -29,7 +29,7 @@ structure ObligationReport where
   source : Option SourceLocation := none
   context : GoalContext := {}
   dependencies : Array String := #[]
-  dependencyScope : String := "checkpoint_assumptions_upper_bound"
+  dependencyScope : String := "unspecified"
   status : String
   provider : String := "none"
   theoremName : Option String := none
@@ -116,7 +116,7 @@ def fingerprint (manifest : Manifest) : CoreM String := do
     if let some value := value then pending := pending ++ value.getUsedConstants
   contents := contents.qsort (fun a b => Name.quickLt a.1 b.1)
   return toString <| hash ("veripy-vc-v2", Lean.versionString, contents,
-    manifest.obligations.map (fun o => (o.goal, o.offset, o.kind, o.source, o.dependencies)))
+    manifest.obligations.map (fun o => (o.goal, o.offset, o.kind, o.source, o.dependencies, o.dependencyScope)))
 
 def ObligationReport.handoff (report : ObligationReport) (imports : Array String) : String :=
   String.intercalate "\n" (imports.toList.map ("import " ++ ·)) ++

@@ -1,5 +1,6 @@
 import GeneratedScopedCheckpointTests
 import VeriPyAsm.Verification.VC.Source
+import VeriPyAsm.Examples.Checkpoints.Correctness
 
 namespace VeriPyAsm.Tests.VCReport
 open Lean Meta Verification.VC
@@ -46,6 +47,8 @@ example : result.report.schemaVersion = 2 := rfl
 example : result.report.obligations[0]!.source = none := rfl
 example : result.report.obligations[3]!.source = some location := rfl
 example : result.report.obligations[3]!.provider = "manual" := rfl
+example : result.report.obligations[3]!.dependencyScope = "checkpoint_assumptions_upper_bound" := rfl
+example : Examples.Checkpoints.verified.report.obligations[2]!.dependencyScope = "unspecified" := rfl
 example : result.report.obligations[0]!.dependencies = #[] := rfl
 example : result.report.obligations[3]!.dependencies =
     #["VeriPyAsm.Tests.GeneratedScopedCheckpoint.generated.VC.checkpoint_assertion"] := rfl
