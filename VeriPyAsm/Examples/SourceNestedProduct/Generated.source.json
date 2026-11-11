@@ -1546,5 +1546,147 @@
     ]
   },
   "missingAnnotations": [],
-  "status": "vcs_generated"
+  "status": "vcs_generated",
+  "verificationConditions": [
+    {
+      "field": "entry",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "nested_product",
+        "line": 3,
+        "column": 0,
+        "endLine": 18,
+        "endColumn": 16
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.entry"
+    },
+    {
+      "field": "safety",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "nested_product",
+        "line": 3,
+        "column": 0,
+        "endLine": 18,
+        "endColumn": 16
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.safety"
+    },
+    {
+      "field": "loop_10_init",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "rows",
+        "line": 7,
+        "column": 4,
+        "endLine": 7,
+        "endColumn": 65
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.loop_10_init"
+    },
+    {
+      "field": "loop_10_preservation",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "rows",
+        "line": 7,
+        "column": 4,
+        "endLine": 7,
+        "endColumn": 65
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.loop_10_preservation"
+    },
+    {
+      "field": "loop_10_ranking",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "rows",
+        "line": 8,
+        "column": 4,
+        "endLine": 8,
+        "endColumn": 25
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.loop_10_ranking"
+    },
+    {
+      "field": "loop_10_exit",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "rows",
+        "line": 9,
+        "column": 4,
+        "endLine": 17,
+        "endColumn": 17
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.loop_10_exit"
+    },
+    {
+      "field": "loop_28_init",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "columns",
+        "line": 12,
+        "column": 8,
+        "endLine": 12,
+        "endColumn": 84
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.loop_28_init"
+    },
+    {
+      "field": "loop_28_preservation",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "columns",
+        "line": 12,
+        "column": 8,
+        "endLine": 12,
+        "endColumn": 84
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.loop_28_preservation"
+    },
+    {
+      "field": "loop_28_ranking",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "columns",
+        "line": 13,
+        "column": 8,
+        "endLine": 13,
+        "endColumn": 29
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.loop_28_ranking"
+    },
+    {
+      "field": "loop_28_exit",
+      "source": {
+        "path": "examples/python/nested_product_annotated.py",
+        "digest": "7b5448c424fabb9b1149dee7b79af08d5ba60d31ef2032c8765452db93170eb0",
+        "functionName": "nested_product",
+        "label": "columns",
+        "line": 14,
+        "column": 8,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedProduct.generated.VC.loop_28_exit"
+    }
+  ]
 }

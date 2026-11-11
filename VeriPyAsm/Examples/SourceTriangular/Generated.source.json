@@ -502,5 +502,49 @@
     ]
   },
   "missingAnnotations": [],
-  "status": "vcs_generated"
+  "status": "vcs_generated",
+  "verificationConditions": [
+    {
+      "field": "entry",
+      "source": {
+        "path": "examples/python/triangular_annotated.py",
+        "digest": "37cd05b72ed9ad40f201920836e20e8e7ac7e5527097ff0aed0e861ef0a9992b",
+        "functionName": "triangular",
+        "label": "triangular",
+        "line": 6,
+        "column": 0,
+        "endLine": 15,
+        "endColumn": 12
+      },
+      "goal": "VeriPyAsm.Examples.SourceTriangular.generated.VC.entry"
+    },
+    {
+      "field": "init",
+      "source": {
+        "path": "examples/python/triangular_annotated.py",
+        "digest": "37cd05b72ed9ad40f201920836e20e8e7ac7e5527097ff0aed0e861ef0a9992b",
+        "functionName": "triangular",
+        "label": "triangular",
+        "line": 6,
+        "column": 0,
+        "endLine": 15,
+        "endColumn": 12
+      },
+      "goal": "VeriPyAsm.Examples.SourceTriangular.generated.VC.init"
+    },
+    {
+      "field": "cut6",
+      "source": {
+        "path": "examples/python/triangular_annotated.py",
+        "digest": "37cd05b72ed9ad40f201920836e20e8e7ac7e5527097ff0aed0e861ef0a9992b",
+        "functionName": "triangular",
+        "label": "sum_loop",
+        "line": 12,
+        "column": 4,
+        "endLine": 14,
+        "endColumn": 17
+      },
+      "goal": "VeriPyAsm.Examples.SourceTriangular.generated.VC.cut6"
+    }
+  ]
 }

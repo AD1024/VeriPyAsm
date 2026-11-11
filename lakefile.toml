@@ -172,6 +172,10 @@ srcDir = "tests"
 name = "VCSplitTests"
 srcDir = "tests"
 
+[[lean_lib]]
+name = "VCReportTests"
+srcDir = "tests"
+
 [[require]]
 name = "crush"
 git = "https://github.com/AD1024/lean-crush"

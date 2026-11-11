@@ -2121,5 +2121,217 @@
     }
   },
   "missingAnnotations": [],
-  "status": "vcs_generated"
+  "status": "vcs_generated",
+  "verificationConditions": [
+    {
+      "field": "entry",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "nested_product",
+        "line": 5,
+        "column": 0,
+        "endLine": 26,
+        "endColumn": 16
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.entry"
+    },
+    {
+      "field": "safety",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "nested_product",
+        "line": 5,
+        "column": 0,
+        "endLine": 26,
+        "endColumn": 16
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.safety"
+    },
+    {
+      "field": "loop_10_init",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "rows",
+        "line": 9,
+        "column": 4,
+        "endLine": 9,
+        "endColumn": 65
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.loop_10_init"
+    },
+    {
+      "field": "loop_10_preservation",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "rows",
+        "line": 9,
+        "column": 4,
+        "endLine": 9,
+        "endColumn": 65
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.loop_10_preservation"
+    },
+    {
+      "field": "loop_10_ranking",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "rows",
+        "line": 10,
+        "column": 4,
+        "endLine": 10,
+        "endColumn": 25
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.loop_10_ranking"
+    },
+    {
+      "field": "loop_10_exit",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "rows",
+        "line": 11,
+        "column": 4,
+        "endLine": 23,
+        "endColumn": 17
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.loop_10_exit"
+    },
+    {
+      "field": "loop_28_init",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "columns",
+        "line": 15,
+        "column": 8,
+        "endLine": 15,
+        "endColumn": 84
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.loop_28_init"
+    },
+    {
+      "field": "loop_28_preservation",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "columns",
+        "line": 15,
+        "column": 8,
+        "endLine": 15,
+        "endColumn": 84
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.loop_28_preservation"
+    },
+    {
+      "field": "loop_28_ranking",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "columns",
+        "line": 16,
+        "column": 8,
+        "endLine": 16,
+        "endColumn": 29
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.loop_28_ranking"
+    },
+    {
+      "field": "loop_28_exit",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "columns",
+        "line": 17,
+        "column": 8,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.loop_28_exit"
+    },
+    {
+      "field": "checkpoint_inner_initialized",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "inner_initialized",
+        "line": 13,
+        "column": 8,
+        "endLine": 13,
+        "endColumn": 54
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_inner_initialized"
+    },
+    {
+      "field": "checkpoint_remaining_nonnegative",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "remaining_nonnegative",
+        "line": 21,
+        "column": 12,
+        "endLine": 21,
+        "endColumn": 25
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_remaining_nonnegative"
+    },
+    {
+      "field": "checkpoint_inner_conserved",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "inner_conserved",
+        "line": 22,
+        "column": 12,
+        "endLine": 22,
+        "endColumn": 90
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_inner_conserved"
+    },
+    {
+      "field": "checkpoint_outer_conserved",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "outer_conserved",
+        "line": 24,
+        "column": 8,
+        "endLine": 24,
+        "endColumn": 71
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_outer_conserved"
+    },
+    {
+      "field": "checkpoint_product",
+      "source": {
+        "path": "examples/python/nested_product_checkpoints.py",
+        "digest": "ada969f7837b0203f9878f338d9a10f34f8f5767c8344f1cacdc96ee82cf8498",
+        "functionName": "nested_product",
+        "label": "product",
+        "line": 25,
+        "column": 4,
+        "endLine": 25,
+        "endColumn": 53
+      },
+      "goal": "VeriPyAsm.Examples.SourceNestedCheckpoints.generated.VC.checkpoint_product"
+    }
+  ]
 }

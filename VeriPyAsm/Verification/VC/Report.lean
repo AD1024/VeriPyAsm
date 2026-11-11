@@ -8,11 +8,28 @@ namespace VeriPyAsm.Verification.VC
 
 open Lean Meta
 
+/-- The outer quantified context of the exact VC. Names are unique within a
+context; the conclusion retains any further branch-local quantification. -/
+structure ContextBinder where
+  name : String
+  type : String
+  assumption : Bool
+  deriving Inhabited, ToJson, FromJson, ToExpr
+
+structure GoalContext where
+  binders : Array ContextBinder := #[]
+  conclusion : String := ""
+  deriving Inhabited, ToJson, FromJson, ToExpr
+
 structure ObligationReport where
   goal : String
   offset : Nat
   kind : String
   statement : String
+  source : Option SourceLocation := none
+  context : GoalContext := {}
+  dependencies : Array String := #[]
+  dependencyScope : String := "checkpoint_assumptions_upper_bound"
   status : String
   provider : String := "none"
   theoremName : Option String := none
@@ -30,7 +47,7 @@ structure ObligationReport where
   deriving Inhabited, ToJson, FromJson, ToExpr
 
 structure Report where
-  schemaVersion : Nat := 1
+  schemaVersion : Nat := 2
   manifest : String
   fingerprint : String
   imports : Array String
@@ -59,6 +76,23 @@ def goalStatement (name : Name) : MetaM String := do
   let expanded ← withTransparency .all <| whnf (mkConst name)
   fullStatement expanded
 
+private partial def contextOf (expression : Expr) (binders : Array ContextBinder := #[]) :
+    MetaM GoalContext := do
+  if let .forallE _ type body info := expression then
+    let assumption ← isProp type
+    -- Stable identifiers also work for quoted/inaccessible input binder names.
+    let unique := Name.mkSimple s!"{if assumption then "h" else "v"}{binders.size}"
+    let binder : ContextBinder := {
+      name := unique.toString, type := ← fullStatement type, assumption }
+    return ← withLocalDecl unique info type fun value =>
+      contextOf (body.instantiate1 value) (binders.push binder)
+  return { binders, conclusion := ← fullStatement expression }
+
+def goalContext (name : Name) : MetaM GoalContext := do
+  discard <| goalExpr name
+  let some expression := (← getConstInfo name).value? | throwError "missing VC definition"
+  contextOf expression
+
 /-- Hash the transitive declaration content of artifact, contract, assembly,
 semantics, and VCs, together with the workflow and Lean versions. Imported
 dependencies used by those declarations are included. Every proof is still
@@ -81,8 +115,8 @@ def fingerprint (manifest : Manifest) : CoreM String := do
     pending := pending ++ info.type.getUsedConstants
     if let some value := value then pending := pending ++ value.getUsedConstants
   contents := contents.qsort (fun a b => Name.quickLt a.1 b.1)
-  return toString <| hash ("veripy-vc-v1", Lean.versionString, contents,
-    manifest.obligations.map (fun o => (o.goal, o.offset, o.kind)))
+  return toString <| hash ("veripy-vc-v2", Lean.versionString, contents,
+    manifest.obligations.map (fun o => (o.goal, o.offset, o.kind, o.source, o.dependencies)))
 
 def ObligationReport.handoff (report : ObligationReport) (imports : Array String) : String :=
   String.intercalate "\n" (imports.toList.map ("import " ++ ·)) ++

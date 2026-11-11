@@ -734,5 +734,77 @@
     }
   },
   "missingAnnotations": [],
-  "status": "vcs_generated"
+  "status": "vcs_generated",
+  "verificationConditions": [
+    {
+      "field": "entry",
+      "source": {
+        "path": "examples/python/triangular_checkpoints.py",
+        "digest": "30257bfb400cc706525e5849d20a7f51437f77c392a7014ef3b1507f14f1fc41",
+        "functionName": "triangular",
+        "label": "triangular",
+        "line": 6,
+        "column": 0,
+        "endLine": 18,
+        "endColumn": 12
+      },
+      "goal": "VeriPyAsm.Examples.SourceCheckpoints.generated.VC.entry"
+    },
+    {
+      "field": "init",
+      "source": {
+        "path": "examples/python/triangular_checkpoints.py",
+        "digest": "30257bfb400cc706525e5849d20a7f51437f77c392a7014ef3b1507f14f1fc41",
+        "functionName": "triangular",
+        "label": "triangular",
+        "line": 6,
+        "column": 0,
+        "endLine": 18,
+        "endColumn": 12
+      },
+      "goal": "VeriPyAsm.Examples.SourceCheckpoints.generated.VC.init"
+    },
+    {
+      "field": "cut6",
+      "source": {
+        "path": "examples/python/triangular_checkpoints.py",
+        "digest": "30257bfb400cc706525e5849d20a7f51437f77c392a7014ef3b1507f14f1fc41",
+        "functionName": "triangular",
+        "label": "sum_loop",
+        "line": 12,
+        "column": 4,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      "goal": "VeriPyAsm.Examples.SourceCheckpoints.generated.VC.cut6"
+    },
+    {
+      "field": "checkpoint_remaining_nonnegative",
+      "source": {
+        "path": "examples/python/triangular_checkpoints.py",
+        "digest": "30257bfb400cc706525e5849d20a7f51437f77c392a7014ef3b1507f14f1fc41",
+        "functionName": "triangular",
+        "label": "remaining_nonnegative",
+        "line": 16,
+        "column": 8,
+        "endLine": 16,
+        "endColumn": 21
+      },
+      "goal": "VeriPyAsm.Examples.SourceCheckpoints.generated.VC.checkpoint_remaining_nonnegative"
+    },
+    {
+      "field": "checkpoint_conserved",
+      "source": {
+        "path": "examples/python/triangular_checkpoints.py",
+        "digest": "30257bfb400cc706525e5849d20a7f51437f77c392a7014ef3b1507f14f1fc41",
+        "functionName": "triangular",
+        "label": "conserved",
+        "line": 17,
+        "column": 8,
+        "endLine": 17,
+        "endColumn": 69
+      },
+      "goal": "VeriPyAsm.Examples.SourceCheckpoints.generated.VC.checkpoint_conserved"
+    }
+  ]
 }

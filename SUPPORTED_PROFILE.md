@@ -170,6 +170,23 @@ and one mandatory VC per checkpoint. The conditional assembly retains every
 loop's invariant and ranking requirements. A checkpoint fact is not implicitly added to an invariant
 or reinterpreted against a later frame.
 
+Scoped loop fields use stable byte offsets and roles (`loop_<header>_init`,
+`preservation`, `ranking`, `exit`); trivial parts remain named, and partial mode
+omits ranking. The checked `execution_of_parts` theorem reconstructs the original
+scoped execution condition. Unknown logical positions containing requirement
+boundaries are rejected. The scalar `Specification` path retains its combined
+cutpoint obligations.
+
+VC report schema 2 includes optional file/digest/span/label metadata, the exact
+outer quantified context (distinguishing variables from assumptions), and
+checkpoint dependency names. Dependencies are a conservative inventory of claims
+available to a proof view, not a minimal proof graph or permission to skip a VC.
+`veripy_vc_sources` attaches diagnostic metadata without changing any proposition
+or assembly. Metadata is not source authentication or a compiler-correctness proof.
+Reports still provide complete manual handoffs, exact `rfl` matching, observed
+Crush routes, and transitive axiom audits. Source companions link all obligations
+through `verificationConditions`, in addition to checkpoint `vcGoal` links.
+
 Directive attachment follows [Python physical lines](https://docs.python.org/3.14/reference/lexical_analysis.html#physical-lines)
 (LF, CRLF, or CR), with
 token-based statement boundaries and matching indentation. Ordinary comments and

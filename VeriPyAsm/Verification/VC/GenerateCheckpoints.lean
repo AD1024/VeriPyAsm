@@ -6,12 +6,6 @@ for diagnostics; the scalar/scoped checkpoint assemblies carry the soundness pro
 namespace VeriPyAsm.Verification.VC.Generation
 open Lean Meta Semantics
 
-private def readString (value : Expr) : MetaM String := do
-  if let some text := getStringValue? (← closedWhnf value) then return text
-  let chars ← readList (← mkAppM ``String.toList #[value])
-  return String.ofList (← chars.toList.mapM fun char => do
-    return Char.ofNat (← readNat (← mkAppM ``Char.toNat #[char])))
-
 def checkpointGoals (name : Name) (next spec : Expr) (fuel : Nat)
     (graph : Array (Nat × Array Nat)) (isScoped : Bool := false) : MetaM (Array Expr × Array Obligation) := do
   let checks ← mkAppM (if isScoped then ``ScopedCheckpointSpecification.checkpoints

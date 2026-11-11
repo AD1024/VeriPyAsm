@@ -11,11 +11,28 @@ namespace VeriPyAsm.Verification.VC
 
 open Lean Meta Elab Command
 
+/-- Diagnostic source association, not evidence of compiler correctness or
+authentication of the supplied file. Columns count UTF-8 bytes, starting at zero. -/
+structure SourceLocation where
+  path : String
+  digest : String
+  functionName : String
+  label : String
+  line : Nat
+  column : Nat
+  endLine : Nat
+  endColumn : Nat
+  deriving Inhabited, ToJson, FromJson, ToExpr, Hashable
+
 structure Obligation where
   field : Name
   goal : Name
   offset : Nat
   kind : String
+  source : Option SourceLocation := none
+  /-- A conservative inventory of checkpoint claims available to this proof
+  view. It is not a minimal proof dependency set or a scheduling DAG. -/
+  dependencies : Array Name := #[]
   deriving Inhabited
 
 structure Manifest where

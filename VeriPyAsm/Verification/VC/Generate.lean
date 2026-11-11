@@ -128,6 +128,12 @@ syntax (name := generateCommand) "veripy_generate " ident " from " ident " for "
         let (parts, _) ← scopedParts name (name ++ `VC.execution) cuts total
         scopedCount := parts.size
         obligations := #[obligations[0]!] ++ parts ++ obligations.extract 2 obligations.size
+      if hasCheckpoints then
+        let checkpointNames := obligations.filter (fun o => o.field.toString.startsWith "checkpoint_")
+          |>.map (·.goal)
+        obligations := obligations.map fun obligation => { obligation with
+          dependencies := if obligation.field == `entry then #[]
+            else checkpointNames.filter (· != obligation.goal) }
       let contract ← mkAppM (if isScoped then ``ScopedSpecification.contract else ``Specification.contract) #[baseSpec]
       let resultType ← mkAppM ``VerifiedArtifact #[artifact, contract, mode]
       return (resultType, obligations, fuel, spec, admission, isScoped, hasCheckpoints,

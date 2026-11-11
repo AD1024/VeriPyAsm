@@ -37,6 +37,12 @@ def readList (expression : Expr) : MetaM (Array Expr) := do
     rest := reduced.getAppArgs[2]!
   return result
 
+def readString (value : Expr) : MetaM String := do
+  if let some text := getStringValue? (← closedWhnf value) then return text
+  let chars ← readList (← mkAppM ``String.toList #[value])
+  return String.ofList (← chars.toList.mapM fun char => do
+    return Char.ofNat (← readNat (← mkAppM ``Char.toNat #[char])))
+
 def readGraph (code : Expr) : MetaM (Array (Nat × Array Nat)) := do
   let entries ← readList (← mkAppM ``controlFlow #[code])
   entries.mapM fun entry => do

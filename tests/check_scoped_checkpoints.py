@@ -133,6 +133,15 @@ example : verified.report.assurance = some "checked" := rfl
             self.assertEqual(bundle["mapping"]["loopMapping"]["parents"], [None, 0])
             self.assertEqual([c["vcGoal"] for c in bundle["checkpoints"]["items"]],
                              ["NestedChecks.generated.VC.checkpoint_" + c.label for c in self.parse().checkpoints])
+            conditions = {item["field"]: item for item in bundle["verificationConditions"]}
+            self.assertEqual(len(conditions), 15)
+            rank = conditions["loop_28_ranking"]
+            self.assertEqual(rank["goal"], "NestedChecks.generated.VC.loop_28_ranking")
+            self.assertEqual(rank["source"]["label"], "columns")
+            self.assertEqual(rank["source"]["line"], 16)
+            self.assertEqual(rank["source"]["digest"], bundle["source"]["digest"])
+            self.assertEqual(conditions["checkpoint_inner_conserved"]["source"]["line"], 22)
+            self.assertEqual(conditions["checkpoint_remaining_nonnegative"]["source"]["line"], 21)
             self.assertIn("VC.ScopedCheckpointSpecification", output.read_text())
 
     def test_single_loop_with_an_initially_uninitialized_local(self):

@@ -42,6 +42,11 @@ example : verified.report.assurance = some "checked" := rfl
 example : verified.report.obligations.size = 15 := rfl
 example : verified.report.obligations[11]!.kind = "runtime_assertion" := rfl
 example : verified.report.obligations[13]!.provider = "manual" := rfl
+example : (verified.report.obligations[8]!.source.map (·.label)) = some "columns" := rfl
+example : (verified.report.obligations[8]!.source.map (·.line)) = some 16 := rfl
+example : (verified.report.obligations[11]!.source.map (·.line)) = some 21 := rfl
+example : verified.report.obligations[8]!.dependencies.size = 5 := rfl
+example : verified.report.obligations[12]!.dependencies.size = 4 := rfl
 
 #veripy_audit VeriPyAsm.Examples.SourceNestedCheckpoints
 end VeriPyAsm.Examples.SourceNestedCheckpoints

@@ -27,15 +27,17 @@ booleans, `None`, local variables, arithmetic, comparisons, branches, and loops.
 - **Automatic verification conditions (VCs).** Generate Lean propositions from
   admitted bytecode and Lean specifications. A Python comment frontend supports
   integer contracts and sequential or nested loops, with checked source mapping.
-  Single-loop specifications can also generate separate obligations for runtime
-  assertions and `# veripy: prove` hints, each required by the final assembly.
+  Scoped loops have separate initialization, preservation, ranking, and exit
+  obligations. Runtime assertions and `# veripy: prove` hints also have mandatory
+  obligations, including inside and after nested loops.
 - **Crush automation and manual proofs.** Discharge VCs with
   [lean-crush](https://github.com/AD1024/lean-crush), or register a theorem with
   `@[veripy_proof VC.name]`. Registration checks exact statement matching through
   an equality proof by `rfl`. Unresolved obligations are emitted as complete
   theorem statements for the user to prove.
-- **Auditable results.** Reports identify the proof provider, observed solver
-  backend, and axiom dependencies for each obligation. A final `VerifiedArtifact`
+- **Auditable results.** Reports identify source spans, quantified assumptions,
+  checkpoint dependencies, the proof provider, observed solver backend, and
+  axiom dependencies for each obligation. A final `VerifiedArtifact`
   combines admission certificates, contract entry assumptions, and correctness.
 
 Checked proof reconstruction is the default for VeriPyAsm's Crush adapter.
@@ -150,8 +152,8 @@ specification. Generation alone does not establish a checkpoint claim.
 Checkpoints also compose through scoped and nested loops. The
 [nested multiplication example](examples/python/nested_product_checkpoints.py)
 resets its inner counter on each outer iteration and checks facts both inside
-and after the inner loop. Its seven mandatory VCs cover entry, execution with
-both loop measures, and five named checkpoints:
+and after the inner loop. Its fifteen mandatory VCs cover entry, execution safety,
+four requirements per loop, and five named checkpoints:
 
 ```sh
 lake build VeriPyAsm.Examples.SourceNestedCheckpoints.Proofs SourceNestedCheckpointCrush
@@ -159,6 +161,18 @@ lake build VeriPyAsm.Examples.SourceNestedCheckpoints.Proofs SourceNestedCheckpo
 
 Loop exits retain downstream checkpoint obligations. A hint refers to the frame
 where it was proved; it does not become an invariant of a summarized loop.
+For example, a bad inner measure leaves `generated.VC.loop_28_ranking` pending
+while independent obligations can be proved. Final assembly still requires every
+VC. The [mixed Crush/manual example](experiments/ScopedLoopCrush.lean), built with
+`lake build ScopedLoopCrush`, uses Crush for invariants and exits and exact manual
+proofs for the integer-to-natural ranking conversions.
+
+Reports use schema version 2. Each includes the exact theorem, its outer
+quantified context, source locations when supplied, and a conservative inventory
+of checkpoint claims available to each proof view. That inventory is not a
+minimal dependency graph. The companion JSON's `verificationConditions` links
+every generated VC to its source span. Source associations are diagnostic;
+the correctness theorem remains about the admitted bytecode artifact.
 
 ## Run the checks
 

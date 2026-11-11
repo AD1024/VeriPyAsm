@@ -23,6 +23,8 @@ private def dischargeOne (runName : Name) (obligation : Obligation) (config : Co
   -- locals inside `try` would roll back their updates on the exception path.
   let reportRef ← IO.mkRef ({
     goal := obligation.goal.toString, offset := obligation.offset, kind := obligation.kind,
+    source := obligation.source, context := ← goalContext obligation.goal,
+    dependencies := obligation.dependencies.map Name.toString,
     statement := ← goalStatement obligation.goal, status := "pending", policy := toString config.policy,
     configuredBackend := config.backend, timeoutSeconds := config.timeout } : ObligationReport)
   let stageRef ← IO.mkRef "registration_rejected"
@@ -102,13 +104,16 @@ private def publishReport (name : Name) (report : Report) : CoreM Unit := do
 
 private def printReport (report : Report) : CommandElabM Unit := do
   for result in report.obligations do
+    let location := match result.source with
+      | none => s!"byte {result.offset}"
+      | some source => s!"{source.path}:{source.line}:{source.column} ({source.label}; byte {result.offset})"
     if result.status == "proved" then
       let provider := if result.provider == "manual" then
         s!"manually: {result.theoremName.getD "unknown"}" else
         s!"via Crush; backend={result.actualBackend.getD "unknown"}, path={result.path.getD "unknown"}"
-      logInfo m!"{result.goal}  Proved {provider} [{result.assurance.getD "unknown"}]"
+      logInfo m!"{result.goal}  Proved {provider} [{result.assurance.getD "unknown"}] at {location}"
     else
-      logInfo m!"{result.goal}  Pending at byte {result.offset} ({result.kind}): \
+      logInfo m!"{result.goal}  Pending at {location} ({result.kind}): \
         {result.failureKind.getD "unknown"}\n{result.detail}\n{result.handoff report.imports}"
   if veripy.json.get (← getOptions) then logInfo m!"VERIPY_REPORT {report.json}"
 
